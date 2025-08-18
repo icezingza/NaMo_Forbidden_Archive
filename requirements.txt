@@ -1,4 +1,4 @@
 fastapi
 uvicorn
 python-dotenv
-zstandard==0.21.0
+zstandard==0.24.0
