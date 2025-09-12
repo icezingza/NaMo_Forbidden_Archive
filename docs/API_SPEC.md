@@ -1,12 +1,15 @@
-# API / CLI Spec (Skeleton)
+# API Spec (เติมของจริง)
 
-## REST (if any)
-- `GET /health` → `{status: "ok"}`
-- `POST /process` → input schema → output schema
+## REST
+- `GET /health` → `{"status":"ok"}`
+- `POST /process` → body:
+  ```json
+  {"inputs":[{"type":"audio","uri":"..."}], "options":{"preset":"default"}}
+  ```
+  response:
+  ```json
+  {"outputs":[{"type":"text","value":"..."}]}
+  ```
 
-## CLI (if any)
-- `python app.py --help`
-- `python app.py --input data/file.ext --out out/`
-
-## Examples
-- Include curl and python examples here once endpoints are stable.
+## CLI
+- `python app.py --input path --out out/ --preset default`
