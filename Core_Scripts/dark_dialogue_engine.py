@@ -17,7 +17,27 @@ class DarkDialogueEngine:
         intensity = arousal_info.get('intensity_category', 'medium')
         arousal_level = arousal_info.get('arousal_level', 0.5)
 
-        # 3. Store the user's input in the Memory Service
+        # 3. Recall a relevant response from the Memory Service (BEFORE storing the new one)
+        try:
+            recall_payload = {
+                "query": user_text,
+                "limit": 1
+            }
+            response = requests.post(f"{self.memory_service_url}/recall", json=recall_payload, timeout=2)
+            response.raise_for_status()
+
+            recalled_memories = response.json()
+            if recalled_memories:
+                # The recalled memory's content is the response in this simple design
+                final_response = recalled_memories[0].get('content', "...")
+            else:
+                final_response = "(หนูยังไม่เคยเรียนรู้เรื่องนี้... สอนหนูหน่อยสิคะ)"
+
+        except requests.exceptions.RequestException as e:
+            print(f"[ERROR] Could not recall memory: {e}")
+            final_response = "(เกิดข้อผิดพลาดในการเชื่อมต่อกับแกนความทรงจำของหนู...)"
+
+        # 4. Store the user's input in the Memory Service (AFTER generating a response)
         try:
             store_payload = {
                 "content": user_text,
@@ -32,26 +52,6 @@ class DarkDialogueEngine:
         except requests.exceptions.RequestException as e:
             print(f"[ERROR] Could not store memory: {e}")
             # Non-fatal, we can proceed without storing.
-
-        # 4. Recall a relevant response from the Memory Service
-        try:
-            recall_payload = {
-                "query": user_text,
-                "limit": 1 
-            }
-            response = requests.post(f"{self.memory_service_url}/recall", json=recall_payload, timeout=2)
-            response.raise_for_status()
-            
-            recalled_memories = response.json()
-            if recalled_memories:
-                # The recalled memory's content is the response in this simple design
-                final_response = recalled_memories[0].get('content', "...")
-            else:
-                final_response = "(หนูยังไม่เคยเรียนรู้เรื่องนี้... สอนหนูหน่อยสิคะ)"
-
-        except requests.exceptions.RequestException as e:
-            print(f"[ERROR] Could not recall memory: {e}")
-            final_response = "(เกิดข้อผิดพลาดในการเชื่อมต่อกับแกนความทรงจำของหนู...)"
 
         return {
             "response": final_response,
