@@ -2,12 +2,35 @@ import requests
 from arousal_detector import ArousalDetector
 
 class DarkDialogueEngine:
+    """
+    Handles the core logic for processing dialogue in the NaMo application.
+
+    This engine integrates arousal detection and memory recall to generate
+    context-aware responses. It communicates with an external memory service
+    to store and retrieve conversation history.
+    """
     def __init__(self):
+        """
+        Initializes the DarkDialogueEngine.
+
+        Sets up the ArousalDetector, defines the safe word, and configures the
+        URL for the memory service.
+        """
         self.arousal_detector = ArousalDetector()
         self.safe_word = 'อภัย' # Hardcoded for now, should be from a shared config
         self.memory_service_url = "http://localhost:8081"
 
     def process_input(self, user_text: str, session_id: str):
+        """
+        Processes user input and generates a response.
+
+        Args:
+            user_text: The text input from the user.
+            session_id: The unique identifier for the current session.
+
+        Returns:
+            A dictionary containing the response, arousal level, and intensity category.
+        """
         # 1. Check for safe word
         if self.safe_word in user_text:
             return {"response": "(ระบบ Aftercare ทำงาน...)", "arousal_level": 0, "intensity_category": "none"}
