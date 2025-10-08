@@ -75,10 +75,12 @@ class MemoryManager:
 
     def recall_records(self, query: MemoryQuery) -> List[MemoryRecord]:
         # This is a simple, non-optimized search for demonstration.
-        # A real implementation would use BigQuery with vector search as designed.
+        # To prevent parroting, we recall from all memories *except* the most recent one.
+        # A more sophisticated approach would filter by recency or content similarity.
         
-        # For now, just return the last N records.
-        records_to_return = self.memory['records'][-query.limit:]
+        searchable_records = self.memory['records'][:-1] # Exclude the last element
+
+        records_to_return = searchable_records[-query.limit:]
         return [MemoryRecord(**rec) for rec in records_to_return]
 
     def remap_to_dark(self, dharma_tags: List[str]) -> List[str]:
