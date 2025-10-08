@@ -10,6 +10,14 @@ from dark_dialogue_engine import DarkDialogueEngine
 from forbidden_behavior_core import handle_input as handle_command
 
 def main():
+    """
+    Runs the NaMo Forbidden Arch application in integrated mode.
+
+    This function initializes the dialogue engine, checks the connection to the
+    memory service, and enters a loop to process user input. It handles both
+    regular dialogue and special commands (prefixed with '!'). The session is
+    managed with a unique session ID.
+    """
     print("--- NaMo Forbidden Arch (Integrated Mode) ---")
     
     # Health check for Memory Service

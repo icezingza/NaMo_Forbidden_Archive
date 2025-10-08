@@ -1,0 +1,18 @@
+{
+  "records": [
+    {
+      "content": "!omega",
+      "type": "special_command",
+      "session_id": "b0efd885-d4d1-44e7-ad6b-13ea0a251c6a",
+      "emotion_context": {
+        "sentiment_score": null,
+        "emotion_type": "command_issued",
+        "intensity": null
+      },
+      "dharma_tags": null,
+      "id": "mem_1759899040_0",
+      "created_at": "2025-10-08T04:50:40.687503"
+    }
+  ],
+  "protocol_metadata": {}
+}
