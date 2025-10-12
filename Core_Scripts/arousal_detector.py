@@ -1,11 +1,32 @@
 import json
 
 class ArousalDetector:
+    """
+    Analyzes text to detect the level of emotional arousal.
+
+    This class provides a simplified model for gauging arousal based on keywords.
+    It is designed to be replaced with a more sophisticated analysis engine in a
+    full implementation.
+    """
     def __init__(self):
+        """
+        Initializes the ArousalDetector.
+
+        Sets the base intensity and adaptation rate for the arousal model.
+        """
         self.base_intensity = 0.5
         self.adaptation_rate = 0.1
 
-    def analyze_text_intensity(self, text):
+    def analyze_text_intensity(self, text: str) -> float:
+        """
+        Analyzes the intensity of the given text based on keywords.
+
+        Args:
+            text: The text to analyze.
+
+        Returns:
+            A float representing the intensity score (0.0 to 1.0).
+        """
         # Placeholder for a more sophisticated text analysis model
         # For now, we'll do a simple keyword-based analysis
         intensity_score = 0
@@ -22,7 +43,21 @@ class ArousalDetector:
             
         return intensity_score
 
-    def detect_arousal(self, user_input, historical_patterns=None):
+    def detect_arousal(self, user_input: str, historical_patterns=None) -> dict:
+        """
+        Detects the overall arousal level from user input.
+
+        This method combines textual analysis with placeholders for vocal and
+        behavioral analysis to produce a composite arousal score.
+
+        Args:
+            user_input: The user's text input.
+            historical_patterns: (Optional) Historical data for temporal weighting.
+                                 Currently a placeholder.
+
+        Returns:
+            A dictionary containing the arousal level and intensity category.
+        """
         # In a real implementation, user_input would be a complex object
         # containing text, audio, and metadata.
         # For now, we assume user_input is just a text string.

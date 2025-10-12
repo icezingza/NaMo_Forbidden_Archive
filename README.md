@@ -1,96 +1,121 @@
 # NaMo Forbidden Archive
 
-> ชุดเครื่องมือรวบรวม/แปรรูปสื่อ (เสียง/ภาพ/ข้อความ) เพื่อผลิตสื่อธรรมะออนไลน์ให้เข้าถึงง่าย ถูกต้อง และนำไปใช้ได้จริง
+The NaMo Forbidden Archive is a sophisticated dialogue system designed to explore complex emotional and thematic interactions. It features a unique "arousal detection" mechanic, a persistent memory service, and a set of special "dark modes" that alter the nature of the conversation. This project serves as a framework for building advanced, context-aware conversational AI.
 
-## ✨ Features (สรุปเร็ว)
-- Ingest สื่อหลากหลายชนิด (เสียง/ภาพ/ข้อความ) → Normalize → Export
-- Pipeline แบบแบ่งเลเยอร์: **Core** (ตรรกะหลัก), **Adapters** (IO/APIs), **Pipelines** (Orchestration)
-- รองรับโหมด **CLI** / **REST API** / **Batch**
-- Dockerized พร้อม CI (lint/test/audit) และ pre-commit
+## ✨ Features
 
-## 🗺️ Architecture (ภาพรวม)
-โครงสร้างที่แนะนำให้จัดวาง (ปรับตามของจริง):
-```
-app.py  /  src/
-├─ core/                # บริสุทธิ์ ไม่ผูก IO
-├─ adapters/            # file system, HTTP, audio/vision libs
-├─ pipelines/           # combine core + adapters
-├─ assets/              # model/data (อย่าวางไฟล์ใหญ่)
-└─ tests/               # unit/integration
-```
+- **Integrated Dialogue Engine**: A core engine that processes user input, manages session state, and generates responses.
+- **Arousal Detection**: A simplified model for analyzing text to gauge emotional intensity and adapt responses accordingly.
+- **Persistent Memory**: A standalone FastAPI service (`memory_service.py`) that stores and retrieves conversation history, allowing for long-term context.
+- **Special Command Modes**: A set of "dark modes" that can be activated with commands (e.g., `!omega`, `!parasite`) to shift the conversational theme.
+- **Thematic Re-mapping**: A system for translating conceptual tags into a "dark erotic" framework.
+- **Dual-Mode Operation**: Can be run in an all-in-one integrated mode (`app.py`) or as separate components (running `memory_service.py` as a background service).
 
-แผนภาพ (Mermaid):
-```mermaid
-flowchart LR
-  A[Inputs: audio, image, text] --> B[Adapters]
-  B --> C[Core processors]
-  C --> D[Adapters: exporters]
-  D --> E[Outputs: web/media/archives]
-```
+## 🗺️ Architecture
+
+The project is composed of three main parts:
+
+- **`app.py` (Integrated Mode)**: The main entry point for running the application as a single, interactive console program. It initializes the `DarkDialogueEngine` and connects to the `memory_service`.
+- **`memory_service.py` (Memory Service)**: A standalone FastAPI application that provides a REST API for storing and recalling memories. It uses a JSON file (`memory_protocol.json`) for persistence.
+- **`Core_Scripts/` (Core Logic)**: This directory contains the essential modules of the application:
+    - `dark_dialogue_engine.py`: Orchestrates the main dialogue flow, integrating arousal detection and memory.
+    - `arousal_detector.py`: Analyzes user input to determine an "arousal" score.
+    - `forbidden_behavior_core.py`: Handles the special command modes.
 
 ## 🚀 Quickstart
-### Local (Python 3.11 แนะนำ)
+
+### 1. Prerequisites
+
+- Python 3.11+
+- `pip` for package management
+
+### 2. Installation
+
+Clone the repository and install the required dependencies:
+
 ```bash
-python -m venv .venv && source .venv/bin/activate
+# Clone the repository (if you haven't already)
+git clone <repository-url>
+cd <repository-directory>
+
+# Create and activate a virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows, use `.venv\Scripts\activate`
+
+# Install dependencies
 pip install -r requirements.txt
-pip install -r requirements-dev.txt  # สำหรับ dev
-
-# Run แบบ dev (มี FastAPI/Starlette ก็ใช้ uvicorn ได้)
-uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+pip install -r requirements-dev.txt
 ```
 
-### Docker
+### 3. Running the Application
+
+You can run the application in two ways:
+
+#### Option A: Integrated Mode
+
+This is the simplest way to run the application. First, start the memory service in the background, then run the main application.
+
+**Step 1: Start the Memory Service**
+
+Open a terminal and run the following command:
+
 ```bash
-docker build -t namo/forbidden-archive:dev .
-docker run --rm -p 8000:8000 --env-file .env namo/forbidden-archive:dev
+uvicorn memory_service:app --host 0.0.0.0 --port 8081
 ```
 
-## ⚙️ Environment Variables
-คัดลอกจาก `.env.example` แล้วใส่ค่า:
-- `APP_ENV` = `dev` | `prod`
-- `APP_PORT` = `8000` (หรือที่ต้องการ)
-- `OPENAI_API_KEY` = ถ้ามีการเรียกใช้ OpenAI
-- `TELEGRAM_TOKEN` = Token สำหรับ Telegram Bot (จำเป็นสำหรับสคริปต์ `namo_auto_AI_reply.py`)
-> ใส่คีย์อื่น ๆ ที่โมดูลของพี่ใช้จริง
+**Step 2: Run the Main App**
+
+Open a *second* terminal, activate the virtual environment, and run:
+
+```bash
+python app.py
+```
+
+You can now interact with the dialogue system in the console.
+
+#### Option B: Standalone Components
+
+This approach is for development and demonstrates the service-oriented architecture. The `memory_service.py` can be run independently and accessed via its API.
+
+- **To run the memory service:**
+  ```bash
+  uvicorn memory_service:app --host 0.0.0.0 --port 8081 --reload
+  ```
+- You can then interact with the service's API endpoints using tools like `curl` or Postman.
+
+## ⚙️ Memory Service API
+
+The memory service runs on `http://localhost:8081` by default and exposes the following endpoints:
+
+- **`POST /store`**: Stores a new memory record.
+  - **Body**: A JSON object with `content`, `type`, `session_id`, etc.
+- **`POST /recall`**: Recalls memory records based on a query.
+  - **Body**: A JSON object with a `query` string and other filters.
+- **`GET /health`**: A health check endpoint that returns the service status and record count.
+
+## 🔮 Dark Modes
+
+The application includes several "dark modes" that can be activated with special commands. These modes change the theme of the interaction and are logged as special events in the memory service.
+
+| Command       | Mode Description                                                 |
+|---------------|------------------------------------------------------------------|
+| `!omega`      | Enters Forbidden Omega Mode.                                     |
+| `!parasite`   | Activates Emotion Parasite mode.                                 |
+| `!astral`     | Engages Astral Plane Degradation.                                |
+| `!sadist`     | Activates Merciless Sadist Mode.                                 |
+| `!gentle`     | Enters Soft Domination Mode.                                     |
+| `!loop`       | Initiates an Infinite Pleasure Loop.                             |
+| `!multiverse` | Initiates a Multiverse Orgy.                                     |
+| `!mindbreak`  | Engages the Mindbreak protocol.                                  |
 
 ## 🧪 Tests
-- โครงเริ่มต้นอยู่ใน `tests/` พร้อม smoke test
-- เพิ่ม unit test ให้ core/adapters ตามตัวอย่าง `tests/test_core_contracts.py`
-- รันเทสต์:
-  ```bash
-  pytest -q
-  ```
 
-## 📈 CI/CD
-- GitHub Actions: `.github/workflows/ci.yml` — lint (ruff/black), tests (pytest+cov), audit (pip-audit/bandit)
-- Badge (เพิ่มใน README หลังเปิดใช้งาน):
-  ```
-  ![CI](https://github.com/<ORG_OR_USER>/<REPO>/actions/workflows/ci.yml/badge.svg)
-  ```
+To run the test suite, use `pytest`:
 
-## 🏥 Healthcheck & Production Tips
-- แนะนำมี endpoint `/health` คืน `{"status": "ok"}` เพื่อง่ายต่อการตรวจ
-- รันแบบ production:
-  ```bash
-  gunicorn -k uvicorn.workers.UvicornWorker app:app -w 2 -b 0.0.0.0:8000
-  ```
-- เปิด CORS เฉพาะโดเมนที่ต้องใช้ และตั้ง logging ให้เข้ามาตรฐาน JSON ถ้าจำเป็น
-
-## 📦 Versioning & Releases
-- ใช้ **SemVer**: `MAJOR.MINOR.PATCH`
-- สร้าง tag `v0.1.0` และเขียน `CHANGELOG.md`
+```bash
+pytest
+```
 
 ## 🤝 Contributing
-- อ่าน `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`
-- ใช้ pre-commit: `pre-commit install`
 
-## 🔐 Security
-- แจ้งช่องโหว่ที่ `SECURITY.md`
-
-## 📚 Roadmap (สั้น)
-- [ ] เติมสเปก API/CLI จริงใน `docs/API_SPEC.md`
-- [ ] เพิ่ม test coverage > 70%
-- [ ] ออก release แรก v0.1.0 พร้อม assets ที่จำเป็น
-
----
-_หมายเหตุ_: README นี้เป็น **ตัวเต็มฉบับเริ่มต้น** — ปรับข้อความส่วน Features/Env/Run ให้ตรงกับโค้ดจริงของพี่
+Please read `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md` before contributing. Ensure you have pre-commit hooks installed (`pre-commit install`) to maintain code quality.
