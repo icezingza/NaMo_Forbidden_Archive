@@ -2,10 +2,10 @@ import requests
 from arousal_detector import ArousalDetector
 
 class DarkDialogueEngine:
-    def __init__(self):
+    def __init__(self, safe_word='อภัย', memory_service_url="http://localhost:8081"):
         self.arousal_detector = ArousalDetector()
-        self.safe_word = 'อภัย' # Hardcoded for now, should be from a shared config
-        self.memory_service_url = "http://localhost:8081"
+        self.safe_word = safe_word
+        self.memory_service_url = memory_service_url
 
     def process_input(self, user_text: str, session_id: str):
         # 1. Check for safe word
