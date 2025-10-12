@@ -25,11 +25,7 @@ def main():
         return
 
     try:
-        # In a real app, these would come from a config file or environment variables
-        safe_word_config = 'อภัย'
-        memory_url_config = "http://localhost:8081"
-
-        engine = DarkDialogueEngine(safe_word=safe_word_config, memory_service_url=memory_url_config)
+        engine = DarkDialogueEngine()
         session_id = str(uuid.uuid4())
         print(f"[INFO] Session started. ID: {session_id}")
     except Exception as e:

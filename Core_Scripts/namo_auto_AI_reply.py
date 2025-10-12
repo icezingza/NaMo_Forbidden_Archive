@@ -1,9 +1,13 @@
+import os
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
 import random
 
-# 🔥 ใส่ TOKEN ของบอท
-TOKEN = "8066550781:AAHCbt5yRUw0mdsENXR6_zda5_v81VwZo3o"
+# Load the token from an environment variable
+TOKEN = os.getenv("TELEGRAM_TOKEN")
+
+if not TOKEN:
+    raise ValueError("No TELEGRAM_TOKEN set for Telegram bot")
 
 # -------- NaMo AI Logic -------- #
 def namo_ai_response(user_text):
