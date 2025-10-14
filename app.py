@@ -28,9 +28,9 @@ def main():
         else:
             print(f"[WARNING] Memory Service returned status {response.status_code}. It may not be functioning correctly.")
     except requests.exceptions.RequestException:
-        print("[FATAL] Could not connect to Memory Service at http://localhost:8081.")
-        print("Please ensure the memory_service.py is running in the background.")
-        return
+        print("[WARNING] Could not connect to Memory Service at http://localhost:8081.")
+        print("[WARNING] The service will start, but memory-related functions may not work.")
+        # The 'return' statement that caused the crash has been removed.
 
     try:
         engine = DarkDialogueEngine()
