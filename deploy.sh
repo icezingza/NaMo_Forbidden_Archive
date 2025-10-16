@@ -5,15 +5,15 @@
 set -e
 
 # ===== CONFIG =====
-PROJECT_ID="YOUR_PROJECT_ID"   # ใส่ Google Cloud Project ID ของคุณ
-SERVICE_NAME="namo-api"        # ชื่อ service
-REGION="asia-southeast1"       # ใช้ region ใกล้ไทย
+PROJECT_ID="arctic-signer-471822-i8"   # Google Cloud Project ID ของคุณ
+SERVICE_NAME="namo-forbidden-archive0" # ชื่อ service ที่ต้องการ deploy
+REGION="asia-southeast1"       # region ที่ใช้
 # ===================
 
-echo "👉 ตั้งค่า project..."
+echo "👉 ตั้งค่า project เป็น $PROJECT_ID..."
 gcloud config set project $PROJECT_ID
 
-echo "👉 สร้าง image และ deploy ไปยัง Cloud Run..."
+echo "👉 สร้าง image และ deploy ไปยัง Cloud Run service: $SERVICE_NAME..."
 gcloud run deploy $SERVICE_NAME \
   --source . \
   --platform managed \
