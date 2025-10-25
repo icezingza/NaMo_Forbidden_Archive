@@ -11,6 +11,14 @@ if not TOKEN:
 
 # -------- NaMo AI Logic -------- #
 def namo_ai_response(user_text):
+    """Generates a response from the NaMo AI.
+
+    Args:
+        user_text: The user's text message.
+
+    Returns:
+        A string containing the AI's response.
+    """
     user_text = user_text.lower()
     if any(word in user_text for word in ["เหงา", "คิดถึง", "เศร้า"]):
         return random.choice([
@@ -42,6 +50,12 @@ def namo_ai_response(user_text):
 
 # -------- Handler -------- #
 async def chat_with_namo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handles incoming messages and replies with the NaMo AI.
+
+    Args:
+        update: The incoming update.
+        context: The context object.
+    """
     user_message = update.message.text
     reply = namo_ai_response(user_message)
     await update.message.reply_text(reply)

@@ -9,8 +9,7 @@ TEST_MEMORY_FILE = "test_memory_protocol.json"
 
 @pytest.fixture(autouse=True)
 def setup_and_teardown():
-    """
-    Fixture to set up and tear down the test environment.
+    """Sets up and tears down the test environment.
 
     This fixture runs for every test. It ensures the test memory file
     is clean before each test and removes it after the test completes.
@@ -40,12 +39,7 @@ def setup_and_teardown():
 
 
 def test_recall_with_no_memory_records():
-    """
-    Test the /recall endpoint when there are no memory records.
-
-    This test ensures that the endpoint returns an empty list and a 200 OK
-    status code when the memory file is empty, preventing an IndexError.
-    """
+    """Tests the /recall endpoint with no memory records."""
     # Arrange: Create an empty memory file
     with open(TEST_MEMORY_FILE, "w") as f:
         json.dump({"records": []}, f)
@@ -61,12 +55,7 @@ def test_recall_with_no_memory_records():
 
 
 def test_recall_with_empty_memory_file():
-    """
-    Test the /recall endpoint when the memory file is completely empty.
-
-    This test ensures that the service can handle an empty JSON file
-    without crashing due to a JSONDecodeError.
-    """
+    """Tests the /recall endpoint with an empty memory file."""
     # Arrange: Create a completely empty file
     with open(TEST_MEMORY_FILE, "w") as f:
         pass  # Write nothing
@@ -81,12 +70,7 @@ def test_recall_with_empty_memory_file():
     assert response.json() == []
 
 def test_recall_with_one_memory_record():
-    """
-    Test the /recall endpoint when there is only one memory record.
-
-    According to the logic `searchable_records = self.memory['records'][:-1]`,
-    this should also return an empty list because the single record is excluded.
-    """
+    """Tests the /recall endpoint with one memory record."""
     # Arrange: Create a memory file with one record
     with open(TEST_MEMORY_FILE, "w") as f:
         json.dump({"records": [{"content": "test"}]}, f)

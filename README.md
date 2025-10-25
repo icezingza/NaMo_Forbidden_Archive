@@ -2,6 +2,17 @@
 
 The NaMo Forbidden Archive is a sophisticated dialogue system designed to explore complex emotional and thematic interactions. It features a unique "arousal detection" mechanic, a persistent memory service, and a set of special "dark modes" that alter the nature of the conversation. This project serves as a framework for building advanced, context-aware conversational AI.
 
+## 🎯 Purpose and Goals
+
+The primary goal of this project is to provide a robust and extensible framework for creating nuanced and emotionally intelligent conversational AI. It is designed to be a tool for developers and researchers who are interested in exploring the boundaries of human-computer interaction.
+
+The key objectives of the project are:
+
+*   **To create a flexible and modular architecture**: The project is designed to be easily extensible, allowing developers to add new features and functionality with minimal effort.
+*   **To explore the use of emotional intelligence in conversational AI**: The project includes a unique "arousal detection" mechanic that allows the AI to adapt its responses based on the user's emotional state.
+*   **To provide a persistent memory service**: The project includes a standalone FastAPI service that allows the AI to store and retrieve conversation history, enabling it to maintain long-term context.
+*   **To explore the use of "dark modes" in conversational AI**: The project includes a set of special "dark modes" that can be activated with commands, allowing the AI to shift the conversational theme and explore more complex and challenging topics.
+
 ## ✨ Features
 
 - **Integrated Dialogue Engine**: A core engine that processes user input, manages session state, and generates responses.

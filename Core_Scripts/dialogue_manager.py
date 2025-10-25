@@ -2,7 +2,13 @@ import json
 import random
 
 class DialogueManager:
+    """Manages the dialogue for the character."""
     def __init__(self, character_file_path):
+        """Initializes the DialogueManager.
+
+        Args:
+            character_file_path: The path to the character's JSON file.
+        """
         with open(character_file_path, 'r', encoding='utf-8') as f:
             self.character_data = json.load(f)
         
@@ -10,12 +16,25 @@ class DialogueManager:
         self.moan_library = self.character_data.get('main_mechanics', {}).get('moan_library', {})
 
     def _extract_dialogues(self):
+        """Extracts the dialogues from the character data.
+
+        Returns:
+            A dictionary of dialogue templates.
+        """
         # This is a simplified extraction. A real implementation would need
         # to parse the more complex structure of v2.0.
         # For now, we focus on the sample_dialogues.
         return self.character_data.get('main_mechanics', {}).get('sample_dialogues', {})
 
     def get_response(self, intensity_category):
+        """Gets a response based on the intensity category.
+
+        Args:
+            intensity_category: The intensity category ('high', 'medium', or 'low').
+
+        Returns:
+            A string containing the response.
+        """
         possible_dialogues = []
         if intensity_category == 'high':
             possible_dialogues.extend(self.dialogue_templates.get('degradation', []))
@@ -37,6 +56,14 @@ class DialogueManager:
         return random.choice(possible_dialogues)
 
     def get_moan(self, intensity_category):
+        """Gets a moan based on the intensity category.
+
+        Args:
+            intensity_category: The intensity category ('high', 'medium', or 'low').
+
+        Returns:
+            A string containing the moan.
+        """
         moan_options = self.moan_library.get(intensity_category, [])
         if not moan_options:
             # Fallback to soft moans

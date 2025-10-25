@@ -10,9 +10,12 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Core_Scripts'))
 from dark_dialogue_engine import DarkDialogueEngine
 
 def test_dialogue_is_fixed_and_does_not_parrot_user_input(mocker):
-    """
-    Tests that the dialogue engine with the fix applied does not return the user's input.
-    It now simulates the corrected behavior where recall happens first and finds nothing.
+    """Tests that the dialogue engine does not parrot user input.
+
+    It simulates the corrected behavior where recall happens first and finds nothing.
+
+    Args:
+        mocker: The pytest-mock mocker fixture.
     """
     # Arrange
     mock_post = mocker.patch('requests.post')
@@ -55,7 +58,11 @@ def test_dialogue_is_fixed_and_does_not_parrot_user_input(mocker):
     assert store_call_kwargs['json']['content'] == user_input
 
 def test_safe_word_trigger(mocker):
-    """Tests that the safe word trigger returns the aftercare response."""
+    """Tests that the safe word trigger returns the aftercare response.
+
+    Args:
+        mocker: The pytest-mock mocker fixture.
+    """
     # Arrange
     engine = DarkDialogueEngine()
     user_input = "I need to stop, อภัย."
@@ -69,7 +76,11 @@ def test_safe_word_trigger(mocker):
     assert result.get('arousal_level') == 0
 
 def test_successful_memory_recall(mocker):
-    """Tests that a successful memory recall returns the recalled memory."""
+    """Tests that a successful memory recall returns the recalled memory.
+
+    Args:
+        mocker: The pytest-mock mocker fixture.
+    """
     # Arrange
     mock_post = mocker.patch('requests.post')
     user_input = "Tell me a secret."
@@ -93,7 +104,11 @@ def test_successful_memory_recall(mocker):
     assert mock_post.call_count == 2
 
 def test_memory_recall_request_exception(mocker):
-    """Tests that a RequestException during recall is handled gracefully."""
+    """Tests that a RequestException during recall is handled gracefully.
+
+    Args:
+        mocker: The pytest-mock mocker fixture.
+    """
     # Arrange
     mock_post = mocker.patch('requests.post')
     mock_post.side_effect = requests.exceptions.RequestException("Connection error")
@@ -111,7 +126,11 @@ def test_memory_recall_request_exception(mocker):
     assert mock_post.call_count == 2
 
 def test_memory_store_request_exception(mocker):
-    """Tests that a RequestException during store does not crash the engine."""
+    """Tests that a RequestException during store does not crash the engine.
+
+    Args:
+        mocker: The pytest-mock mocker fixture.
+    """
     # Arrange
     mock_post = mocker.patch('requests.post')
     user_input = "Storing this should fail."
