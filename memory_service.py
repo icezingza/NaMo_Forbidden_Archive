@@ -81,7 +81,10 @@ class MemoryManager:
             # Added a top-level key to store records
             return {"records": [], "protocol_metadata": {}}
         with open(self.file_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return {"records": [], "protocol_metadata": {}}
 
     def save_memory(self):
         """
