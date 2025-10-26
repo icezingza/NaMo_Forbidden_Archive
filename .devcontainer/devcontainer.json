@@ -1,4 +1,11 @@
 {
-  "image": "mcr.microsoft.com/devcontainers/universal:2",
-  "features": {}
+"name": "Dark Knowledge Dev Container",
+"image": "mcr.microsoft.com/devcontainers/python:3.11",
+"postCreateCommand": "pip install openai faiss-cpu numpy",
+"features": {},
+"customizations": {
+"vscode": {
+"extensions": ["ms-python.python", "ms-toolsai.jupyter"]
+}
+}
 }
