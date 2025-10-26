@@ -1,0 +1,3 @@
+on_startup:
+  - run: python learn_from_set.py
+  - say: "Dark Knowledge system initialized. Ready to absorb new data."
