@@ -1,7 +1,8 @@
 import os
-from telegram import Update
-from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
 import random
+
+from telegram import Update
+from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
 
 # Load the token from an environment variable
 TOKEN = os.getenv("TELEGRAM_TOKEN")

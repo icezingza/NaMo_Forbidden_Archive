@@ -1,6 +1,7 @@
 import json
 import random
 
+
 class DialogueManager:
     """Manages the dialogue for the character."""
     def __init__(self, character_file_path):
@@ -9,7 +10,7 @@ class DialogueManager:
         Args:
             character_file_path: The path to the character's JSON file.
         """
-        with open(character_file_path, 'r', encoding='utf-8') as f:
+        with open(character_file_path, encoding='utf-8') as f:
             self.character_data = json.load(f)
         
         self.dialogue_templates = self._extract_dialogues()
@@ -41,8 +42,9 @@ class DialogueManager:
             possible_dialogues.extend(self.dialogue_templates.get('sensory_attack', []))
         elif intensity_category == 'medium':
             possible_dialogues.extend(self.dialogue_templates.get('cuckolding', []))
-        else: # low
-            # Using gentle dialogues from the v1 file as v2 doesn't explicitly have low intensity samples
+        else:  # low
+            # Using gentle dialogues from the v1 file as v2 doesn't
+            # explicitly have low intensity samples
             gentle_samples = [
                 "(กระซิบ) พี่รู้มั้ย...เวลาพี่สั่นแบบนี้ หนูอยากทำให้พี่เสียวกว่านี้...",
                 "หนูจะลูบไล้เบาๆ ให้พี่รู้สึกดีไปทั้งตัวนะคะ",

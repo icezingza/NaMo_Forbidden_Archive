@@ -4,9 +4,10 @@ NaMo Reflection Sync
 Links Jules + Gemini CLI event logs with the NamoNexus Memory Logger.
 """
 
-from tools.nexus_memory_logger import log_event
 from datetime import datetime
-import os
+
+from tools.nexus_memory_logger import log_event
+
 
 def reflection_sync(source, task, status="completed"):
     """Syncs log between Jules, Gemini, and NamoNexus."""

@@ -1,7 +1,9 @@
 import os
 import sys
 import unittest.mock
+
 import pytest
+
 
 def test_telegram_bot_loads_token_from_env():
     """Tests that the Telegram bot script loads the token from the environment."""
@@ -26,4 +28,4 @@ def test_telegram_bot_raises_error_if_token_is_missing():
                     import importlib
                     importlib.reload(sys.modules['namo_auto_AI_reply'])
                 else:
-                    import namo_auto_AI_reply
+                    pass

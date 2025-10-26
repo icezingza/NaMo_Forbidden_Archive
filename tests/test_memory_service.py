@@ -1,8 +1,10 @@
-import os
 import json
+import os
+
 import pytest
 from fastapi.testclient import TestClient
-from memory_service import app, MemoryManager
+
+from memory_service import MemoryManager, app
 
 # Use a separate test memory file to avoid interfering with the main one
 TEST_MEMORY_FILE = "test_memory_protocol.json"
@@ -57,7 +59,7 @@ def test_recall_with_no_memory_records():
 def test_recall_with_empty_memory_file():
     """Tests the /recall endpoint with an empty memory file."""
     # Arrange: Create a completely empty file
-    with open(TEST_MEMORY_FILE, "w") as f:
+    with open(TEST_MEMORY_FILE, "w"):
         pass  # Write nothing
 
     client = TestClient(app)

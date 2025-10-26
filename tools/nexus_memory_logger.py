@@ -2,6 +2,7 @@
 
 import logging
 
+
 def get_logger(name):
     """Creates and configures a logger."""
     logger = logging.getLogger(name)

@@ -1,7 +1,7 @@
+import contextlib
 import os
 import socket
-import pytest
-import contextlib
+
 
 def _can_bind(port:int)->bool:
     """Checks if a port is available to bind to.

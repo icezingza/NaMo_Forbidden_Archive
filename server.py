@@ -1,6 +1,7 @@
 import os
 import sys
 import uuid
+
 from fastapi import FastAPI
 from pydantic import BaseModel
 
@@ -56,7 +57,8 @@ async def chat_with_engine(payload: ChatInput):
     Processes user input through the Dark Dialogue Engine.
 
     - **text**: The user's message to the engine.
-    - **session_id**: (Optional) A unique ID for the conversation. If not provided, a new one will be generated.
+    - **session_id**: (Optional) A unique ID for the conversation. If not
+      provided, a new one will be generated.
     """
     if not engine:
         return {

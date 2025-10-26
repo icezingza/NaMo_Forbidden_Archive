@@ -1,6 +1,7 @@
 import requests
 from arousal_detector import ArousalDetector
 
+
 class DarkDialogueEngine:
     """
     Handles the core logic for processing dialogue in the NaMo application.
@@ -33,7 +34,11 @@ class DarkDialogueEngine:
         """
         # 1. Check for safe word
         if self.safe_word in user_text:
-            return {"response": "(ระบบ Aftercare ทำงาน...)", "arousal_level": 0, "intensity_category": "none"}
+            return {
+                "response": "(ระบบ Aftercare ทำงาน...)",
+                "arousal_level": 0,
+                "intensity_category": "none",
+            }
 
         # 2. Detect arousal (remains a local utility)
         arousal_info = self.arousal_detector.detect_arousal(user_text)
@@ -46,7 +51,9 @@ class DarkDialogueEngine:
                 "query": user_text,
                 "limit": 1
             }
-            response = requests.post(f"{self.memory_service_url}/recall", json=recall_payload, timeout=2)
+            response = requests.post(
+                f"{self.memory_service_url}/recall", json=recall_payload, timeout=2
+            )
             response.raise_for_status()
 
             recalled_memories = response.json()

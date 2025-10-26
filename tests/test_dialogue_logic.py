@@ -1,13 +1,14 @@
-import pytest
-import sys
 import os
+import sys
 from unittest.mock import MagicMock
+
 import requests
 
 # Add Core_Scripts to the Python path to allow for direct imports
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Core_Scripts'))
 
 from dark_dialogue_engine import DarkDialogueEngine
+
 
 def test_dialogue_is_fixed_and_does_not_parrot_user_input(mocker):
     """Tests that the dialogue engine does not parrot user input.
@@ -43,7 +44,9 @@ def test_dialogue_is_fixed_and_does_not_parrot_user_input(mocker):
     # Assert
     # The response should now be the default message for when no memory is found.
     expected_response = "(หนูยังไม่เคยเรียนรู้เรื่องนี้... สอนหนูหน่อยสิคะ)"
-    assert result.get('response') == expected_response, f"The engine response was not the expected default message."
+    assert result.get('response') == expected_response, (
+        "The engine response was not the expected default message."
+    )
 
     # We still expect two calls to the memory service
     assert mock_post.call_count == 2
@@ -141,7 +144,10 @@ def test_memory_store_request_exception(mocker):
     mock_recall_response.json.return_value = []
 
     # The second call (store) will raise an exception
-    mock_post.side_effect = [mock_recall_response, requests.exceptions.RequestException("Connection error")]
+    mock_post.side_effect = [
+        mock_recall_response,
+        requests.exceptions.RequestException("Connection error"),
+    ]
 
     # Act
     engine = DarkDialogueEngine()

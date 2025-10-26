@@ -1,5 +1,7 @@
 import importlib
+
 import pytest
+
 
 @pytest.mark.skipif(importlib.util.find_spec("core") is None, reason="no core package yet")
 def test_core_module_exists():

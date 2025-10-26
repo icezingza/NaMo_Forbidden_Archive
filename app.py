@@ -1,6 +1,7 @@
 import os
 import sys
 import uuid
+
 import requests
 
 # Add Core_Scripts to the Python path
@@ -8,6 +9,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'Core_Scripts'))
 
 from dark_dialogue_engine import DarkDialogueEngine
 from forbidden_behavior_core import handle_input as handle_command
+
 
 def main():
     """
@@ -26,7 +28,10 @@ def main():
         if response.status_code == 200:
             print("[INFO] Memory Service is connected.")
         else:
-            print(f"[WARNING] Memory Service returned status {response.status_code}. It may not be functioning correctly.")
+            print(
+                f"[WARNING] Memory Service returned status {response.status_code}. "
+                "It may not be functioning correctly."
+            )
     except requests.exceptions.RequestException:
         print("[WARNING] Could not connect to Memory Service at http://localhost:8081.")
         print("[WARNING] The service will start, but memory-related functions may not work.")
@@ -40,7 +45,7 @@ def main():
         print(f"Failed to initialize engine: {e}")
         return
 
-    print(f"Engine Ready. Type 'exit' to quit.")
+    print("Engine Ready. Type 'exit' to quit.")
     print(f"Safe word is: {engine.safe_word}")
     print("-" * 20)
 
@@ -61,7 +66,10 @@ def main():
             
             print("\nNaMo:")
             print(f"> {result.get('response', '(No response)')}")
-            print(f"[Debug: Arousal={result.get('arousal_level', 0):.2f}, Intensity='{result.get('intensity_category', 'N/A')}']\n")
+            print(
+                f"[Debug: Arousal={result.get('arousal_level', 0):.2f}, "
+                f"Intensity='{result.get('intensity_category', 'N/A')}']\n"
+            )
 
         except KeyboardInterrupt:
             print("\nExiting...")

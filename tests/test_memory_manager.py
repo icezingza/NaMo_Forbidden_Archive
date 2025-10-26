@@ -1,5 +1,7 @@
 import os
+
 import pytest
+
 from memory_service import MemoryManager
 
 TEST_FILE = "test_direct_memory.json"
@@ -20,7 +22,7 @@ def setup_and_teardown():
 def test_load_memory_with_empty_file_is_handled():
     """Tests that MemoryManager handles an empty file gracefully."""
     # Arrange: Create a completely empty file.
-    with open(TEST_FILE, "w") as f:
+    with open(TEST_FILE, "w"):
         pass  # Write nothing.
 
     # Act: Instantiate the manager. This should not raise an exception.
