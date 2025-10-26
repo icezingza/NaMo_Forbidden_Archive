@@ -1,0 +1,23 @@
+# julius_train_from_set.yaml
+name: "Train Julius with Dharma Set"
+description: >
+  Load and embed Dharma learning set from set.zip into local vector database for contextual reasoning.
+
+on_startup:
+  - run: |
+      echo "🧘 Julius initializing Dharma learning system..."
+      mkdir -p vector_db
+      unzip -o learning_set/set.zip -d vector_db/extracted/
+      python learn_from_set.py
+      echo "✅ Julius has absorbed the Dharma learning set. Wisdom ready."
+
+tasks:
+  learn_from_set:
+    description: "Read all files in learning_set/set.zip and build local embedding database."
+    run: |
+      python learn_from_set.py
+
+  query_knowledge:
+    description: "Ask Julius to recall from the learned Dharma base."
+    run: |
+      python query_learned_knowledge.py
