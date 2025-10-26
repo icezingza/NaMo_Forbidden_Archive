@@ -5,7 +5,6 @@ VECTOR_DIR = "vector_db"
 DB_PATH = f"{VECTOR_DIR}/knowledge.index"
 META_PATH = f"{VECTOR_DIR}/meta.json"
 MODEL = "text-embedding-3-large"
-
 client = OpenAI()
 
 def query_knowledge(question, top_k=3):
