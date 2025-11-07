@@ -1,0 +1,23 @@
+# GitLab Agent for Kubernetes configuration file
+#
+# This file is used to configure the GitLab Agent for Kubernetes.
+# For more information, see the documentation:
+# https://docs.gitlab.com/ee/user/clusters/agent/user_access.html
+
+user_access:
+  # The 'projects' keyword grants access to members of the specified projects.
+  # Replace 'your-group/your-project' with the actual path to your project.
+  # You can add more projects to the list.
+  projects:
+    - id: 'icezingza/NaMo_Forbidden_Archive'
+
+  # The 'groups' keyword grants access to members of the specified groups and their subgroups.
+  # Replace 'your-group' with the actual path to your group.
+  # You can add more groups to the list.
+  # groups:
+  #   - id: 'your-group'
+
+  # 'access_as: { agent: {} }' means that Kubernetes API requests
+  # will be performed using the agent's service account identity.
+  access_as:
+    agent: {}
