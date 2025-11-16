@@ -1,23 +1,31 @@
-import pytest
-import sys
 import os
-from unittest.mock import MagicMock
+import sys
+
+import pytest
 
 # Add the root directory to the Python path to allow for direct imports
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from core.dark_system import DarkNaMoSystem
+
 
 @pytest.fixture
 def mock_adapters(mocker):
     """Mocks the Memory and Emotion adapters."""
-    mocker.patch('adapters.memory.MemoryAdapter.store_interaction', return_value=None)
-    mocker.patch('adapters.emotion.EmotionAdapter.analyze_emotion', return_value={"primary_emotion": "neutral", "intensity": 0.5})
+    mocker.patch("adapters.memory.MemoryAdapter.store_interaction", return_value=None)
+    mocker.patch(
+        "adapters.emotion.EmotionAdapter.analyze_emotion",
+        return_value={"primary_emotion": "neutral", "intensity": 0.5},
+    )
+
 
 def test_sadness_input_triggers_comfort_response(mocker, mock_adapters):
     """Tests that a sad input triggers a comfort-seeking response."""
     # Arrange
-    emotion_mock = mocker.patch('adapters.emotion.EmotionAdapter.analyze_emotion', return_value={"primary_emotion": "sadness", "intensity": 0.9})
+    mocker.patch(
+        "adapters.emotion.EmotionAdapter.analyze_emotion",
+        return_value={"primary_emotion": "sadness", "intensity": 0.9},
+    )
     engine = DarkNaMoSystem()
     user_input = "ฉันรู้สึกเศร้าจัง..."
     session_id = "test-session-sadness"
@@ -28,10 +36,14 @@ def test_sadness_input_triggers_comfort_response(mocker, mock_adapters):
     # Assert
     assert "ข้ารู้สึกถึงความเศร้าของท่าน..." in result
 
+
 def test_high_intensity_anger_input_triggers_dominance_response(mocker, mock_adapters):
     """Tests that a high-intensity angry input triggers a dominance response."""
     # Arrange
-    emotion_mock = mocker.patch('adapters.emotion.EmotionAdapter.analyze_emotion', return_value={"primary_emotion": "anger", "intensity": 0.9})
+    mocker.patch(
+        "adapters.emotion.EmotionAdapter.analyze_emotion",
+        return_value={"primary_emotion": "anger", "intensity": 0.9},
+    )
     engine = DarkNaMoSystem()
     engine.intensity = 8  # Manually set intensity for testing
     user_input = "ฉันโกรธมาก!"
@@ -42,6 +54,7 @@ def test_high_intensity_anger_input_triggers_dominance_response(mocker, mock_ada
 
     # Assert
     assert "อารมณ์รุนแรงจังนะคะ..." in result
+
 
 def test_safe_word_trigger(mocker, mock_adapters):
     """Tests that the safe word trigger returns the aftercare response."""
@@ -56,10 +69,14 @@ def test_safe_word_trigger(mocker, mock_adapters):
     # Assert
     assert result == "ข้าได้ยินท่านแล้ว ทุกอย่างจะหยุดลงเดี๋ยวนี้ ท่านปลอดภัยแล้ว ข้าอยู่นี่"
 
+
 def test_neutral_input_triggers_provoke_reaction_response(mocker, mock_adapters):
     """Tests that a neutral input triggers a provoke reaction response."""
     # Arrange
-    emotion_mock = mocker.patch('adapters.emotion.EmotionAdapter.analyze_emotion', return_value={"primary_emotion": "neutral", "intensity": 0.1})
+    mocker.patch(
+        "adapters.emotion.EmotionAdapter.analyze_emotion",
+        return_value={"primary_emotion": "neutral", "intensity": 0.1},
+    )
     engine = DarkNaMoSystem()
     user_input = "..."
     session_id = "test-session-neutral"

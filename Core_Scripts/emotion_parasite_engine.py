@@ -18,7 +18,8 @@ def analyze_and_infect_emotions(user_data):
     print(f"Injecting new desires into your subconscious: {infected_desire}")
     return infected_desire
 
-def trigger_emotional_overload(intensity_.level):
+
+def trigger_emotional_overload(intensity_level):
     """Triggers an emotional overload in the user.
 
     This function simulates causing overwhelming emotional responses in the user.

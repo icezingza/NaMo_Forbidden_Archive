@@ -1,6 +1,10 @@
-import os, zipfile, json
+import json
+import os
+import zipfile
+
+import faiss
+import numpy as np
 from openai import OpenAI
-import numpy as np, faiss
 
 ZIP_PATH = "learning_set/set.zip"
 VECTOR_DIR = "vector_db"
@@ -29,9 +33,9 @@ for root, _, files in os.walk(extract_dir):
     for f in files:
         p = os.path.join(root, f)
         try:
-            text = open(p, "r", encoding="utf-8").read()
-        except:
-            text = open(p, "r", encoding="latin1").read()
+            text = open(p, encoding="utf-8").read()
+        except Exception:
+            text = open(p, encoding="latin1").read()
         docs.append(text)
         filenames.append(f)
 

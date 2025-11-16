@@ -1,16 +1,19 @@
 import os
+from typing import Any
+
 import requests
-from typing import Dict, Any
+
 
 class EmotionAdapter:
     """
     Adapter for interacting with the external Emotion Analysis Service.
     """
+
     def __init__(self):
         self.api_url = os.environ.get("EMOTION_API_URL", "http://localhost:8082/analyze")
         print(f"[EmotionAdapter]: Initialized. API URL: {self.api_url}")
 
-    def analyze_emotion(self, text: str) -> Dict[str, Any]:
+    def analyze_emotion(self, text: str) -> dict[str, Any]:
         """
         Analyzes the emotion of a given text using the Emotion Analysis Service.
         """

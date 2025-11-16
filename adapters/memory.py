@@ -1,16 +1,21 @@
 import os
+from typing import Any
+
 import requests
-from typing import Dict, Any
+
 
 class MemoryAdapter:
     """
     Adapter for interacting with the external Memory Service.
     """
+
     def __init__(self):
         self.api_url = os.environ.get("MEMORY_API_URL", "http://localhost:8081/store")
         print(f"[MemoryAdapter]: Initialized. API URL: {self.api_url}")
 
-    def store_interaction(self, session_id: str, user_input: str, response: str, desire_map: Dict[str, Any]):
+    def store_interaction(
+        self, session_id: str, user_input: str, response: str, desire_map: dict[str, Any]
+    ):
         """
         Stores a user interaction in the Memory Service.
         """
@@ -18,7 +23,7 @@ class MemoryAdapter:
             "session_id": session_id,
             "user_input": user_input,
             "response": response,
-            "desire_map": desire_map
+            "desire_map": desire_map,
         }
         try:
             requests.post(self.api_url, json=payload, timeout=2)

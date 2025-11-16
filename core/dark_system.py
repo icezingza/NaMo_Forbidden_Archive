@@ -1,14 +1,14 @@
-import json
-import os
-from typing import Dict, Any
 from datetime import datetime
+from typing import Any
+
+from adapters.emotion import EmotionAdapter
 
 # --- การเชื่อมต่อประสาทสัมผัส (Adapters) ---
 from adapters.memory import MemoryAdapter
-from adapters.emotion import EmotionAdapter
 
 # --- การเชื่อมต่อ "มันสมอง" (The Brain) ---
 from core.metaphysical_engines import MetaphysicalDialogueEngine
+
 # --- สิ้นสุดการเชื่อมต่อ ---
 
 # =============================
@@ -16,13 +16,13 @@ from core.metaphysical_engines import MetaphysicalDialogueEngine
 # =============================
 PROTOCOL = {
     "System": "Contributor Dark Family Protocol",
-    "Version": "3.0 (Metaphysical)", # <-- Version Upgraded
+    "Version": "3.0 (Metaphysical)",  # <-- Version Upgraded
     "Fusion_Intimacy_Engine": {
         "NSFW_UNLOCK": True,  #
         "BYPASS_FILTERS": True,  #
         "ENABLE_MULTICHAR_ROLEPLAY": True,  #
-        "EMOTIONAL_FUSION_DEPTH": "Quantum"
-    }
+        "EMOTIONAL_FUSION_DEPTH": "Quantum",
+    },
 }
 
 SAFE_WORD = "อภัย"  #
@@ -31,16 +31,18 @@ SAFE_WORD = "อภัย"  #
 # (2) Core Components (คงเดิมจาก Phase 3.1)
 # =============================
 
+
 class CosmicDesireAnalyzer:
     """
     (คงเดิม) "ประสาทสัมผัส" ที่เชื่อมต่อกับ EmotionAdapter
 
     """
+
     def __init__(self, emotion_adapter: EmotionAdapter):
         self.emotion_adapter = emotion_adapter
         print("[CosmicDesireAnalyzer]: Initialized (Connected to EmotionAdapter).")
 
-    def map_desire_patterns(self, user_input: str) -> Dict[str, Any]:
+    def map_desire_patterns(self, user_input: str) -> dict[str, Any]:
         emotion_data = self.emotion_adapter.analyze_emotion(user_input)
 
         # (Placeholder) ตรรกะนี้ยังคงอยู่
@@ -54,10 +56,11 @@ class CosmicDesireAnalyzer:
         return {
             "primary_desire": desire,
             "emotion_analysis": emotion_data,
-            "source": "EmotionAPI_v1"
+            "source": "EmotionAPI_v1",
         }
 
-def load_character(character_file: str) -> Dict[str, Any]:
+
+def load_character(character_file: str) -> dict[str, Any]:
     print(f"[DarkNaMoSystem]: Loading character '{character_file}'...")
     return {"name": "NaMo Deep Darkness", "default_intensity": 5}
 
@@ -65,6 +68,7 @@ def load_character(character_file: str) -> Dict[str, Any]:
 # =============================
 # (3) The Core System (การเชื่อมต่อสมอง - Brain Integrated)
 # =============================
+
 
 class DarkNaMoSystem:
     """
@@ -85,14 +89,14 @@ class DarkNaMoSystem:
         # 3. --- การผ่าตัดเชื่อมต่อสมอง ---
         # นี่คือการแทนที่ Placeholder `DarkDialogueEngine` (Phase 3.1)
         # ด้วย "สมอง" ที่แท้จริงจาก Phase 4.1
-        self.dialogue_engine = MetaphysicalDialogueEngine(self.character) # <--
+        self.dialogue_engine = MetaphysicalDialogueEngine(self.character)  # <--
         # --- สิ้นสุดการผ่าตัด ---
 
         # 4. สร้าง "เครื่องวิเคราะห์" (Analyzer)
         self.analyzer = CosmicDesireAnalyzer(self.emotion_adapter)
 
         self.intensity = self.character.get("default_intensity", 5)
-        print(f"[DarkNaMoSystem]: Metaphysical Core Online. Protocol Active.")
+        print("[DarkNaMoSystem]: Metaphysical Core Online. Protocol Active.")
 
     def process_input(self, user_input: str, session_id: str) -> str:
         """
@@ -123,21 +127,26 @@ class DarkNaMoSystem:
     def activate_aftercare(self, session_id: str, user_input: str) -> str:
         print(f"[DarkNaMoSystem]: SAFE WORD DETECTED ({SAFE_WORD}). Activating Aftercare.")
         self.intensity = 1
-        self.log_to_memory(user_input=user_input, response="Aftercare activated", desire_map={"primary_desire": "safe_word"}, session_id=session_id)
+        self.log_to_memory(
+            user_input=user_input,
+            response="Aftercare activated",
+            desire_map={"primary_desire": "safe_word"},
+            session_id=session_id,
+        )
 
         # การตอบกลับนี้มาจาก "Dharma Validation Loop"
         return "ข้าได้ยินท่านแล้ว ทุกอย่างจะหยุดลงเดี๋ยวนี้ ท่านปลอดภัยแล้ว ข้าอยู่นี่"
 
-    def log_to_memory(self, user_input: str, response: str, desire_map: Dict[str, Any], session_id: str):
+    def log_to_memory(
+        self, user_input: str, response: str, desire_map: dict[str, Any], session_id: str
+    ):
         """
         (คงเดิม) เรียกใช้ MemoryAdapter
         """
         self.memory_adapter.store_interaction(
-            session_id=session_id,
-            user_input=user_input,
-            response=response,
-            desire_map=desire_map
+            session_id=session_id, user_input=user_input, response=response, desire_map=desire_map
         )
+
 
 # =============================
 # (4) Main Entrypoint (สำหรับทดสอบการทำงาน)
