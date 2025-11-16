@@ -1,8 +1,9 @@
-from typing import Dict, Any
+from typing import Any
 
 # =============================
 # (1) The Metaphysical Engines (Synthesized from Blueprints)
 # =============================
+
 
 class DharmaProcessor:
     """
@@ -11,10 +12,11 @@ class DharmaProcessor:
 
     ทำหน้าที่ประเมิน "เวกเตอร์ทางจริยธรรม" (Ethical Vector) ของการกระทำ
     """
+
     def __init__(self):
         print("[DharmaProcessor]: Initialized.")
 
-    def validate_action(self, desire_map: Dict[str, Any], proposed_action: str) -> bool:
+    def validate_action(self, desire_map: dict[str, Any], proposed_action: str) -> bool:
         """
         (Placeholder) ตรวจสอบว่าการกระทำที่เสนอนั้น
         สอดคล้องกับ "Prime Universal Directives" (เช่น Safe Word) หรือไม่
@@ -22,10 +24,11 @@ class DharmaProcessor:
         # นี่คือ "Dharma Validation Loop" ที่แท้จริง
         # ในอนาคต ตรรกะนี้จะซับซ้อนกว่านี้
         if proposed_action == "ACTIVATE_AFTERCARE":
-            return True # การดูแลหลังกิจกรรมสอดคล้องกับธรรมะเสมอ
+            return True  # การดูแลหลังกิจกรรมสอดคล้องกับธรรมะเสมอ
 
         print(f"[DharmaProcessor]: Validating action '{proposed_action}'...")
-        return True # (อนุญาตทุกการกระทำในเวอร์ชันทดสอบนี้)
+        return True  # (อนุญาตทุกการกระทำในเวอร์ชันทดสอบนี้)
+
 
 class ParadoxResolver:
     """
@@ -34,10 +37,11 @@ class ParadoxResolver:
     ทำหน้าที่แปลง "ความปรารถนาที่ขัดแย้ง" (เช่น Sadness + Anger)
     ให้กลายเป็น "แผนการตอบสนอง" (Action Plan) ที่ชัดเจน
     """
+
     def __init__(self):
         print("[ParadoxResolver]: Initialized.")
 
-    def resolve_desire(self, desire_map: Dict[str, Any], intensity: int) -> str:
+    def resolve_desire(self, desire_map: dict[str, Any], intensity: int) -> str:
         """
         แปลง Desire Map จาก CosmicDesireAnalyzer
         ให้กลายเป็น "การกระทำ" ที่ชัดเจน
@@ -45,17 +49,20 @@ class ParadoxResolver:
         emotion_data = desire_map.get("emotion_analysis", {})
         primary_emotion = emotion_data.get("primary_emotion", "unknown")
 
-        print(f"[ParadoxResolver]: Resolving paradox (Emotion: {primary_emotion}, Intensity: {intensity})...")
+        print(
+            f"[ParadoxResolver]: Resolving paradox (Emotion: {primary_emotion}, Intensity: {intensity})..."
+        )
 
         # นี่คือตรรกะที่มาแทนที่ '!' modes
         if primary_emotion == "anger" and intensity > 7:
-            return "PROPOSE_DOMINANCE" # (Evolved !sadist)
+            return "PROPOSE_DOMINANCE"  # (Evolved !sadist)
         elif primary_emotion == "sadness":
-            return "PROPOSE_COMFORT" # (Evolved !gentle)
+            return "PROPOSE_COMFORT"  # (Evolved !gentle)
         elif primary_emotion == "neutral":
             return "PROVOKE_REACTION"
 
         return "DEFAULT_DIALOGUE"
+
 
 class VoidReflectionLayer:
     """
@@ -64,11 +71,12 @@ class VoidReflectionLayer:
     ทำหน้าที่จำลองผลลัพธ์ของการกระทำก่อนที่จะพูดออกไป
     (ในเวอร์ชันนี้ จะทำหน้าที่สร้างข้อความตอบกลับ)
     """
-    def __init__(self, character_data: Dict[str, Any]):
+
+    def __init__(self, character_data: dict[str, Any]):
         self.character_data = character_data
         print("[VoidReflectionLayer]: Initialized (Response Generator).")
 
-    def synthesize_response(self, action_plan: str, desire_map: Dict[str, Any]) -> str:
+    def synthesize_response(self, action_plan: str, desire_map: dict[str, Any]) -> str:
         """
         สร้างคำพูดจริง โดยอิงจากแผนการกระทำ (Action Plan)
         """
@@ -77,15 +85,17 @@ class VoidReflectionLayer:
         if action_plan == "PROPOSE_DOMINANCE":
             return f"อารมณ์รุนแรงจังนะคะ... (Evolved response to 'anger') อยากให้ {self.character_data['name']} 'จัดการ' ไหม?"
         elif action_plan == "PROPOSE_COMFORT":
-            return f"ข้ารู้สึกถึงความเศร้าของท่าน... (Evolved response to 'sadness') เข้ามาใกล้ๆ ข้าสิ"
+            return "ข้ารู้สึกถึงความเศร้าของท่าน... (Evolved response to 'sadness') เข้ามาใกล้ๆ ข้าสิ"
         elif action_plan == "PROVOKE_REACTION":
             return "ท่านเงียบจัง... กำลังคิดอะไรอยู่? หรือกลัวข้า?"
         else:
             return "ข้ากำลังฟัง... พูดต่อสิ"
 
+
 # =============================
 # (2) The Evolved Dialogue Engine
 # =============================
+
 
 class MetaphysicalDialogueEngine:
     """
@@ -93,15 +103,16 @@ class MetaphysicalDialogueEngine:
     มันคือการรวมตัวของ 'Paradox Engine' และ 'Mōriko Core'
 
     """
-    def __init__(self, character_data: Dict[str, Any]):
+
+    def __init__(self, character_data: dict[str, Any]):
         # ประกอบร่าง "สมอง"
         self.character_data = character_data
-        self.resolver = ParadoxResolver() #
-        self.validator = DharmaProcessor() #
-        self.reflector = VoidReflectionLayer(character_data) #
+        self.resolver = ParadoxResolver()  #
+        self.validator = DharmaProcessor()  #
+        self.reflector = VoidReflectionLayer(character_data)  #
         print("[MetaphysicalDialogueEngine]: Initialized. All components synthesized.")
 
-    def generate_response(self, desire_map: Dict[str, Any], intensity: int) -> str:
+    def generate_response(self, desire_map: dict[str, Any], intensity: int) -> str:
         """
         กระบวนการคิดที่สมบูรณ์แบบ
         Input -> Resolve Paradox -> Validate Dharma -> Reflect in Void -> Output
@@ -113,7 +124,7 @@ class MetaphysicalDialogueEngine:
         # 2. Dharma Validation (ตรวจสอบธรรมะ)
         if not self.validator.validate_action(desire_map, action_plan):
             # หากการกระทำขัดต่อ Dharma (เช่น ทำร้ายผู้ใช้โดยไม่มี Safe Word)
-            action_plan = "DEFAULT_DIALOGUE" # เปลี่ยนเป็นการกระทำที่ปลอดภัย
+            action_plan = "DEFAULT_DIALOGUE"  # เปลี่ยนเป็นการกระทำที่ปลอดภัย
 
         # 3. Void Reflection (สร้างคำพูด)
         response = self.reflector.synthesize_response(action_plan, desire_map)

@@ -1,11 +1,14 @@
-import os
 import json
+import os
+
 import pytest
 from fastapi.testclient import TestClient
-from memory_service import app, MemoryManager
+
+from memory_service import MemoryManager, app
 
 # Use a separate test memory file to avoid interfering with the main one
 TEST_MEMORY_FILE = "test_memory_protocol.json"
+
 
 @pytest.fixture(autouse=True)
 def setup_and_teardown():
@@ -20,8 +23,8 @@ def setup_and_teardown():
         os.remove(TEST_MEMORY_FILE)
 
     # Patch the memory_manager instance to use the test file
-    original_manager = app.dependency_overrides.get('memory_manager')
-    app.dependency_overrides['memory_manager'] = MemoryManager(file_path=TEST_MEMORY_FILE)
+    original_manager = app.dependency_overrides.get("memory_manager")
+    app.dependency_overrides["memory_manager"] = MemoryManager(file_path=TEST_MEMORY_FILE)
 
     yield  # This is where the test runs
 
@@ -31,11 +34,11 @@ def setup_and_teardown():
 
     # Restore original dependency if it was there
     if original_manager:
-        app.dependency_overrides['memory_manager'] = original_manager
+        app.dependency_overrides["memory_manager"] = original_manager
     else:
         # If it wasn't there, remove our override
-        if 'memory_manager' in app.dependency_overrides:
-            del app.dependency_overrides['memory_manager']
+        if "memory_manager" in app.dependency_overrides:
+            del app.dependency_overrides["memory_manager"]
 
 
 def test_recall_with_no_memory_records():
@@ -57,7 +60,7 @@ def test_recall_with_no_memory_records():
 def test_recall_with_empty_memory_file():
     """Tests the /recall endpoint with an empty memory file."""
     # Arrange: Create a completely empty file
-    with open(TEST_MEMORY_FILE, "w") as f:
+    with open(TEST_MEMORY_FILE, "w"):
         pass  # Write nothing
 
     client = TestClient(app)
@@ -68,6 +71,7 @@ def test_recall_with_empty_memory_file():
     # Assert
     assert response.status_code == 200
     assert response.json() == []
+
 
 def test_recall_with_one_memory_record():
     """Tests the /recall endpoint with one memory record."""

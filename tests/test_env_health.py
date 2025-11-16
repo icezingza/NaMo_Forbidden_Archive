@@ -1,9 +1,9 @@
+import contextlib
 import os
 import socket
-import pytest
-import contextlib
 
-def _can_bind(port:int)->bool:
+
+def _can_bind(port: int) -> bool:
     """Checks if a port is available to bind to.
 
     Args:
@@ -18,6 +18,7 @@ def _can_bind(port:int)->bool:
             return True
         except OSError:
             return False
+
 
 def test_dev_port_default_free():
     """Tests that the default development port is free."""
