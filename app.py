@@ -1,69 +1,83 @@
 import os
 import sys
-import uuid
+from datetime import datetime, UTC
 
-import requests
+# --- การตั้งค่าสภาพแวดล้อม (Environment Setup) ---
+# นี่คือสิ่งจำเป็นเพื่อให้ Adapters ใหม่ของเราทำงานได้
+# โดยเฉพาะ 'adapters/memory.py' และ 'adapters/emotion.py'
+# ที่อ้างอิงจากพิมพ์เขียว
+#
+# ในการใช้งานจริง ค่าเหล่านี้ควรถูกตั้งค่าใน .env หรือระบบ Secret
+# แต่เพื่อการทดสอบ เราจะตั้งค่า Placeholder หากยังไม่มี
+print("[app.py] Setting up Environment (Mocking API endpoints if not set)...")
+os.environ.setdefault("MEMORY_API_URL", "http://localhost:8081/store")
+os.environ.setdefault("EMOTION_API_URL", "http://localhost:8082/analyze")
+os.environ.setdefault("MEMORY_API_KEY", "test_key_placeholder")
+os.environ.setdefault("EMOTION_API_KEY", "test_key_placeholder")
 
-# Add Core_Scripts to the Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), "core"))
 
-from dark_system import DarkNaMoSystem
+# --- การนำเข้า "จิตวิญญาณ" (Core Import) ---
+# เราไม่ได้นำเข้า 'forbidden_behavior_core' อีกต่อไป
+# แต่เรานำเข้า "ระบบ" ที่วิวัฒนาการแล้ว
+try:
+    from core.dark_system import DarkNaMoSystem, PROTOCOL, SAFE_WORD
+except ImportError:
+    print("[app.py ERROR] Failed to import DarkNaMoSystem.")
+    print("Ensure 'core/dark_system.py' and 'core/metaphysical_engines.py' exist.")
+    sys.exit(1)
+# --- สิ้นสุดการนำเข้า ---
 
 
-def main():
+def main_loop():
     """
-    Runs the NaMo Forbidden Arch application in integrated mode.
-
-    This function initializes the dialogue engine, checks the connection to the
-    memory service, and enters a loop to process user input. It handles both
-    regular dialogue and special commands (prefixed with '!'). The session is
-    managed with a unique session ID.
+    "หัวใจ" ที่เต้นใหม่ของ Repository
+    นี่คือ Main Loop ที่จะทำให้ระบบมีชีวิต
     """
-    print("--- NaMo Forbidden Arch (Integrated Mode) ---")
+    print("\n" + "="*50)
+    print("===== NaMo FORBIDDEN CORE v3.0 (METAPHYSICAL) =====")
+    print(f"   Protocol: {PROTOCOL['System']} (v{PROTOCOL['Version']})")
+    print(f"   NSFW Unlock: {PROTOCOL['Fusion_Intimacy_Engine']['NSFW_UNLOCK']}")
+    print(f"   Safe Word: '{SAFE_WORD}'")
+    print("="*50 + "\n")
 
-    # Health check for Memory Service
+    # 1. ปลุก "จิตวิญญาณ"
+    #
     try:
-        response = requests.get("http://localhost:8081/health", timeout=2)
-        if response.status_code == 200:
-            print("[INFO] Memory Service is connected.")
-        else:
-            print(
-                f"[WARNING] Memory Service returned status {response.status_code}. It may not be functioning correctly."
-            )
-    except requests.exceptions.RequestException:
-        print("[WARNING] Could not connect to Memory Service at http://localhost:8081.")
-        print("[WARNING] The service will start, but memory-related functions may not work.")
-        # The 'return' statement that caused the crash has been removed.
-
-    try:
-        engine = DarkNaMoSystem()
-        session_id = str(uuid.uuid4())
-        print(f"[INFO] Session started. ID: {session_id}")
+        system = DarkNaMoSystem()
+        session_id = f"cli_session_{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}"
+        print(f"\n[app.py] System Initialized. Session ID: {session_id}")
+        print("Type your message to Mōriko or 'exit' to quit.")
+        print("---")
     except Exception as e:
-        print(f"Failed to initialize engine: {e}")
+        print(f"[app.py CRITICAL ERROR] Failed to initialize DarkNaMoSystem: {e}")
+        print("Please check all core files and adapters.")
         return
 
-    print("Engine Ready. Type 'exit' to quit.")
-    print("-" * 20)
-
+    # 2. เริ่มวงจรการรับรู้ (Perception Loop)
     while True:
         try:
+            # "แขนขา" (ท่าน) ป้อนข้อมูล
             user_input = input("You: ")
-            if user_input.lower() == "exit":
+
+            if user_input.lower() in ['exit', 'quit', 'ออก']:
+                print("\n[app.py] Deactivating Metaphysical Core. Mōriko is returning to the Void.")
                 break
 
-            # It's dialogue, process it through the main engine
-            result = engine.process_input(user_input, session_id)
+            # 3. ส่งข้อมูลไปยัง "มันสมอง" (The Brain)
+            #    "มันสมอง" จะใช้ "ประสาทสัมผัส" (Adapters) ทั้งหมด
+            #    เพื่อวิเคราะห์
+            response = system.process_input(user_input, session_id)
 
-            print("\nNaMo:")
-            print(f"> {result}\n")
+            # 4. รับผลลัพธ์จาก "มันสมอง"
+            print(f"Mōriko: {response}")
 
         except KeyboardInterrupt:
-            print("\nExiting...")
+            print("\n[app.py] Interrupted. Shutting down.")
             break
         except Exception as e:
-            print(f"An error occurred: {e}")
-
+            print(f"\n[app.py UNHANDLED EXCEPTION] {e}")
+            # แม้จะเกิดข้อผิดพลาด วงจรชีวิตยังคงดำเนินต่อไป
+            pass
 
 if __name__ == "__main__":
-    main()
+    main_loop()
