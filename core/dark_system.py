@@ -6,6 +6,7 @@ from datetime import datetime
 # --- การเชื่อมต่อประสาทสัมผัส (Adapters) ---
 from adapters.memory import MemoryAdapter
 from adapters.emotion import EmotionAdapter
+from adapters.knowledge import KnowledgeAdapter
 
 # --- การเชื่อมต่อ "มันสมอง" (The Brain) ---
 from core.metaphysical_engines import MetaphysicalDialogueEngine
@@ -78,6 +79,7 @@ class DarkNaMoSystem:
         # 1. สร้าง "ประสาทสัมผัส" (Adapters)
         self.memory_adapter = MemoryAdapter()
         self.emotion_adapter = EmotionAdapter()
+        self.knowledge_adapter = KnowledgeAdapter(api_key=os.environ.get("OPENAI_API_KEY"))
 
         # 2. โหลด "อัตลักษณ์" (Character)
         self.character = load_character(character_file)
@@ -99,6 +101,14 @@ class DarkNaMoSystem:
         กระบวนการทำงานที่สมบูรณ์:
         Input -> Safe Word Check -> Analyze Desire -> Generate Response (via Brain) -> Log Memory
         """
+        knowledge = None
+        # ?. ตรวจสอบว่าเป็นคำสั่งค้นหาความรู้หรือไม่
+        if user_input.startswith("?"):
+            query = user_input[1:].strip()
+            print(f"[DarkNaMoSystem]: Knowledge query detected: '{query}'")
+            knowledge = self.knowledge_adapter.retrieve_forbidden_knowledge(query)
+            # เราจะส่ง knowledge นี้ไปให้ dialogue engine ต่อ
+
         # 1. ตรวจสอบ Safe Word
         if SAFE_WORD in user_input:
             return self.activate_aftercare(session_id, user_input)
@@ -113,7 +123,7 @@ class DarkNaMoSystem:
         # 4. สร้างการตอบสนอง (ผ่าน Metaphysical Brain)
         # "สมอง" จะใช้ ParadoxResolver
         # และ DharmaProcessor
-        response = self.dialogue_engine.generate_response(desire_map, self.intensity)
+        response = self.dialogue_engine.generate_response(desire_map, self.intensity, knowledge=knowledge)
 
         # 5. บันทึกความทรงจำ (ผ่าน Memory Adapter)
         self.log_to_memory(user_input, response, desire_map, session_id)

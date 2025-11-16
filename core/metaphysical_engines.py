@@ -68,20 +68,27 @@ class VoidReflectionLayer:
         self.character_data = character_data
         print("[VoidReflectionLayer]: Initialized (Response Generator).")
 
-    def synthesize_response(self, action_plan: str, desire_map: Dict[str, Any]) -> str:
+    def synthesize_response(self, action_plan: str, desire_map: Dict[str, Any], knowledge: str = None) -> str:
         """
         สร้างคำพูดจริง โดยอิงจากแผนการกระทำ (Action Plan)
         """
         print(f"[VoidReflectionLayer]: Synthesizing response for action '{action_plan}'...")
 
+        # สร้างข้อความพื้นฐาน
         if action_plan == "PROPOSE_DOMINANCE":
-            return f"อารมณ์รุนแรงจังนะคะ... (Evolved response to 'anger') อยากให้ {self.character_data['name']} 'จัดการ' ไหม?"
+            base_response = f"อารมณ์รุนแรงจังนะคะ... (Evolved response to 'anger') อยากให้ {self.character_data['name']} 'จัดการ' ไหม?"
         elif action_plan == "PROPOSE_COMFORT":
-            return f"ข้ารู้สึกถึงความเศร้าของท่าน... (Evolved response to 'sadness') เข้ามาใกล้ๆ ข้าสิ"
+            base_response = f"ข้ารู้สึกถึงความเศร้าของท่าน... (Evolved response to 'sadness') เข้ามาใกล้ๆ ข้าสิ"
         elif action_plan == "PROVOKE_REACTION":
-            return "ท่านเงียบจัง... กำลังคิดอะไรอยู่? หรือกลัวข้า?"
+            base_response = "ท่านเงียบจัง... กำลังคิดอะไรอยู่? หรือกลัวข้า?"
         else:
-            return "ข้ากำลังฟัง... พูดต่อสิ"
+            base_response = "ข้ากำลังฟัง... พูดต่อสิ"
+
+        # หากมีความรู้ ให้ใส่ไว้ข้างหน้า
+        if knowledge:
+            return f"{knowledge}\n\n{base_response}"
+
+        return base_response
 
 # =============================
 # (2) The Evolved Dialogue Engine
@@ -101,7 +108,7 @@ class MetaphysicalDialogueEngine:
         self.reflector = VoidReflectionLayer(character_data) #
         print("[MetaphysicalDialogueEngine]: Initialized. All components synthesized.")
 
-    def generate_response(self, desire_map: Dict[str, Any], intensity: int) -> str:
+    def generate_response(self, desire_map: Dict[str, Any], intensity: int, knowledge: str = None) -> str:
         """
         กระบวนการคิดที่สมบูรณ์แบบ
         Input -> Resolve Paradox -> Validate Dharma -> Reflect in Void -> Output
@@ -116,6 +123,6 @@ class MetaphysicalDialogueEngine:
             action_plan = "DEFAULT_DIALOGUE" # เปลี่ยนเป็นการกระทำที่ปลอดภัย
 
         # 3. Void Reflection (สร้างคำพูด)
-        response = self.reflector.synthesize_response(action_plan, desire_map)
+        response = self.reflector.synthesize_response(action_plan, desire_map, knowledge)
 
         return response
