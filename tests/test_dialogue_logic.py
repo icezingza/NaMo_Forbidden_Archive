@@ -55,3 +55,17 @@ def test_safe_word_trigger(mocker, mock_adapters):
 
     # Assert
     assert result == "ข้าได้ยินท่านแล้ว ทุกอย่างจะหยุดลงเดี๋ยวนี้ ท่านปลอดภัยแล้ว ข้าอยู่นี่"
+
+def test_neutral_input_triggers_provoke_reaction_response(mocker, mock_adapters):
+    """Tests that a neutral input triggers a provoke reaction response."""
+    # Arrange
+    emotion_mock = mocker.patch('adapters.emotion.EmotionAdapter.analyze_emotion', return_value={"primary_emotion": "neutral", "intensity": 0.1})
+    engine = DarkNaMoSystem()
+    user_input = "..."
+    session_id = "test-session-neutral"
+
+    # Act
+    result = engine.process_input(user_input, session_id)
+
+    # Assert
+    assert "ท่านเงียบจัง..." in result
