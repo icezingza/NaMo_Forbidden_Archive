@@ -1,31 +1,54 @@
 import pytest
 import sys
 import os
+from unittest.mock import MagicMock
 
-# Add Core_Scripts to the Python path to allow for direct imports
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'core'))
+# Add the root directory to the Python path to allow for direct imports
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from dark_system import DarkNaMoSystem
+from core.dark_system import DarkNaMoSystem
 
-def test_dialogue_produces_placeholder_response():
-    """Tests that the dialogue engine produces a placeholder response."""
+@pytest.fixture
+def mock_adapters(mocker):
+    """Mocks the Memory and Emotion adapters."""
+    mocker.patch('adapters.memory.MemoryAdapter.store_interaction', return_value=None)
+    mocker.patch('adapters.emotion.EmotionAdapter.analyze_emotion', return_value={"primary_emotion": "neutral", "intensity": 0.5})
+
+def test_sadness_input_triggers_comfort_seeking(mocker, mock_adapters):
+    """Tests that a sad input triggers a comfort-seeking desire."""
     # Arrange
+    emotion_mock = mocker.patch('adapters.emotion.EmotionAdapter.analyze_emotion', return_value={"primary_emotion": "sadness", "intensity": 0.9})
     engine = DarkNaMoSystem()
-    user_input = "สวัสดีตอนเช้า"
-    session_id = "test-session-fixed"
+    user_input = "ฉันรู้สึกเศร้าจัง..."
+    session_id = "test-session-sadness"
 
     # Act
     result = engine.process_input(user_input, session_id)
 
     # Assert
-    expected_response = "อื้อออ... (Placeholder response based on desire: dialogue)"
-    assert result == expected_response, f"The engine response was not the expected default message."
+    assert "comfort_seeking" in engine.analyzer.map_desire_patterns(user_input)['primary_desire']
+    assert "Emotion detected: sadness" in result
 
-def test_safe_word_trigger():
+def test_anger_input_triggers_submission_longing(mocker, mock_adapters):
+    """Tests that an angry input triggers a submission-longing desire."""
+    # Arrange
+    emotion_mock = mocker.patch('adapters.emotion.EmotionAdapter.analyze_emotion', return_value={"primary_emotion": "anger", "intensity": 0.9})
+    engine = DarkNaMoSystem()
+    user_input = "ฉันโกรธมาก!"
+    session_id = "test-session-anger"
+
+    # Act
+    result = engine.process_input(user_input, session_id)
+
+    # Assert
+    assert "submission_longing" in engine.analyzer.map_desire_patterns(user_input)['primary_desire']
+    assert "Emotion detected: anger" in result
+
+def test_safe_word_trigger(mocker, mock_adapters):
     """Tests that the safe word trigger returns the aftercare response."""
     # Arrange
     engine = DarkNaMoSystem()
-    user_input = "I need to stop, อภัย."
+    user_input = "พอแล้ว! อภัย นะ"
     session_id = "test-session-safe-word"
 
     # Act
@@ -33,16 +56,3 @@ def test_safe_word_trigger():
 
     # Assert
     assert result == "ข้าได้ยินท่านแล้ว ทุกอย่างจะหยุดลงเดี๋ยวนี้ ท่านปลอดภัยแล้ว ข้าอยู่นี่"
-
-def test_command_produces_placeholder_response():
-    """Tests that a command produces a placeholder response."""
-    # Arrange
-    engine = DarkNaMoSystem()
-    user_input = "!omega"
-    session_id = "test-session-command"
-
-    # Act
-    result = engine.process_input(user_input, session_id)
-
-    # Assert
-    assert result == "อื้อออ... (Placeholder response based on desire: command)"
