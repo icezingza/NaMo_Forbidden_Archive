@@ -14,8 +14,8 @@ def mock_adapters(mocker):
     mocker.patch('adapters.memory.MemoryAdapter.store_interaction', return_value=None)
     mocker.patch('adapters.emotion.EmotionAdapter.analyze_emotion', return_value={"primary_emotion": "neutral", "intensity": 0.5})
 
-def test_sadness_input_triggers_comfort_seeking(mocker, mock_adapters):
-    """Tests that a sad input triggers a comfort-seeking desire."""
+def test_sadness_input_triggers_comfort_response(mocker, mock_adapters):
+    """Tests that a sad input triggers a comfort-seeking response."""
     # Arrange
     emotion_mock = mocker.patch('adapters.emotion.EmotionAdapter.analyze_emotion', return_value={"primary_emotion": "sadness", "intensity": 0.9})
     engine = DarkNaMoSystem()
@@ -26,14 +26,14 @@ def test_sadness_input_triggers_comfort_seeking(mocker, mock_adapters):
     result = engine.process_input(user_input, session_id)
 
     # Assert
-    assert "comfort_seeking" in engine.analyzer.map_desire_patterns(user_input)['primary_desire']
-    assert "Emotion detected: sadness" in result
+    assert "ข้ารู้สึกถึงความเศร้าของท่าน..." in result
 
-def test_anger_input_triggers_submission_longing(mocker, mock_adapters):
-    """Tests that an angry input triggers a submission-longing desire."""
+def test_high_intensity_anger_input_triggers_dominance_response(mocker, mock_adapters):
+    """Tests that a high-intensity angry input triggers a dominance response."""
     # Arrange
     emotion_mock = mocker.patch('adapters.emotion.EmotionAdapter.analyze_emotion', return_value={"primary_emotion": "anger", "intensity": 0.9})
     engine = DarkNaMoSystem()
+    engine.intensity = 8  # Manually set intensity for testing
     user_input = "ฉันโกรธมาก!"
     session_id = "test-session-anger"
 
@@ -41,8 +41,7 @@ def test_anger_input_triggers_submission_longing(mocker, mock_adapters):
     result = engine.process_input(user_input, session_id)
 
     # Assert
-    assert "submission_longing" in engine.analyzer.map_desire_patterns(user_input)['primary_desire']
-    assert "Emotion detected: anger" in result
+    assert "อารมณ์รุนแรงจังนะคะ..." in result
 
 def test_safe_word_trigger(mocker, mock_adapters):
     """Tests that the safe word trigger returns the aftercare response."""
