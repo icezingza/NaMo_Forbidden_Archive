@@ -1,32 +1,64 @@
+import json
 import os
-from typing import Any
-
-import requests
+import datetime
 
 
 class MemoryAdapter:
     """
-    Adapter for interacting with the external Memory Service.
+    Adapter สำหรับบันทึกความทรงจำระยะยาวลงไฟล์ Local
     """
-
-    def __init__(self):
-        self.api_url = os.environ.get("MEMORY_API_URL", "http://localhost:8081/store")
-        print(f"[MemoryAdapter]: Initialized. API URL: {self.api_url}")
+    def __init__(self, db_file="memory_history.json"):
+        self.db_file = db_file
+        if not os.path.exists(self.db_file):
+            with open(self.db_file, 'w', encoding='utf-8') as f:
+                json.dump([], f)
+        print(f"[MemoryAdapter]: Initialized. Storage: {self.db_file}")
 
     def store_interaction(
-        self, session_id: str, user_input: str, response: str, desire_map: dict[str, Any]
+        self,
+        user_input,
+        response,
+        emotions=None,
+        *,
+        arousal_level=None,
+        infection_status=None,
+        session_id=None,
+        desire_map=None,
     ):
         """
-        Stores a user interaction in the Memory Service.
+        บันทึกสิ่งที่คุยกัน พร้อม metadata เพิ่มเติม
+        - emotions: ภาพรวมสถานะอารมณ์/สเตตัส ณ ขณะนั้น
+        - arousal_level: ค่าความเงี่ยนล่าสุด (0-100)
+        - infection_status: สถานะการติดเชื้อ/อารมณ์ที่ถูกฝัง
         """
-        payload = {
+        entry = {
+            "timestamp": str(datetime.datetime.now()),
             "session_id": session_id,
-            "user_input": user_input,
-            "response": response,
+            "user": user_input,
+            "bot": response,
+            "state_snapshot": emotions,
+            "arousal_level": arousal_level,
+            "infection_status": infection_status,
             "desire_map": desire_map,
         }
+
+        # ตัด key ที่เป็น None ออกเพื่อไม่ให้ไฟล์รก
+        entry = {k: v for k, v in entry.items() if v is not None}
+        
         try:
-            requests.post(self.api_url, json=payload, timeout=2)
-            print(f"[MemoryAdapter]: Stored interaction for session {session_id}.")
-        except requests.exceptions.RequestException as e:
-            print(f"[MemoryAdapter]: ERROR - Could not store interaction: {e}")
+            with open(self.db_file, 'r+', encoding='utf-8') as f:
+                history = json.load(f)
+                history.append(entry)
+                f.seek(0)
+                json.dump(history, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            print(f"[MemoryError]: {e}")
+
+    def get_last_conversation(self):
+        """ดึงบทสนทนาล่าสุดมาดูบริบท"""
+        try:
+            with open(self.db_file, 'r', encoding='utf-8') as f:
+                history = json.load(f)
+                return history[-1] if history else None
+        except:
+            return None

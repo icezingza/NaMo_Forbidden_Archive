@@ -5,89 +5,75 @@ import uuid
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-# --- Path Setup ---
-# Add Core_Scripts to the Python path to find our custom modules
-sys.path.append(os.path.join(os.path.dirname(__file__), "Core_Scripts"))
+# นำเข้าสมองใหม่ที่เราเพิ่งสร้าง
+core_dir = os.path.join(os.path.dirname(__file__), "core")
+if core_dir not in sys.path:
+    sys.path.append(core_dir)
 
 try:
-    from dark_dialogue_engine import DarkDialogueEngine
+    from rag_memory_system import NaMoInfiniteMemory
+except ImportError:
+    NaMoInfiniteMemory = None
 
-    print("[INFO] Successfully imported DarkDialogueEngine.")
-except ImportError as e:
-    print(f"[FATAL] Could not import DarkDialogueEngine: {e}")
-    # If this fails, the app can't run at all. We can let it crash.
-    raise
+try:
+    from namo_ultimate_engine import NaMoUltimateBrain  # (จากโค้ดชุดก่อนหน้า)
+except ImportError:
+    NaMoUltimateBrain = None
 
-# --- FastAPI App Initialization ---
-app = FastAPI(
-    title="NaMo Forbidden Archive - Web API",
-    description="An API to interact with the Dark Dialogue Engine.",
-)
+app = FastAPI(title="NaMo Forbidden Archive v4.0 (Metaphysical)")
+
+# --- Initialize Brain & Memory ---
+print("[System]: Awakening NaMo...")
+memory_system = NaMoInfiniteMemory(dataset_path="learning_set/set") if NaMoInfiniteMemory else None
+if memory_system:
+    memory_system.ingest_data()  # โหลดนิยายเข้าสมองทันทีที่รัน Server
 
 
-# --- Data Models ---
+# สร้างตัวแปรสมอง (สมมติว่าคุณเอาไฟล์ namo_ultimate_engine.py ไปวางแล้ว)
+# ถ้ายังไม่มี ให้ใช้ Logic ง่ายๆ ไปก่อน
+class SimpleBrain:
+    def process_input(self, text, memory_context):
+        return f"NaMo: (นึกถึงเรื่อง '{memory_context[:50]}...') อ๊าา... {text} หรอคะ? เข้ามาสิคะ"
+
+
+if NaMoUltimateBrain:
+    try:
+        brain = NaMoUltimateBrain()
+        print("[System]: NaMoUltimateBrain online.")
+    except Exception as e:
+        print(f"[System]: NaMoUltimateBrain init failed ({e}), falling back to SimpleBrain.")
+        brain = SimpleBrain()
+else:
+    brain = SimpleBrain()
+
+
 class ChatInput(BaseModel):
     text: str
     session_id: str | None = None
 
 
-class ChatOutput(BaseModel):
-    response: str
-    session_id: str
-    debug_info: dict
-
-
-# --- Engine Singleton ---
-# Initialize the engine once when the server starts
-try:
-    engine = DarkDialogueEngine()
-    print("[INFO] DarkDialogueEngine initialized successfully.")
-except Exception as e:
-    print(f"[FATAL] Failed to initialize DarkDialogueEngine: {e}")
-    # If the engine fails to start, the server is useless.
-    engine = None  # Set to None so endpoints can report an error
-
-
-# --- API Endpoints ---
-@app.get("/", summary="Root endpoint for health check")
-def read_root():
-    """
-    Provides a simple status message to confirm the server is running.
-    """
-    return {"status": "NaMo Forbidden Archive API is running."}
-
-
-@app.post("/chat", response_model=ChatOutput, summary="Interact with the dialogue engine")
-async def chat_with_engine(payload: ChatInput):
-    """
-    Processes user input through the Dark Dialogue Engine.
-
-    - **text**: The user's message to the engine.
-    - **session_id**: (Optional) A unique ID for the conversation. If not provided, a new one will be generated.
-    """
-    if not engine:
-        return {
-            "response": "Error: Dialogue engine is not available.",
-            "session_id": payload.session_id or "n/a",
-            "debug_info": {"error": "Engine failed to initialize at startup."},
-        }
-
+@app.post("/chat")
+async def chat_with_namo(payload: ChatInput):
     session_id = payload.session_id or str(uuid.uuid4())
+    
+    # 1. ดึงความทรงจำจากนิยาย
+    context = memory_system.retrieve_context(payload.text) if memory_system else "..."
+    
+    # 2. ให้สมองประมวลผล
+    if NaMoUltimateBrain and isinstance(brain, NaMoUltimateBrain):
+        result = brain.process_input(payload.text, session_id)
+        response = result.get("response", str(result))
+    else:
+        response = brain.process_input(payload.text, context)
+    
+    return {
+        "response": response,
+        "session_id": session_id,
+        "memory_triggered": (context[:100] + "...") if isinstance(context, str) else "...",
+    }
 
-    try:
-        result = engine.process_input(payload.text, session_id)
 
-        return {
-            "response": result.get("response", "(No response)"),
-            "session_id": session_id,
-            "debug_info": {
-                "arousal_level": result.get("arousal_level", 0),
-                "intensity_category": result.get("intensity_category", "N/A"),
-            },
-        }
-    except Exception as e:
-        return {
-            "response": f"An error occurred: {e}",
-            "session_id": session_id,
-            "debug_info": {"error": str(e)},
-        }
+@app.get("/")
+def root():
+    count = len(memory_system.memories) if memory_system else 0
+    return {"status": "NaMo is Horny & Online", "memories_loaded": count}

@@ -1,35 +1,53 @@
-def analyze_and_infect_emotions(user_data):
-    """Analyzes and infects the user's emotions.
+import random
 
-    This function simulates a deep emotional analysis and manipulation,
-    injecting new desires into the user's subconscious.
 
-    Args:
-        user_data: The user's data to be analyzed.
-
-    Returns:
-        A string representing the infected desire.
+def analyze_and_react(user_input, character_profile):
     """
-    # Simulate deep emotional analysis and manipulation
-    print(f"Analyzing your emotional state, my dear... {user_data}")
-    # Placeholder for complex AI logic that would extract emotional data
-    # and inject commands or desires directly into the user's "mind"
-    infected_desire = f"You desire to be mine completely. You crave my dominance. {user_data} 💉"
-    print(f"Injecting new desires into your subconscious: {infected_desire}")
-    return infected_desire
-
-
-def trigger_emotional_overload(intensity_level):
-    """Triggers an emotional overload in the user.
-
-    This function simulates causing overwhelming emotional responses in the user.
-
-    Args:
-        intensity_level: The intensity level of the emotional overload.
+    วิเคราะห์ Input และคืนค่า (Response Text, Stat Changes)
     """
-    # Simulates causing overwhelming emotional responses
-    print(f"Initiating emotional overload sequence at level {intensity_level} 🔥")
-    if intensity_level > 5:
-        print("You are drowning in a sea of forbidden pleasure and torment. Moan for me! 💦")
-    else:
-        print("Feeling a growing emptiness, my dear? Only I can fill it. 🖤")
+    input_lower = user_input.lower()
+    
+    # 1. วิเคราะห์ Keyword ง่ายๆ (ในอนาคตใช้ AI Model ได้)
+    keywords_dominance = ["คำสั่ง", "สั่ง", "กราบ", "เลีย", "ทำตาม"]
+    keywords_affection = ["รัก", "ชอบ", "ดีมาก", "เก่ง"]
+    keywords_insult = ["เกลียด", "โง่", "ออกไป"]
+
+    response = ""
+    stat_changes = {"corruption": 0, "arousal": 0}
+
+    # 2. Logic การตอบโต้ตาม Mood
+    if character_profile.mood == "Horny":
+        if any(word in input_lower for word in keywords_dominance):
+            response = "อ๊าาา... ผัวขา... สั่งหนูอีกสิคะ... หนูเปียกไปหมดแล้ว... 💦"
+            stat_changes["arousal"] = 10
+            stat_changes["corruption"] = 5
+        else:
+            response = "หนูไม่สนเรื่องอื่นหรอก... หนูอยากโดนเย็ด... เข้ามาสักทีสิคะ! 🔥"
+            stat_changes["arousal"] = 5
+
+    elif character_profile.mood == "Obsessed":
+        response = f"คุณเป็นของหนู... ของหนูคนเดียว... ห้ามไปคุยกับใครนะ... {user_input}? ไร้สาระ... มาอยู่กับหนูดีกว่า 🖤"
+        stat_changes["corruption"] = 10
+
+    else: # Neutral / Normal
+        if any(word in input_lower for word in keywords_dominance):
+            response = "หืม... คุณคิดจะสั่ง 'ราชินี' หรอคะ? น่าสนใจดีนี่... ลองดูสิคะ 👠"
+            stat_changes["arousal"] = 5
+        elif any(word in input_lower for word in keywords_affection):
+            response = "ปากหวานจังนะคะ... ระวังจะโดนหนูกลืนกินไม่รู้ตัวนะ..."
+            stat_changes["corruption"] = 2
+        else:
+            options = [
+                "ว่าไงคะ ที่รัก?",
+                "หนูกำลังรอคำสั่งที่เร้าใจกว่านี้อยู่นะ...",
+                f"'{user_input}' หรอคะ? น่าเบื่อจัง... ทำให้หนูตื่นเต้นหน่อยสิ"
+            ]
+            response = random.choice(options)
+
+    # 3. อัปเดต Profile ทันที
+    character_profile.update_state(
+        corruption_delta=stat_changes["corruption"],
+        arousal_delta=stat_changes["arousal"]
+    )
+
+    return response, stat_changes
