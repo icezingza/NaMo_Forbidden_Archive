@@ -3,3 +3,7 @@ uvicorn
 python-dotenv
 zstandard==0.24.0
 requests
+openai
+faiss-cpu
+numpy
+elevenlabs

@@ -8,3 +8,7 @@ pre-commit>=3.7.0
 uvicorn>=0.30.0
 pytest-mock
 python-telegram-bot
+openai
+faiss-cpu
+numpy
+elevenlabs

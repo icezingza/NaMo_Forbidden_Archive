@@ -1,8 +1,10 @@
 import json
 import os
 from datetime import datetime
+from threading import Lock
 
 from fastapi import FastAPI, HTTPException
+from fastapi import Depends
 from pydantic import BaseModel, Field
 
 # --- Pydantic Models based on OpenAPI Spec ---
@@ -76,6 +78,7 @@ class MemoryManager:
         """
         self.file_path = file_path
         self.memory = self.load_memory()
+        self._lock = Lock()
 
     def load_memory(self) -> dict:
         """
@@ -126,19 +129,20 @@ class MemoryManager:
         Returns:
             The newly created MemoryRecord object.
         """
-        new_id = f"mem_{int(datetime.now().timestamp())}_{len(self.memory['records'])}"
-        record_data = memory_request.dict()
-        record_data["id"] = new_id
-        record_data["created_at"] = datetime.now()
+        with self._lock:
+            new_id = f"mem_{int(datetime.now().timestamp())}_{len(self.memory['records'])}"
+            record_data = memory_request.model_dump()
+            record_data["id"] = new_id
+            record_data["created_at"] = datetime.now()
 
-        # Thematic Re-mapping
-        if record_data.get("dharma_tags"):
-            record_data["dark_concepts"] = self.remap_to_dark(record_data.pop("dharma_tags"))
+            # Thematic Re-mapping
+            if record_data.get("dharma_tags"):
+                record_data["dark_concepts"] = self.remap_to_dark(record_data.pop("dharma_tags"))
 
-        new_record = MemoryRecord(**record_data)
-        self.memory["records"].append(new_record.dict())
-        self.save_memory()
-        return new_record
+            new_record = MemoryRecord(**record_data)
+            self.memory["records"].append(new_record.model_dump())
+            self.save_memory()
+            return new_record
 
     def recall_records(self, query: MemoryQuery) -> list[MemoryRecord]:
         """
@@ -157,7 +161,8 @@ class MemoryManager:
         # To prevent parroting, we recall from all memories *except* the most recent one.
         # A more sophisticated approach would filter by recency or content similarity.
 
-        searchable_records = self.memory["records"][:-1]  # Exclude the last element
+        with self._lock:
+            searchable_records = self.memory["records"][:-1]  # Exclude the last element
 
         records_to_return = searchable_records[-query.limit :]
         return [MemoryRecord(**rec) for rec in records_to_return]
@@ -190,8 +195,13 @@ app = FastAPI(title="Infinity Awareness Engine - Memory Service")
 memory_manager = MemoryManager()
 
 
+def get_memory_manager() -> MemoryManager:
+    """FastAPI dependency wrapper for the memory manager."""
+    return memory_manager
+
+
 @app.post("/store", response_model=MemoryRecord)
-async def store(request: MemoryStorageRequest):
+async def store(request: MemoryStorageRequest, manager: MemoryManager = Depends(get_memory_manager)):
     """
     Stores a new memory record in the memory service.
 
@@ -205,14 +215,14 @@ async def store(request: MemoryStorageRequest):
         The created MemoryRecord object.
     """
     try:
-        stored_record = memory_manager.store_record(request)
+        stored_record = manager.store_record(request)
         return stored_record
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.post("/recall", response_model=list[MemoryRecord])
-async def recall(query: MemoryQuery):
+async def recall(query: MemoryQuery, manager: MemoryManager = Depends(get_memory_manager)):
     """
     Recalls memory records based on a query.
 
@@ -226,21 +236,21 @@ async def recall(query: MemoryQuery):
         A list of matching MemoryRecord objects.
     """
     try:
-        records = memory_manager.recall_records(query)
+        records = manager.recall_records(query)
         return records
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.get("/health")
-async def health_check():
+async def health_check(manager: MemoryManager = Depends(get_memory_manager)):
     """
     Provides a health check endpoint for the memory service.
 
     Returns:
         A dictionary with the service status and the current number of records.
     """
-    return {"status": "ok", "memory_records": len(memory_manager.memory.get("records", []))}
+    return {"status": "ok", "memory_records": len(manager.memory.get("records", []))}
 
 
 print("Memory Service script created. Ready to be run with Uvicorn.")

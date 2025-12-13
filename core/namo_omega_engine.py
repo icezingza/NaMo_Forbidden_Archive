@@ -3,6 +3,8 @@ import json
 import os
 from typing import List, Dict
 
+from adapters.tts import TTSAdapter
+
 
 # =========================================================
 # 🩸 Module 1: Karmic System (ระบบแต้มบาป x100)
@@ -106,6 +108,7 @@ class NaMoOmegaEngine:
         self.sin_system = SinSystem()
         self.sensory = SensoryOverloadManager()
         self.personas = PersonaOrchestrator()
+        self.tts = TTSAdapter()
         self.arousal = 0
         print("[OMEGA ENGINE]: ONLINE. SENSORY SYSTEMS ENGAGED.")
 
@@ -127,6 +130,13 @@ class NaMoOmegaEngine:
         
         # 3. เตรียมสื่อสัมผัส (Sensory Trigger)
         media = self.sensory.trigger_sensation(self.arousal, user_input)
+        
+        # 3.1 สร้างเสียงพูดจริงด้วย ElevenLabs (ถ้ามี API key)
+        tts_audio = self.tts.synthesize(text_response) if self.tts else None
+        if tts_audio and not media.get("audio"):
+            media["audio"] = tts_audio  # ใช้เสียงที่สร้างเป็นค่าเริ่มต้น
+        elif tts_audio:
+            media["tts"] = tts_audio  # แนบเพิ่มไว้ให้ frontend เลือกใช้
         
         # 4. ประกอบผลลัพธ์ส่งกลับ
         return {
