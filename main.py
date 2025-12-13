@@ -3,6 +3,7 @@ import time
 from adapters.memory import MemoryAdapter
 from core.character_profile import CharacterProfile
 from Core_Scripts.emotion_parasite_engine import analyze_and_react
+from adapters.tts import TTSAdapter
 
 
 def type_effect(text):
@@ -22,6 +23,7 @@ def main():
     # Initialize Systems
     memory = MemoryAdapter()
     namo = CharacterProfile("NaMo")
+    tts = TTSAdapter()
     
     # ทักทายตามสถานะล่าสุด
     print(f"\n[System]: Loading Persona... {namo.get_status_str()}")
@@ -48,6 +50,11 @@ def main():
             print(f"[Internal]: Corruption +{stats['corruption']} | Arousal +{stats['arousal']}")
             print(f"NaMo: ", end="")
             type_effect(response)
+
+            # 2.1 สร้างเสียงพูดจริง (ถ้ามี ElevenLabs API key)
+            audio_path = tts.synthesize(response) if tts else None
+            if audio_path:
+                print(f"[Audio]: Generated voice at {audio_path}")
             
             # 3. Memory Storage
             memory.store_interaction(user_input, response, namo.get_status_str())
