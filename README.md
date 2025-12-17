@@ -30,6 +30,26 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+## Cloud Run (ใช้งานส่วนตัว)
+Endpoint ที่ใช้อยู่:
+- `https://namo-forbidden-archive0-185116032835.asia-southeast1.run.app`
+
+ทดสอบเร็ว:
+```bash
+curl https://namo-forbidden-archive0-185116032835.asia-southeast1.run.app/
+```
+
+```bash
+curl -X POST https://namo-forbidden-archive0-185116032835.asia-southeast1.run.app/chat \
+  -H "Content-Type: application/json" \
+  -d "{\"text\":\"สวัสดี\",\"session_id\":\"cloud-demo\"}"
+```
+
+Quick API check (optional):
+```bash
+python tools/check_api.py --base-url https://namo-forbidden-archive0-185116032835.asia-southeast1.run.app
+```
+
 ## การใช้งานหลัก
 
 ### CLI (DarkNaMoSystem)
