@@ -3,6 +3,10 @@ import os
 import sys
 
 import requests
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 
 def _get_token(args) -> str | None:
