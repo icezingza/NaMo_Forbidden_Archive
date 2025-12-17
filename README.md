@@ -34,6 +34,9 @@ pip install -r requirements.txt
 Endpoint ที่ใช้อยู่:
 - `https://namo-forbidden-archive0-185116032835.asia-southeast1.run.app`
 
+UI (ถ้าใช้ API เดียวกัน):
+- `https://namo-forbidden-archive0-185116032835.asia-southeast1.run.app/ui`
+
 ทดสอบเร็ว:
 ```bash
 curl https://namo-forbidden-archive0-185116032835.asia-southeast1.run.app/
@@ -82,6 +85,7 @@ python -m http.server 5173
 ```
 
 จากนั้นเปิด `http://localhost:5173` แล้วตั้งค่า Base URL ใน Settings
+หากรัน API เดียวกัน ให้เข้า `/ui` ได้ทันที เช่น `http://localhost:8000/ui`
 
 ## Knowledge base (Embedding + FAISS)
 1. วางไฟล์ `set.zip` ใน `learning_set/`

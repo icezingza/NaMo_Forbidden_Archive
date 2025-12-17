@@ -122,6 +122,7 @@ python -m http.server 5173
 ```
 
 เปิด `http://localhost:5173` แล้วตั้งค่า Base URL ใน Settings
+หากรัน API เดียวกัน สามารถเข้า UI ที่ `/ui` ได้ทันที เช่น `http://localhost:8000/ui`
 
 ### 5) Knowledge Base (Embedding + FAISS)
 1) วางไฟล์ `set.zip` ใน `learning_set/`
@@ -173,6 +174,7 @@ docker run --rm -e PORT=8080 -p 8080:8080 namo-forbidden-archive
 - Project ID: `arctic-signer-471822-i8`
 - Project Number: `185116032835`
 - Service URL: `https://namo-forbidden-archive0-185116032835.asia-southeast1.run.app`
+- UI URL: `https://namo-forbidden-archive0-185116032835.asia-southeast1.run.app/ui`
 
 ตัวอย่างทดสอบ:
 ```bash

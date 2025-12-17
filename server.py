@@ -28,6 +28,7 @@ app.add_middleware(
 
 app.mount("/media/visual", StaticFiles(directory="Visual_Scenes", check_dir=False), name="visual")
 app.mount("/media/audio", StaticFiles(directory="Audio_Layers", check_dir=False), name="audio")
+app.mount("/ui", StaticFiles(directory="web", html=True, check_dir=False), name="ui")
 
 # --- Initialize Engine ---
 print("[System]: Awakening NaMo Omega...")
