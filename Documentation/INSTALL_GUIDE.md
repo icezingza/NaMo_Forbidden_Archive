@@ -52,6 +52,8 @@ pip install -r requirements.txt
 ## ตัวแปรแวดล้อมที่สำคัญ (.env)
 อ้างอิงจาก `.env.example`:
 - `OPENAI_API_KEY` สำหรับ embedding/query (Knowledge base)
+- `NAMO_LLM_ENABLED` เปิดให้ NaMo ตอบแบบมีบริบท (ใช้ OpenAI)
+- `NAMO_LLM_MODEL`, `NAMO_LLM_TEMPERATURE`, `NAMO_LLM_MAX_TOKENS`, `NAMO_LLM_MEMORY_TURNS` ตั้งค่า LLM
 - `TELEGRAM_TOKEN` สำหรับ Telegram bot
 - `ELEVENLABS_API_KEY` และ `ELEVENLABS_VOICE_ID` สำหรับ TTS
 - `EMOTION_API_URL` สำหรับ emotion service (ถ้ามี service แยก)
@@ -149,9 +151,31 @@ python Core_Scripts/namo_auto_AI_reply.py
 หากต้องการให้ Telegram bot เรียก REST API ให้ตั้งค่า `NAMO_API_URL`
 และตั้งค่า `TELEGRAM_SHOW_STATUS` หรือ `TELEGRAM_INCLUDE_MEDIA` ตามต้องการ
 
+ตรวจสอบบอตอย่างเร็ว:
+```bash
+python tools/telegram_check.py
+```
+
+ถ้าต้องการส่งข้อความทดสอบ ให้ส่ง `/start` กับบอตก่อน แล้วใช้:
+```bash
+python tools/telegram_check.py --send --message "ping from NaMo"
+```
+
 ### 7) ElevenLabs TTS (ตัวเลือก)
 ตั้งค่า `ELEVENLABS_API_KEY` และ `ELEVENLABS_VOICE_ID` ใน `.env`
 ระบบจะเรียกใช้งานผ่าน `adapters/tts.py` เมื่อ flow ที่เกี่ยวข้องถูกใช้งาน
+
+### 8) LLM (OpenAI) เพื่อเพิ่มความหลากหลายในการตอบ
+ตั้งค่าใน `.env`:
+```bash
+NAMO_LLM_ENABLED=1
+NAMO_LLM_MODEL=gpt-4o-mini
+NAMO_LLM_TEMPERATURE=0.85
+NAMO_LLM_MAX_TOKENS=240
+NAMO_LLM_MEMORY_TURNS=6
+```
+
+จากนั้นรัน REST API ตามปกติ ระบบจะตอบแบบมีบริบทและลดการซ้ำคำ
 
 ## การทดสอบ
 ติดตั้ง dependencies สำหรับ dev แล้วรัน pytest:

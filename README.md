@@ -100,6 +100,8 @@ python -m http.server 5173
 
 ## ตัวแปรแวดล้อมที่สำคัญ
 - `OPENAI_API_KEY` สำหรับสคริปต์ embedding/query
+- `NAMO_LLM_ENABLED` เปิดให้ NaMo ตอบแบบมีบริบท (ใช้ OpenAI)
+- `NAMO_LLM_MODEL`, `NAMO_LLM_TEMPERATURE`, `NAMO_LLM_MAX_TOKENS`, `NAMO_LLM_MEMORY_TURNS` ตั้งค่า LLM
 - `ELEVENLABS_API_KEY` และ `ELEVENLABS_VOICE_ID` สำหรับ TTS
 - `TELEGRAM_TOKEN` สำหรับ Telegram bot
 - `EMOTION_API_URL` สำหรับ EmotionAdapter (ถ้ามี service แยก)
@@ -107,6 +109,11 @@ python -m http.server 5173
 - `CORS_ALLOW_ORIGINS` สำหรับกำหนด origin ที่อนุญาตใน REST API
 - `MEMORY_LOGGING` เปิดการบันทึก memory ผ่าน REST API (ใช้กับ memory service)
 - `NAMO_API_URL` สำหรับให้ Telegram bot เรียก REST API
+
+## Telegram (ตรวจสอบบอตอย่างเร็ว)
+```bash
+python tools/telegram_check.py
+```
 
 ## โครงสร้างหลักของ repo
 ```

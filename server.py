@@ -91,7 +91,7 @@ def _store_memory_if_enabled(session_id: str, user_text: str, response_text: str
 @app.post("/chat")
 async def chat_with_namo(payload: ChatInput, request: Request):
     session_id = payload.session_id or str(uuid.uuid4())
-    result = engine.process_input(payload.text)
+    result = engine.process_input(payload.text, session_id=session_id)
 
     base_url = os.getenv("PUBLIC_BASE_URL")
     if base_url:
