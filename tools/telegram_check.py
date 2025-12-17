@@ -9,8 +9,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+def _sanitize_token(token: str | None) -> str | None:
+    if not token:
+        return None
+    return token.strip()
+
+
 def _get_token(args) -> str | None:
-    return args.token or os.getenv("TELEGRAM_TOKEN")
+    return _sanitize_token(args.token or os.getenv("TELEGRAM_TOKEN"))
 
 
 def _api_base(token: str) -> str:

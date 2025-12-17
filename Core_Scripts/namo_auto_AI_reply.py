@@ -8,9 +8,9 @@ from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filte
 
 # Load the token from an environment variable
 load_dotenv()
-TOKEN = os.getenv("TELEGRAM_TOKEN")
-API_BASE_URL = os.getenv("NAMO_API_URL", "http://localhost:8000").rstrip("/")
-API_TIMEOUT = float(os.getenv("NAMO_API_TIMEOUT", "10"))
+TOKEN = (os.getenv("TELEGRAM_TOKEN") or "").strip()
+API_BASE_URL = (os.getenv("NAMO_API_URL", "http://localhost:8000") or "").strip().rstrip("/")
+API_TIMEOUT = float((os.getenv("NAMO_API_TIMEOUT", "10") or "10").strip())
 SHOW_STATUS = os.getenv("TELEGRAM_SHOW_STATUS", "0") == "1"
 INCLUDE_MEDIA = os.getenv("TELEGRAM_INCLUDE_MEDIA", "0") == "1"
 
