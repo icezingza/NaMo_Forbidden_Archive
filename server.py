@@ -1,16 +1,13 @@
-import os
-import sys
 import uuid
 
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-# นำเข้าสมอง Omega ใหม่
-core_dir = os.path.join(os.path.dirname(__file__), "core")
-if core_dir not in sys.path:
-    sys.path.append(core_dir)
+from dotenv import load_dotenv
 
-from namo_omega_engine import NaMoOmegaEngine
+from core.namo_omega_engine import NaMoOmegaEngine
+
+load_dotenv()
 
 app = FastAPI(title="NaMo Forbidden Archive v9.0 (Omega Sensory)")
 

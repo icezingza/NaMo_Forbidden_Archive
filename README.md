@@ -1,40 +1,93 @@
-# 🧠 Dark Knowledge System
+# NaMo Forbidden Archive
 
-ระบบนี้ช่วยให้ Agent (เช่น Julius) เรียนรู้จากไฟล์ ZIP ได้โดยตรง
-เมื่อใส่ `set.zip` ใน `learning_set/` แล้วเรียกใช้ `learn_from_set.py`
-ระบบจะสร้างฐานความรู้ในรูปแบบ Embedding (FAISS index)
+ชุดระบบทดลองที่รวม CLI, REST API, memory service และฐานความรู้แบบ embedding
+เพื่อใช้งานกับ NaMo/Mōriko และสคริปต์ประกอบอื่นๆ ใน repo นี้
 
-## ⚙️ วิธีใช้งานอย่างเร็ว
+## สิ่งที่มีในโปรเจคนี้
+- CLI โหมดหลัก: `app.py` (DarkNaMoSystem)
+- CLI โหมดทดลอง: `main.py` (CharacterProfile + emotion_parasite_engine)
+- REST API: `server.py` (NaMoOmegaEngine)
+- Memory service: `memory_service.py`
+- Knowledge base: `learn_from_set.py` + `query_learned_knowledge.py`
+- Telegram auto reply (ตัวเลือก): `Core_Scripts/namo_auto_AI_reply.py`
+- ElevenLabs TTS (ตัวเลือก): `adapters/tts.py`
 
-1. วางไฟล์ `set.zip` ในโฟลเดอร์ `learning_set/`
-2. เปิด Codespace หรือ dev container
-3. รันคำสั่ง:
+## เริ่มต้นแบบเร็ว
 
+### Windows (PowerShell)
+```powershell
+Copy-Item .env.example .env
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+### macOS/Linux
+```bash
+cp .env.example .env
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+## การใช้งานหลัก
+
+### CLI (DarkNaMoSystem)
+```bash
+python app.py
+```
+
+### CLI (CharacterProfile)
+```bash
+python main.py
+```
+
+### REST API
+```bash
+uvicorn server:app --host 0.0.0.0 --port 8000 --reload
+```
+
+### Memory service
+```bash
+uvicorn memory_service:app --host 0.0.0.0 --port 8081 --reload
+```
+
+## Knowledge base (Embedding + FAISS)
+1. วางไฟล์ `set.zip` ใน `learning_set/`
+2. สร้างฐานความรู้:
    ```bash
    python learn_from_set.py
    ```
-4. เมื่อสร้างฐานสำเร็จ จะมีไฟล์ใน `vector_db/`
-5. ถามข้อมูลได้ด้วย:
-
+3. ค้นหาข้อมูล:
    ```bash
    python query_learned_knowledge.py
    ```
 
-## 🧩 โครงสร้าง Repo
+## ตัวแปรแวดล้อมที่สำคัญ
+- `OPENAI_API_KEY` สำหรับสคริปต์ embedding/query
+- `ELEVENLABS_API_KEY` และ `ELEVENLABS_VOICE_ID` สำหรับ TTS
+- `TELEGRAM_TOKEN` สำหรับ Telegram bot
+- `EMOTION_API_URL` สำหรับ EmotionAdapter (ถ้ามี service แยก)
 
+## โครงสร้างหลักของ repo
 ```
-learning_set/
-  ├── set.zip
-  └── README.md
-vector_db/
-  ├── knowledge.index
-  └── meta.json
-learn_from_set.py
-query_learned_knowledge.py
-.jules/config.yml
-.devcontainer/devcontainer.json
+adapters/            # IO adapters (emotion, memory, tts)
+core/                # core engines
+Core_Scripts/        # experimental scripts
+docs/                # architecture & API docs
+learning_set/        # zip input for knowledge base
+tests/               # pytest
 ```
 
-## 🧠 การทำงานอัตโนมัติ
+## เอกสารที่เกี่ยวข้อง
+- `docs/ARCHITECTURE.md`
+- `docs/API_SPEC.md`
+- `docs/NamoNexus_Integration_Handbook.md`
+- `INSTALL_GUIDE.md`
 
-ทุกครั้งที่ Julius เริ่มต้น `.jules/config.yml` จะโหลดฐานความรู้นี้เข้าระบบโดยอัตโนมัติ
+## ทดสอบ
+```bash
+pytest
+```
+
+หมายเหตุ: โค้ดตัวอย่างและ sample dialogue บางส่วนมีเนื้อหาเชิงผู้ใหญ่ (NSFW)

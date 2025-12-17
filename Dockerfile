@@ -1,5 +1,5 @@
 # ใช้ Python เวอร์ชันที่เหมาะสม
-FROM python:3.12-slim
+FROM python:3.11-slim
 
 # ตั้ง working directory
 WORKDIR /app

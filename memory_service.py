@@ -5,9 +5,11 @@ from threading import Lock
 
 from fastapi import FastAPI, HTTPException
 from fastapi import Depends
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
 # --- Pydantic Models based on OpenAPI Spec ---
+load_dotenv()
 
 
 class EmotionContext(BaseModel):

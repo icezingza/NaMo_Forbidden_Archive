@@ -1,5 +1,8 @@
 import sys
 import time
+
+from dotenv import load_dotenv
+
 from adapters.memory import MemoryAdapter
 from core.character_profile import CharacterProfile
 from Core_Scripts.emotion_parasite_engine import analyze_and_react
@@ -16,6 +19,7 @@ def type_effect(text):
 
 
 def main():
+    load_dotenv()
     print("==========================================")
     print("   FORBIDDEN ARCHEOLOGY: NAMO PROTOCOL    ")
     print("==========================================")

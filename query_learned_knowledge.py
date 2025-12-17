@@ -4,12 +4,14 @@ import time
 
 import faiss
 import numpy as np
+from dotenv import load_dotenv
 from openai import OpenAI
 
 VECTOR_DIR = "vector_db"
 DB_PATH = f"{VECTOR_DIR}/knowledge.index"
 META_PATH = f"{VECTOR_DIR}/meta.json"
 MODEL = "text-embedding-3-large"
+load_dotenv()
 client = OpenAI()
 
 

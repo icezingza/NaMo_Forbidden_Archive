@@ -2,6 +2,8 @@ import os
 import sys
 from datetime import datetime, UTC
 
+from dotenv import load_dotenv
+
 # --- การตั้งค่าสภาพแวดล้อม (Environment Setup) ---
 # นี่คือสิ่งจำเป็นเพื่อให้ Adapters ใหม่ของเราทำงานได้
 # โดยเฉพาะ 'adapters/memory.py' และ 'adapters/emotion.py'
@@ -9,6 +11,7 @@ from datetime import datetime, UTC
 #
 # ในการใช้งานจริง ค่าเหล่านี้ควรถูกตั้งค่าใน .env หรือระบบ Secret
 # แต่เพื่อการทดสอบ เราจะตั้งค่า Placeholder หากยังไม่มี
+load_dotenv()
 print("[app.py] Setting up Environment (Mocking API endpoints if not set)...")
 os.environ.setdefault("MEMORY_API_URL", "http://localhost:8081/store")
 os.environ.setdefault("EMOTION_API_URL", "http://localhost:8082/analyze")

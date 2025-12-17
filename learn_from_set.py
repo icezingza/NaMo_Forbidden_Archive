@@ -7,6 +7,7 @@ from typing import List, Tuple
 
 import faiss
 import numpy as np
+from dotenv import load_dotenv
 from openai import OpenAI
 
 ZIP_PATH = "learning_set/set.zip"
@@ -15,6 +16,7 @@ os.makedirs(VECTOR_DIR, exist_ok=True)
 DB_PATH = os.path.join(VECTOR_DIR, "knowledge.index")
 META_PATH = os.path.join(VECTOR_DIR, "meta.json")
 MODEL = "text-embedding-3-large"
+load_dotenv()
 client = OpenAI()
 
 extract_dir = os.path.join(VECTOR_DIR, "extracted")

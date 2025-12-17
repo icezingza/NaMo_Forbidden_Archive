@@ -67,6 +67,6 @@ def test_telegram_bot_loads_token_from_env():
 def test_telegram_bot_raises_error_if_token_is_missing():
     """Tests that the script raises a ValueError if the TELEGRAM_TOKEN is not set."""
     _inject_telegram_stub()
-    with unittest.mock.patch.dict(os.environ, clear=True):
+    with unittest.mock.patch.dict(os.environ, {"TELEGRAM_TOKEN": ""}, clear=True):
         with pytest.raises(ValueError, match="No TELEGRAM_TOKEN set for Telegram bot"):
             _reload_module()
