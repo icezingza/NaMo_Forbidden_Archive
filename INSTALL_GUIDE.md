@@ -56,6 +56,13 @@ pip install -r requirements.txt
 - `ELEVENLABS_API_KEY` และ `ELEVENLABS_VOICE_ID` สำหรับ TTS
 - `EMOTION_API_URL` สำหรับ emotion service (ถ้ามี service แยก)
 - `MEMORY_API_URL` และ `MEMORY_API_KEY` หากใช้ memory service ภายนอก
+- `MEMORY_LOGGING` เปิดการบันทึก memory ผ่าน REST API (ค่า 1/0)
+- `PUBLIC_BASE_URL` สำหรับสร้าง media URL ที่เป็น absolute ใน REST API
+- `CORS_ALLOW_ORIGINS` สำหรับกำหนด origin ที่อนุญาตใน REST API
+- `NAMO_API_URL` สำหรับให้ Telegram bot เรียก REST API
+- `NAMO_API_TIMEOUT` timeout ของ Telegram bot
+- `TELEGRAM_SHOW_STATUS` แสดง status เพิ่มเติมใน Telegram (ค่า 1/0)
+- `TELEGRAM_INCLUDE_MEDIA` แนบ media URL ใน Telegram (ค่า 1/0)
 
 ## การใช้งานฟีเจอร์หลัก
 
@@ -83,6 +90,11 @@ curl -X POST http://localhost:8000/chat ^
 
 > รูปแบบ response อ้างอิง `docs/API_SPEC.md`
 
+หมายเหตุเพิ่มเติม:
+- REST API จะเสิร์ฟไฟล์ media ที่ `/media/visual` และ `/media/audio`
+- ตั้งค่า `PUBLIC_BASE_URL` หากต้องการให้ media URL เป็น absolute
+- ตั้งค่า `CORS_ALLOW_ORIGINS` หากใช้เว็บ client แยกโดเมน
+
 ### 4) Memory Service
 ```bash
 uvicorn memory_service:app --host 0.0.0.0 --port 8081 --reload
@@ -99,6 +111,17 @@ curl -X POST http://localhost:8081/store ^
 ```bash
 curl http://localhost:8081/health
 ```
+
+### 4.1) Web Client (Static)
+ใช้ไฟล์ใน `web/` เพื่อคุยกับ REST API ผ่านหน้าเว็บ
+
+ตัวอย่างรันแบบ local:
+```bash
+cd web
+python -m http.server 5173
+```
+
+เปิด `http://localhost:5173` แล้วตั้งค่า Base URL ใน Settings
 
 ### 5) Knowledge Base (Embedding + FAISS)
 1) วางไฟล์ `set.zip` ใน `learning_set/`
@@ -121,6 +144,9 @@ pip install python-telegram-bot
 ```bash
 python Core_Scripts/namo_auto_AI_reply.py
 ```
+
+หากต้องการให้ Telegram bot เรียก REST API ให้ตั้งค่า `NAMO_API_URL`
+และตั้งค่า `TELEGRAM_SHOW_STATUS` หรือ `TELEGRAM_INCLUDE_MEDIA` ตามต้องการ
 
 ### 7) ElevenLabs TTS (ตัวเลือก)
 ตั้งค่า `ELEVENLABS_API_KEY` และ `ELEVENLABS_VOICE_ID` ใน `.env`

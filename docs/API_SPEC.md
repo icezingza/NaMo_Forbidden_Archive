@@ -27,9 +27,9 @@ Response:
   "response": "NaMo: ...",
   "session_id": "generated-or-provided",
   "media": {
-    "image": "Visual_Scenes/...",
-    "audio": "Audio_Layers/...",
-    "tts": "Audio_Layers/generated/..."
+    "image": "https://host/media/visual/...",
+    "audio": "https://host/media/audio/...",
+    "tts": "https://host/media/audio/generated/..."
   },
   "status": {
     "arousal": "50% (MAX)",
@@ -38,6 +38,14 @@ Response:
   }
 }
 ```
+
+Media hosting:
+- Visual files: `GET /media/visual/{path}`
+- Audio files: `GET /media/audio/{path}`
+
+Notes:
+- `media` URLs may be absolute if `PUBLIC_BASE_URL` is set, otherwise they are derived from the request base URL.
+- Configure `CORS_ALLOW_ORIGINS` if a separate web client needs cross-origin access.
 
 ## Memory Service (`memory_service.py`)
 

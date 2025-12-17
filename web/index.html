@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NaMo Forbidden Archive</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Space+Grotesk:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="ambient">
+      <div class="orb orb--amber"></div>
+      <div class="orb orb--crimson"></div>
+      <div class="orb orb--ivory"></div>
+    </div>
+
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand__sigil"></span>
+          <div>
+            <h1>NaMo Forbidden Archive</h1>
+            <p>Omega gateway for sensory dialogue</p>
+          </div>
+        </div>
+        <div class="topbar__actions">
+          <button class="btn btn--ghost" id="ping-button" type="button">Ping</button>
+          <button class="btn btn--ghost" id="settings-button" type="button">Settings</button>
+        </div>
+      </header>
+
+      <div class="layout">
+        <aside class="sidebar">
+          <section class="panel">
+            <h2>System Status</h2>
+            <div class="kv">
+              <span class="kv__label">Engine</span>
+              <span class="kv__value" id="status-engine">Idle</span>
+            </div>
+            <div class="kv">
+              <span class="kv__label">Sin Status</span>
+              <span class="kv__value" id="status-sin">Awaiting input</span>
+            </div>
+            <div class="kv">
+              <span class="kv__label">Arousal</span>
+              <span class="kv__value" id="status-arousal">0%</span>
+            </div>
+            <div class="meter">
+              <span class="meter__fill" id="arousal-bar"></span>
+            </div>
+            <div class="kv">
+              <span class="kv__label">Personas</span>
+              <span class="kv__value" id="status-personas">NaMo</span>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2>Session</h2>
+            <div class="kv">
+              <span class="kv__label">Base URL</span>
+              <span class="kv__value" id="base-url-label">-</span>
+            </div>
+            <div class="kv">
+              <span class="kv__label">Session ID</span>
+              <span class="kv__value" id="session-id-label">-</span>
+            </div>
+          </section>
+        </aside>
+
+        <main class="chat-area">
+          <div class="chat" id="chat"></div>
+          <div class="state state--empty" id="empty-state">
+            <h3>Archive is quiet</h3>
+            <p>Send a message to awaken the Omega engine.</p>
+          </div>
+          <div class="state state--error" id="error-state">
+            <h3>Connection lost</h3>
+            <p id="error-message">Unable to reach the API.</p>
+          </div>
+        </main>
+      </div>
+
+      <form class="composer" id="chat-form">
+        <textarea
+          id="message-input"
+          rows="2"
+          placeholder="Type your message..."
+          autocomplete="off"
+        ></textarea>
+        <button class="btn btn--primary" id="send-button" type="submit">Send</button>
+      </form>
+    </div>
+
+    <div class="modal hidden" id="settings-modal" aria-hidden="true">
+      <div class="modal__backdrop" data-close="true"></div>
+      <div class="modal__card">
+        <h2>Connection Settings</h2>
+        <p>Set the API base URL for the NaMo engine.</p>
+        <label class="field">
+          <span>Base URL</span>
+          <input id="base-url-input" type="text" placeholder="https://your-api-url" />
+        </label>
+        <div class="modal__actions">
+          <button class="btn btn--ghost" data-close="true" type="button">Cancel</button>
+          <button class="btn btn--primary" id="save-settings" type="button">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

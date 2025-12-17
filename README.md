@@ -72,6 +72,17 @@ uvicorn server:app --host 0.0.0.0 --port 8000 --reload
 uvicorn memory_service:app --host 0.0.0.0 --port 8081 --reload
 ```
 
+## Web client (static)
+ใช้ไฟล์ใน `web/` เพื่อคุยกับ API ผ่านหน้าเว็บ
+
+ตัวอย่างรันแบบ local:
+```bash
+cd web
+python -m http.server 5173
+```
+
+จากนั้นเปิด `http://localhost:5173` แล้วตั้งค่า Base URL ใน Settings
+
 ## Knowledge base (Embedding + FAISS)
 1. วางไฟล์ `set.zip` ใน `learning_set/`
 2. สร้างฐานความรู้:
@@ -88,6 +99,10 @@ uvicorn memory_service:app --host 0.0.0.0 --port 8081 --reload
 - `ELEVENLABS_API_KEY` และ `ELEVENLABS_VOICE_ID` สำหรับ TTS
 - `TELEGRAM_TOKEN` สำหรับ Telegram bot
 - `EMOTION_API_URL` สำหรับ EmotionAdapter (ถ้ามี service แยก)
+- `PUBLIC_BASE_URL` สำหรับสร้าง media URL ที่เป็น absolute ใน REST API
+- `CORS_ALLOW_ORIGINS` สำหรับกำหนด origin ที่อนุญาตใน REST API
+- `MEMORY_LOGGING` เปิดการบันทึก memory ผ่าน REST API (ใช้กับ memory service)
+- `NAMO_API_URL` สำหรับให้ Telegram bot เรียก REST API
 
 ## โครงสร้างหลักของ repo
 ```
