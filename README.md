@@ -32,10 +32,10 @@ pip install -r requirements.txt
 
 ## Cloud Run (ใช้งานส่วนตัว)
 Endpoint ที่ใช้อยู่:
-- `https://namo-forbidden-archive0-185116032835.asia-southeast1.run.app`
+- `https://namo-forbidden-archive-185116032835.asia-southeast1.run.app`
 
 UI (ถ้าใช้ API เดียวกัน):
-- `https://namo-forbidden-archive0-185116032835.asia-southeast1.run.app/ui`
+- `https://namo-forbidden-archive-185116032835.asia-southeast1.run.app/ui`
 
 ทดสอบเร็ว:
 ```bash
@@ -50,7 +50,7 @@ curl -X POST https://namo-forbidden-archive0-185116032835.asia-southeast1.run.ap
 
 Quick API check (optional):
 ```bash
-python tools/check_api.py --base-url https://namo-forbidden-archive0-185116032835.asia-southeast1.run.app
+python tools/check_api.py --base-url https://namo-forbidden-archive-185116032835.asia-southeast1.run.app
 ```
 
 ## การใช้งานหลัก

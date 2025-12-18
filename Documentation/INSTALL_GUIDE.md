@@ -197,16 +197,16 @@ docker run --rm -e PORT=8080 -p 8080:8080 namo-forbidden-archive
 ### Endpoint ที่ใช้งานอยู่ (สำหรับผู้ใช้เดียว)
 - Project ID: `arctic-signer-471822-i8`
 - Project Number: `185116032835`
-- Service URL: `https://namo-forbidden-archive0-185116032835.asia-southeast1.run.app`
-- UI URL: `https://namo-forbidden-archive0-185116032835.asia-southeast1.run.app/ui`
+- Service URL: `https://namo-forbidden-archive-185116032835.asia-southeast1.run.app`
+- UI URL: `https://namo-forbidden-archive-185116032835.asia-southeast1.run.app/ui`
 
 ตัวอย่างทดสอบ:
 ```bash
-curl https://namo-forbidden-archive0-185116032835.asia-southeast1.run.app/
+curl https://namo-forbidden-archive-185116032835.asia-southeast1.run.app/
 ```
 
 ```bash
-curl -X POST https://namo-forbidden-archive0-185116032835.asia-southeast1.run.app/chat ^
+curl -X POST https://namo-forbidden-archive-185116032835.asia-southeast1.run.app/chat ^
   -H "Content-Type: application/json" ^
   -d "{\"text\":\"สวัสดี\",\"session_id\":\"cloud-demo\"}"
 ```
@@ -221,7 +221,7 @@ python tools/check_api.py --base-url http://localhost:8000
 
 ตัวอย่าง (Cloud Run):
 ```bash
-python tools/check_api.py --base-url https://namo-forbidden-archive0-185116032835.asia-southeast1.run.app
+python tools/check_api.py --base-url https://namo-forbidden-archive-185116032835.asia-southeast1.run.app
 ```
 
 ## Troubleshooting
