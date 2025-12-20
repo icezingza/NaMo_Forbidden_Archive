@@ -39,6 +39,39 @@ Response:
 }
 ```
 
+### POST `/v1/chat`
+Headers:
+```
+X-API-Key: optional-api-key
+```
+
+Request:
+```json
+{
+  "text": "สวัสดี",
+  "session_id": "optional-session-id"
+}
+```
+
+Response:
+```json
+{
+  "response": "NaMo: ...",
+  "session_id": "generated-or-provided",
+  "media": {
+    "image": "https://host/media/visual/...",
+    "audio": "https://host/media/audio/...",
+    "tts": "https://host/media/audio/generated/..."
+  },
+  "status": {
+    "arousal": "50% (MAX)",
+    "sin_status": "[Corrupted Master] ...",
+    "active_personas": ["NaMo"]
+  },
+  "plan": "public"
+}
+```
+
 Media hosting:
 - Visual files: `GET /media/visual/{path}`
 - Audio files: `GET /media/audio/{path}`
@@ -46,6 +79,18 @@ Media hosting:
 Notes:
 - `media` URLs may be absolute if `PUBLIC_BASE_URL` is set, otherwise they are derived from the request base URL.
 - Configure `CORS_ALLOW_ORIGINS` if a separate web client needs cross-origin access.
+- Optional API keys can be configured via `NAMO_API_KEYS` (comma-separated `key:plan` pairs).
+- Default plan is `NAMO_API_DEFAULT_PLAN` when no key is provided or when the key list is empty.
+- Usage events can be logged with `NAMO_USAGE_LOG_PATH` (JSONL).
+
+### GET `/v1/health`
+Response:
+```json
+{
+  "status": "ok",
+  "engine": "Omega"
+}
+```
 
 ## Memory Service (`memory_service.py`)
 

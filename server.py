@@ -1,8 +1,10 @@
+import json
 import os
 import uuid
+from datetime import datetime
 
 import requests
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -87,6 +89,46 @@ def _store_memory_if_enabled(session_id: str, user_text: str, response_text: str
     except requests.RequestException as exc:
         print(f"[MemoryLog]: Failed to store memory: {exc}")
 
+def _parse_api_key_map(raw: str | None) -> dict[str, str]:
+    if not raw:
+        return {}
+    mapping: dict[str, str] = {}
+    for entry in raw.split(","):
+        item = entry.strip()
+        if not item:
+            continue
+        if ":" in item:
+            key, plan = item.split(":", 1)
+            mapping[key.strip()] = plan.strip() or "standard"
+        else:
+            mapping[item] = "standard"
+    return mapping
+
+
+def _resolve_plan(api_key: str | None) -> tuple[str, bool]:
+    mapping = _parse_api_key_map(os.getenv("NAMO_API_KEYS"))
+    default_plan = os.getenv("NAMO_API_DEFAULT_PLAN", "public")
+    if not mapping:
+        return default_plan, True
+    if not api_key:
+        return default_plan, False
+    if api_key in mapping:
+        return mapping[api_key], True
+    return default_plan, False
+
+
+def _log_usage(event: dict) -> None:
+    path = os.getenv("NAMO_USAGE_LOG_PATH")
+    if not path:
+        return
+    payload = dict(event)
+    payload["timestamp"] = datetime.utcnow().isoformat() + "Z"
+    try:
+        with open(path, "a", encoding="utf-8") as handle:
+            handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
+    except OSError as exc:
+        print(f"[UsageLog]: Failed to write usage event: {exc}")
+
 
 @app.post("/chat")
 async def chat_with_namo(payload: ChatInput, request: Request):
@@ -108,6 +150,48 @@ async def chat_with_namo(payload: ChatInput, request: Request):
         "media": media,
         "status": result["system_status"],
     }
+
+
+@app.post("/v1/chat")
+async def chat_with_namo_v1(
+    payload: ChatInput,
+    request: Request,
+    x_api_key: str | None = Header(default=None),
+):
+    plan, allowed = _resolve_plan(x_api_key)
+    if not allowed and os.getenv("NAMO_API_KEYS"):
+        raise HTTPException(status_code=401, detail="invalid_api_key")
+    session_id = payload.session_id or str(uuid.uuid4())
+    result = engine.process_input(payload.text, session_id=session_id)
+
+    base_url = os.getenv("PUBLIC_BASE_URL")
+    if base_url:
+        base_url = _normalize_base_url(base_url)
+    else:
+        base_url = _normalize_base_url(str(request.base_url))
+    media = _normalize_media(result["media_trigger"], base_url)
+    _store_memory_if_enabled(session_id, payload.text, result["text"])
+    _log_usage(
+        {
+            "endpoint": "/v1/chat",
+            "session_id": session_id,
+            "plan": plan,
+            "text_length": len(payload.text),
+        }
+    )
+
+    return {
+        "response": result["text"],
+        "session_id": session_id,
+        "media": media,
+        "status": result["system_status"],
+        "plan": plan,
+    }
+
+
+@app.get("/v1/health")
+def health_check():
+    return {"status": "ok", "engine": "Omega"}
 
 
 @app.get("/")
