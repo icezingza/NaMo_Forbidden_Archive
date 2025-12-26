@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NaMo Cloud Chat</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 600px;
+        height: 700px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 24px;
+        margin-bottom: 5px;
+      }
+
+      .header p {
+        font-size: 12px;
+        opacity: 0.9;
+      }
+
+      .chat-box {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+
+      .message {
+        margin-bottom: 15px;
+        display: flex;
+        animation: slideIn 0.3s ease-in;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .message.user {
+        justify-content: flex-end;
+      }
+
+      .message.ai {
+        justify-content: flex-start;
+      }
+
+      .message-text {
+        max-width: 70%;
+        padding: 12px 16px;
+        border-radius: 12px;
+        line-height: 1.4;
+        word-wrap: break-word;
+      }
+
+      .message.user .message-text {
+        background: #667eea;
+        color: white;
+        border-bottom-right-radius: 4px;
+      }
+
+      .message.ai .message-text {
+        background: #e0e0e0;
+        color: #333;
+        border-bottom-left-radius: 4px;
+      }
+
+      .input-area {
+        padding: 20px;
+        background: white;
+        border-top: 1px solid #ddd;
+        display: flex;
+        gap: 10px;
+      }
+
+      input {
+        flex: 1;
+        padding: 12px 16px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      button {
+        padding: 12px 24px;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+
+      button:hover {
+        background: #5568d3;
+      }
+
+      .status {
+        font-size: 11px;
+        color: #999;
+        margin-top: 5px;
+      }
+
+      .error {
+        background: #fee;
+        color: #c00;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>💜 NaMo Cloud Chat</h1>
+        <p>Powered by Google Cloud Run</p>
+      </div>
+      <div class="chat-box" id="chatBox"></div>
+      <div class="input-area">
+        <input
+          type="text"
+          id="messageInput"
+          placeholder="พิมพ์ข้อความที่นี่..."
+          onkeypress="handleKeyPress(event)"
+        />
+        <button onclick="sendMessage()">ส่ง</button>
+      </div>
+    </div>
+
+    <script>
+      // ⚠️ เปลี่ยนเป็น Cloud Run URL
+      const API_URL =
+        "https://namo-forbidden-archive-185116032835.asia-southeast1.run.app";
+      let sessionId = "session-" + Date.now();
+      const chatBox = document.getElementById("chatBox");
+      const messageInput = document.getElementById("messageInput");
+
+      function handleKeyPress(event) {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          sendMessage();
+        }
+      }
+
+      async function sendMessage() {
+        const text = messageInput.value.trim();
+        if (!text) return;
+
+        addMessage(text, "user");
+        messageInput.value = "";
+
+        const loadingMsg = addMessage("กำลังคิด...", "ai");
+
+        try {
+          const response = await fetch(`${API_URL}/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              text: text,
+              session_id: sessionId,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+
+          const data = await response.json();
+          sessionId = data.session_id;
+
+          loadingMsg.remove();
+          const aiMsg = addMessage(data.response, "ai");
+
+          if (data.status) {
+            const statusDiv = document.createElement("div");
+            statusDiv.className = "status";
+            statusDiv.textContent = `Arousal: ${data.status.arousal || "N/A"}`;
+            aiMsg.appendChild(statusDiv);
+          }
+
+          chatBox.scrollTop = chatBox.scrollHeight;
+        } catch (error) {
+          loadingMsg.remove();
+          const errorDiv = document.createElement("div");
+          errorDiv.className = "error";
+          errorDiv.textContent = "❌ Error: " + error.message;
+          chatBox.appendChild(errorDiv);
+          console.error("Error:", error);
+        }
+      }
+
+      function addMessage(text, sender) {
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `message ${sender}`;
+
+        const textDiv = document.createElement("div");
+        textDiv.className = "message-text";
+        textDiv.textContent = text;
+
+        messageDiv.appendChild(textDiv);
+        chatBox.appendChild(messageDiv);
+
+        return messageDiv;
+      }
+
+      window.addEventListener("load", async () => {
+        try {
+          const response = await fetch(`${API_URL}/`);
+          if (response.ok) {
+            const data = await response.json();
+            addMessage(`✅ ${data.status}`, "ai");
+          }
+        } catch (error) {
+          addMessage(`❌ Cannot connect to server: ${error.message}`, "ai");
+        }
+      });
+    </script>
+  </body>
+</html>
