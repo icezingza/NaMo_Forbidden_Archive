@@ -1,4 +1,4 @@
-const CLOUD_RUN_URL = "https://namo-forbidden-archive0-185116032835.asia-southeast1.run.app";
+const CLOUD_RUN_URL = "https://namo-forbidden-archive-185116032835.asia-southeast1.run.app";
 const DEFAULT_BASE_URL = (() => {
   const origin = window.location.origin;
   if (origin && origin !== "null" && window.location.pathname.startsWith("/ui")) {
