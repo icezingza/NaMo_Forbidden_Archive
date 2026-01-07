@@ -4,3 +4,100 @@ INFO:     Started reloader process [76308] using StatReload
 INFO:     Started server process [81428]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
+Traceback (most recent call last):
+  File "<frozen ntpath>", line 696, in realpath
+OSError: [WinError 1450] Insufficient system resources exist to complete the requested service: 'D:\\NaMo_Forbidden_Archive\\venv\\Lib\\site-packages\\elevenlabs\\pronunciation_dictionaries\\types\\body_add_a_pronunciation_dictionary_v_1_pronunciation_dictionaries_add_from_rules_post_workspace_access.py'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "D:\NaMo_Forbidden_Archive\venv\Scripts\uvicorn.exe\__main__.py", line 7, in <module>
+  File "D:\NaMo_Forbidden_Archive\venv\Lib\site-packages\click\core.py", line 1485, in __call__
+    return self.main(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\NaMo_Forbidden_Archive\venv\Lib\site-packages\click\core.py", line 1406, in main
+    rv = self.invoke(ctx)
+         ^^^^^^^^^^^^^^^^
+  File "D:\NaMo_Forbidden_Archive\venv\Lib\site-packages\click\core.py", line 1269, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\NaMo_Forbidden_Archive\venv\Lib\site-packages\click\core.py", line 824, in invoke
+    return callback(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\NaMo_Forbidden_Archive\venv\Lib\site-packages\uvicorn\main.py", line 424, in main
+    run(
+  File "D:\NaMo_Forbidden_Archive\venv\Lib\site-packages\uvicorn\main.py", line 589, in run
+    ChangeReload(config, target=server.run, sockets=[sock]).run()
+  File "D:\NaMo_Forbidden_Archive\venv\Lib\site-packages\uvicorn\supervisors\basereload.py", line 52, in run
+    for changes in self:
+  File "D:\NaMo_Forbidden_Archive\venv\Lib\site-packages\uvicorn\supervisors\basereload.py", line 71, in __next__
+    return self.should_restart()
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\NaMo_Forbidden_Archive\venv\Lib\site-packages\uvicorn\supervisors\statreload.py", line 31, in should_restart
+    for file in self.iter_py_files():
+  File "D:\NaMo_Forbidden_Archive\venv\Lib\site-packages\uvicorn\supervisors\statreload.py", line 52, in iter_py_files
+    yield path.resolve()
+          ^^^^^^^^^^^^^^
+  File "C:\Users\Window10\AppData\Local\Programs\Python\Python311\Lib\pathlib.py", line 993, in resolve
+    s = os.path.realpath(self, strict=strict)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen ntpath>", line 710, in realpath
+  File "<frozen ntpath>", line 650, in _getfinalpathname_nonstrict
+OSError: [WinError 1450] Insufficient system resources exist to complete the requested service: 'D:\\NaMo_Forbidden_Archive\\venv\\Lib\\site-packages\\elevenlabs\\pronunciation_dictionaries\\types\\body_add_a_pronunciation_dictionary_v_1_pronunciation_dictionaries_add_from_rules_post_workspace_access.py'
+ERROR:    Traceback (most recent call last):
+  File "D:\NaMo_Forbidden_Archive\venv\Lib\site-packages\uvicorn\_compat.py", line 30, in asyncio_run
+  File "C:\Users\Window10\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Window10\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 640, in run_until_complete
+    self.run_forever()
+  File "C:\Users\Window10\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 607, in run_forever
+    self._run_once()
+  File "C:\Users\Window10\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 1884, in _run_once
+    event_list = self._selector.select(timeout)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Window10\AppData\Local\Programs\Python\Python311\Lib\selectors.py", line 323, in select
+    r, w, _ = self._select(self._readers, self._writers, [], timeout)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Window10\AppData\Local\Programs\Python\Python311\Lib\selectors.py", line 314, in _select
+    r, w, x = select.select(r, w, w, timeout)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [WinError 10055] An operation on a socket could not be performed because the system lacked sufficient buffer space or because a queue was full
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\NaMo_Forbidden_Archive\venv\Lib\site-packages\starlette\routing.py", line 701, in lifespan
+  File "D:\NaMo_Forbidden_Archive\venv\Lib\site-packages\uvicorn\lifespan\on.py", line 137, in receive
+  File "C:\Users\Window10\AppData\Local\Programs\Python\Python311\Lib\asyncio\queues.py", line 158, in get
+    await getter
+asyncio.exceptions.CancelledError
+
+Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "C:\Users\Window10\AppData\Local\Programs\Python\Python311\Lib\multiprocessing\process.py", line 314, in _bootstrap
+    self.run()
+  File "C:\Users\Window10\AppData\Local\Programs\Python\Python311\Lib\multiprocessing\process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\NaMo_Forbidden_Archive\venv\Lib\site-packages\uvicorn\_subprocess.py", line 80, in subprocess_started
+  File "D:\NaMo_Forbidden_Archive\venv\Lib\site-packages\uvicorn\server.py", line 67, in run
+  File "D:\NaMo_Forbidden_Archive\venv\Lib\site-packages\uvicorn\_compat.py", line 30, in asyncio_run
+  File "C:\Users\Window10\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Window10\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 640, in run_until_complete
+    self.run_forever()
+  File "C:\Users\Window10\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 607, in run_forever
+    self._run_once()
+  File "C:\Users\Window10\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 1884, in _run_once
+    event_list = self._selector.select(timeout)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Window10\AppData\Local\Programs\Python\Python311\Lib\selectors.py", line 323, in select
+    r, w, _ = self._select(self._readers, self._writers, [], timeout)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Window10\AppData\Local\Programs\Python\Python311\Lib\selectors.py", line 314, in _select
+    r, w, x = select.select(r, w, w, timeout)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [WinError 10055] An operation on a socket could not be performed because the system lacked sufficient buffer space or because a queue was full
