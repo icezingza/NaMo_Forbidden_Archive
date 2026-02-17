@@ -8,6 +8,7 @@ try:
     from openai import OpenAI
 except Exception:  # pragma: no cover - optional dependency at runtime
     OpenAI = None
+from config import settings
 
 
 # =========================================================
@@ -147,13 +148,13 @@ class NaMoOmegaEngine:
             print("[OMEGA ENGINE]: LLM enabled but OpenAI client/key not available.")
 
         # --- Dark Mode Initialization Checks ---
-        if os.getenv("ENABLE_DARK_MEMORY", "false").lower() == "true":
+        if settings.enable_dark_memory:
             print("✅ Dark System: ONLINE")
 
-        if os.getenv("ENABLE_AROUSAL_DETECTOR", "false").lower() == "true":
+        if settings.enable_arousal_detector:
             print("✅ Arousal Detector: ACTIVE")
 
-        if os.getenv("SAFETY_FILTER_ENABLED", "true").lower() == "false":
+        if not settings.safety_filter_enabled:
             print("✅ WARNING: Safety filters are DISABLED.")
         print("[OMEGA ENGINE]: ONLINE. SENSORY SYSTEMS ENGAGED.")
 

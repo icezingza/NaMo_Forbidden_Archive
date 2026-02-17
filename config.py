@@ -39,6 +39,12 @@ class Settings(BaseSettings):
     enable_arousal_detector: bool = False
     enable_dark_memory: bool = False
 
+    # --- Legacy / Compatibility ---
+    namo_api_keys: Optional[str] = None
+    namo_api_default_plan: str = "public"
+    namo_usage_log_path: Optional[str] = None
+    memory_file_path: str = "memory_protocol.json"
+
     # Configuration to handle .env file and ignore unknown extra fields
     model_config = SettingsConfigDict(
         env_file=".env",
