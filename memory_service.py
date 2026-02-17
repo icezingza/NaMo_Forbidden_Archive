@@ -3,13 +3,12 @@ import os
 from datetime import datetime
 from threading import Lock
 
-from fastapi import FastAPI, HTTPException
-from fastapi import Depends
-from dotenv import load_dotenv
+from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+from config import settings
+
 # --- Pydantic Models based on OpenAPI Spec ---
-load_dotenv()
 
 
 class EmotionContext(BaseModel):
@@ -70,15 +69,16 @@ class MemoryManager:
     This class handles loading, saving, storing, and recalling memory records.
     It also provides a thematic re-mapping feature to translate concepts.
     """
-
-    def __init__(self, file_path="memory_protocol.json"):
+ 
+    def __init__(self, file_path: str | None = None):
         """
         Initializes the MemoryManager.
 
         Args:
-            file_path: The path to the JSON file used for memory storage.
+            file_path: The path to the JSON file. If None, it defaults to the
+                       MEMORY_FILE_PATH environment variable, or "memory_protocol.json".
         """
-        self.file_path = file_path
+        self.file_path = file_path or settings.memory_file_path
         self.memory = self.load_memory()
         self._lock = Lock()
 
@@ -149,9 +149,9 @@ class MemoryManager:
     def recall_records(self, query: MemoryQuery) -> list[MemoryRecord]:
         """
         Recalls memory records based on a query.
-
-        This is a simplified implementation that returns the last N records.
-        A real implementation would use a more sophisticated search.
+        
+        Filters records based on the provided criteria in the MemoryQuery object.
+        This implementation provides filtering by memory types and dark concepts.
 
         Args:
             query: The query object specifying recall parameters.
@@ -159,14 +159,33 @@ class MemoryManager:
         Returns:
             A list of MemoryRecord objects.
         """
-        # This is a simple, non-optimized search for demonstration.
-        # To prevent parroting, we recall from all memories *except* the most recent one.
-        # A more sophisticated approach would filter by recency or content similarity.
-
         with self._lock:
+            # To prevent parroting, we recall from all memories *except* the most recent one.
+            # A more sophisticated approach would filter by recency or content similarity.
             searchable_records = self.memory["records"][:-1]  # Exclude the last element
 
-        records_to_return = searchable_records[-query.limit :]
+        # In a real-world scenario, this filtering would be done by a database or a search engine for performance.
+        # This is a demonstration of in-memory filtering.
+        filtered_records = searchable_records
+
+        # Filter by memory_types
+        if query.memory_types:
+            filtered_records = [
+                rec for rec in filtered_records if rec.get("type") in query.memory_types
+            ]
+
+        # Filter by dark_concepts (which were remapped from dharma_tags)
+        if query.dark_concepts_filter:
+            filtered_records = [
+                rec for rec in filtered_records
+                if rec.get("dark_concepts") and any(concept in rec["dark_concepts"] for concept in query.dark_concepts_filter)
+            ]
+
+        # NOTE: Full-text search on 'query.query', emotion filtering, and time range filtering are not implemented here for brevity.
+        # A production system would use a search library like Whoosh, Elasticsearch, or a vector database.
+
+        # Apply limit and return
+        records_to_return = filtered_records[-query.limit:]
         return [MemoryRecord(**rec) for rec in records_to_return]
 
     def remap_to_dark(self, dharma_tags: list[str]) -> list[str]:
@@ -194,7 +213,7 @@ class MemoryManager:
 # --- FastAPI App ---
 
 app = FastAPI(title="Infinity Awareness Engine - Memory Service")
-memory_manager = MemoryManager()
+memory_manager = MemoryManager()  # Will now respect the MEMORY_FILE_PATH env var
 
 
 def get_memory_manager() -> MemoryManager:

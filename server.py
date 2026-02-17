@@ -1,5 +1,4 @@
 import json
-import os
 import uuid
 from datetime import datetime
 
@@ -9,17 +8,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from dotenv import load_dotenv
-
+from config import settings
 from core.namo_omega_engine import NaMoOmegaEngine
-
-load_dotenv()
 
 app = FastAPI(title="NaMo Forbidden Archive v9.0 (Omega Sensory)")
 
 # --- CORS + Static Media ---
-cors_origins_raw = os.getenv("CORS_ALLOW_ORIGINS", "*")
-cors_origins = [o.strip() for o in cors_origins_raw.split(",") if o.strip()] or ["*"]
+cors_origins = [o.strip() for o in settings.cors_allow_origins.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
@@ -70,9 +65,9 @@ def _normalize_media(media: dict, base_url: str) -> dict:
 
 
 def _store_memory_if_enabled(session_id: str, user_text: str, response_text: str) -> None:
-    if os.getenv("MEMORY_LOGGING", "0") != "1":
+    if not settings.memory_logging:
         return
-    memory_url = os.getenv("MEMORY_API_URL")
+    memory_url = settings.memory_api_url
     if not memory_url:
         return
     payload = {
@@ -81,7 +76,7 @@ def _store_memory_if_enabled(session_id: str, user_text: str, response_text: str
         "session_id": session_id,
     }
     headers = {}
-    memory_key = os.getenv("MEMORY_API_KEY")
+    memory_key = settings.memory_api_key
     if memory_key:
         headers["x-api-key"] = memory_key
     try:
@@ -106,8 +101,8 @@ def _parse_api_key_map(raw: str | None) -> dict[str, str]:
 
 
 def _resolve_plan(api_key: str | None) -> tuple[str, bool]:
-    mapping = _parse_api_key_map(os.getenv("NAMO_API_KEYS"))
-    default_plan = os.getenv("NAMO_API_DEFAULT_PLAN", "public")
+    mapping = _parse_api_key_map(settings.namo_api_keys)
+    default_plan = settings.namo_api_default_plan
     if not mapping:
         return default_plan, True
     if not api_key:
@@ -118,7 +113,7 @@ def _resolve_plan(api_key: str | None) -> tuple[str, bool]:
 
 
 def _log_usage(event: dict) -> None:
-    path = os.getenv("NAMO_USAGE_LOG_PATH")
+    path = settings.namo_usage_log_path
     if not path:
         return
     payload = dict(event)
@@ -135,8 +130,8 @@ async def chat_with_namo(payload: ChatInput, request: Request):
     session_id = payload.session_id or str(uuid.uuid4())
     result = engine.process_input(payload.text, session_id=session_id)
 
-    base_url = os.getenv("PUBLIC_BASE_URL")
-    if base_url:
+    base_url = settings.public_base_url
+    if base_url:  # Use configured public URL if available
         base_url = _normalize_base_url(base_url)
     else:
         base_url = _normalize_base_url(str(request.base_url))
@@ -159,13 +154,13 @@ async def chat_with_namo_v1(
     x_api_key: str | None = Header(default=None),
 ):
     plan, allowed = _resolve_plan(x_api_key)
-    if not allowed and os.getenv("NAMO_API_KEYS"):
+    if not allowed and settings.namo_api_keys:
         raise HTTPException(status_code=401, detail="invalid_api_key")
     session_id = payload.session_id or str(uuid.uuid4())
     result = engine.process_input(payload.text, session_id=session_id)
 
-    base_url = os.getenv("PUBLIC_BASE_URL")
-    if base_url:
+    base_url = settings.public_base_url
+    if base_url:  # Use configured public URL if available
         base_url = _normalize_base_url(base_url)
     else:
         base_url = _normalize_base_url(str(request.base_url))

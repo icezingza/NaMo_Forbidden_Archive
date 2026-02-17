@@ -26,6 +26,6 @@ jobs:
       - name: Run tests
         run: pytest --cov --cov-report=term-missing
       - name: Security audit (pip-audit)
-        run: pip-audit -r requirements.txt || true
+        run: pip-audit -r requirements.txt
       - name: Bandit security scan
-        run: bandit -r . || true
+        run: bandit -r .

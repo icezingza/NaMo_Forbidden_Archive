@@ -108,3 +108,90 @@ def test_store_and_recall_returns_previous_entries():
     # Latest record is skipped, so only the first should appear
     assert len(data) == 1
     assert data[0]["content"] == "first"
+
+
+def test_recall_filters_by_memory_type():
+    """Tests that the /recall endpoint correctly filters by memory_types."""
+    client = TestClient(app)
+
+    # Arrange: Store records with different types
+    client.post("/store", json={"content": "short term memory", "type": "short-term"})
+    client.post("/store", json={"content": "long term memory", "type": "long-term"})
+    client.post("/store", json={"content": "contextual memory", "type": "contextual"})
+    # This last one will be skipped by recall
+    client.post("/store", json={"content": "another short term", "type": "short-term"})
+
+    # Act: Recall with a filter for 'long-term'
+    response = client.post("/recall", json={"memory_types": ["long-term"]})
+    data = response.json()
+
+    # Assert
+    assert response.status_code == 200
+    assert len(data) == 1
+    assert data[0]["content"] == "long term memory"
+    assert data[0]["type"] == "long-term"
+
+
+def test_recall_filters_by_dark_concepts():
+    """Tests that the /recall endpoint correctly filters by dark_concepts_filter."""
+    client = TestClient(app)
+
+    # Arrange: Store records with different dharma_tags
+    client.post("/store", json={"content": "obsession memory", "dharma_tags": ["metta"]})  # -> Obsession
+    client.post("/store", json={"content": "suffering memory", "dharma_tags": ["dukkha"]})  # -> Managed Suffering
+    client.post("/store", json={"content": "detachment memory", "dharma_tags": ["upekkha"]})  # -> Cold Detachment
+    # This last one will be skipped by recall
+    client.post("/store", json={"content": "another obsession", "dharma_tags": ["metta"]})
+
+    # Act: Recall with a filter for 'Obsession' and 'Managed Suffering'
+    response = client.post("/recall", json={"dark_concepts_filter": ["Obsession", "Managed Suffering"]})
+    data = response.json()
+
+    # Assert
+    assert response.status_code == 200
+    assert len(data) == 2
+    # The order is chronological
+    contents = {item["content"] for item in data}
+    assert "obsession memory" in contents
+    assert "suffering memory" in contents
+    assert "detachment memory" not in contents
+
+
+def test_recall_with_combined_filters():
+    """Tests that the /recall endpoint works with combined filters."""
+    client = TestClient(app)
+
+    # Arrange
+    client.post("/store", json={"content": "long term obsession", "type": "long-term", "dharma_tags": ["metta"]})
+    client.post("/store", json={"content": "short term obsession", "type": "short-term", "dharma_tags": ["metta"]})
+    client.post("/store", json={"content": "long term suffering", "type": "long-term", "dharma_tags": ["dukkha"]})
+    # This last one will be skipped by recall
+    client.post("/store", json={"content": "another record"})
+
+    # Act: Recall with filters for type 'long-term' and concept 'Obsession'
+    response = client.post("/recall", json={"memory_types": ["long-term"], "dark_concepts_filter": ["Obsession"]})
+    data = response.json()
+
+    # Assert
+    assert response.status_code == 200
+    assert len(data) == 1
+    assert data[0]["content"] == "long term obsession"
+
+
+def test_recall_with_filter_that_matches_nothing():
+    """Tests that recall returns an empty list when filters match no records."""
+    client = TestClient(app)
+
+    # Arrange
+    client.post("/store", json={"content": "record 1", "type": "type-A"})
+    client.post("/store", json={"content": "record 2", "type": "type-B"})
+    # This last one will be skipped by recall
+    client.post("/store", json={"content": "record 3"})
+
+    # Act: Recall with a filter that won't match anything
+    response = client.post("/recall", json={"memory_types": ["type-C"]})
+    data = response.json()
+
+    # Assert
+    assert response.status_code == 200
+    assert data == []

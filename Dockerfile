@@ -1,21 +1,18 @@
-# ใช้ Python เวอร์ชันที่เหมาะสม
+# Use an official Python runtime as a parent image
 FROM python:3.11-slim
 
-# ตั้ง working directory
+# Set the working directory in the container
 WORKDIR /app
 
-# คัดลอก requirements.txt ก่อนเพื่อให้ cache ทำงาน
+# Copy the requirements file into the container at /app
 COPY requirements.txt .
 
-# ติดตั้ง dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install any needed packages specified in requirements.txt
+RUN python -m pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# คัดลอกโค้ดทั้งหมดเข้า container
+# Copy the rest of the application's code
 COPY . .
 
-# เปิดพอร์ตที่ Cloud Run กำหนด (ปกติคือ 8080)
-EXPOSE 8080
-
-# คำสั่งรัน Uvicorn โดยใช้ $PORT จาก environment variable
-# ต้องใช้ shell form (ไม่มี []) เพื่อให้ $PORT ทำงาน
-CMD uvicorn server:app --host 0.0.0.0 --port $PORT
+# Command to run the application
+CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]
