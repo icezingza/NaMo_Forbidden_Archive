@@ -31,6 +31,7 @@ class MemoryStorageRequest(BaseModel):
     session_id: str | None = None
     emotion_context: EmotionContext | None = None
     dharma_tags: list[str] | None = None  # We will map this to Dark Erotic Concepts
+    sin_stats: dict | None = None
 
 
 class MemoryRecord(MemoryStorageRequest):

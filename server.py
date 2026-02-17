@@ -64,7 +64,7 @@ def _normalize_media(media: dict, base_url: str) -> dict:
     return {k: _resolve_media_url(v, base_url) for k, v in media.items()}
 
 
-def _store_memory_if_enabled(session_id: str, user_text: str, response_text: str) -> None:
+def _store_memory_if_enabled(session_id: str, user_text: str, response_text: str, system_status: dict | None = None) -> None:
     if not settings.memory_logging:
         return
     memory_url = settings.memory_api_url
@@ -74,6 +74,7 @@ def _store_memory_if_enabled(session_id: str, user_text: str, response_text: str
         "content": f"user: {user_text}\nassistant: {response_text}",
         "type": "contextual",
         "session_id": session_id,
+        "sin_stats": system_status,
     }
     headers = {}
     memory_key = settings.memory_api_key
@@ -136,7 +137,7 @@ async def chat_with_namo(payload: ChatInput, request: Request):
     else:
         base_url = _normalize_base_url(str(request.base_url))
     media = _normalize_media(result["media_trigger"], base_url)
-    _store_memory_if_enabled(session_id, payload.text, result["text"])
+    _store_memory_if_enabled(session_id, payload.text, result["text"], result["system_status"])
 
     # ส่ง Path ไฟล์ภาพ/เสียง กลับไปให้ Frontend แสดงผล
     return {
@@ -165,7 +166,7 @@ async def chat_with_namo_v1(
     else:
         base_url = _normalize_base_url(str(request.base_url))
     media = _normalize_media(result["media_trigger"], base_url)
-    _store_memory_if_enabled(session_id, payload.text, result["text"])
+    _store_memory_if_enabled(session_id, payload.text, result["text"], result["system_status"])
     _log_usage(
         {
             "endpoint": "/v1/chat",
