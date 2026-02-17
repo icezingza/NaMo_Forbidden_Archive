@@ -115,6 +115,7 @@ class NaMoOmegaEngine:
         return env_value == "1"
 
     def __init__(self):
+        print("✅ Loading NaMoOmegaEngine...")
         self.sin_system = SinSystem()
         self.sensory = SensoryOverloadManager()
         self.personas = PersonaOrchestrator()
@@ -145,6 +146,15 @@ class NaMoOmegaEngine:
         elif self.llm_enabled:
             print("[OMEGA ENGINE]: LLM enabled but OpenAI client/key not available.")
 
+        # --- Dark Mode Initialization Checks ---
+        if os.getenv("ENABLE_DARK_MEMORY", "false").lower() == "true":
+            print("✅ Dark System: ONLINE")
+
+        if os.getenv("ENABLE_AROUSAL_DETECTOR", "false").lower() == "true":
+            print("✅ Arousal Detector: ACTIVE")
+
+        if os.getenv("SAFETY_FILTER_ENABLED", "true").lower() == "false":
+            print("✅ WARNING: Safety filters are DISABLED.")
         print("[OMEGA ENGINE]: ONLINE. SENSORY SYSTEMS ENGAGED.")
 
     def _history_key(self, session_id: Optional[str]) -> str:

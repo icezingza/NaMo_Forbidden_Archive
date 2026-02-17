@@ -3,8 +3,8 @@ import sys
 
 import pytest
 
-# Add Core_Scripts to the Python path to allow for direct imports
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "Core_Scripts"))
+# Add the root directory to the Python path to allow for direct imports
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from dialogue_manager import DialogueManager
 
