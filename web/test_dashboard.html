@@ -1,3 +1,16 @@
+Configuration Check: Analyze config.py and .env. Confirm that Settings class correctly allows extra fields
+(extra='ignore') and that SAFETY_FILTER_ENABLED is reading as False.
+
+Engine Injection Verify: Inspect core/namo_omega_engine.py. Confirm that it imports settings from config and that the
+__init__ method uses these settings to print the 'Dark System: ONLINE' and 'Safety filters DISABLED' logs.
+
+Endpoint Discovery: Scan server.py and app.py. Identify the EXACT HTTP route for the chat API. Is it /chat, /v1/chat,
+/api/chat, or something else?
+
+Dependency Conflict: Check if requirements.txt has any conflicts with the current uvicorn or fastapi versions causing
+the pydantic errors we saw earlier.
+
+Simulation: Simulate a server startup in your internal sandbox. Does it crash? If not, what are the startup logs?
 <!DOCTYPE html>
 <html lang="en">
 

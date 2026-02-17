@@ -1,0 +1,7 @@
+{
+    "python.testing.pytestArgs": [
+        "learning_set"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
+}
