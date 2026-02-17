@@ -1,37 +1,50 @@
-"""
-Centralized configuration management using Pydantic's BaseSettings.
+import os
+from typing import Optional
 
-This module provides a single source of truth for all environment-based
-configurations, offering validation, type-hinting, and default values.
-"""
-
-from pydantic import Field
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Manages application settings, automatically reading from .env files."""
+    # --- System ---
+    app_env: str = "development"
+    app_port: int = 8000
+    debug: bool = True
+    log_level: str = "INFO"
 
-    # --- Server Settings ---
-    public_base_url: str | None = Field(None, alias="PUBLIC_BASE_URL")
-    cors_allow_origins: str = Field("*", alias="CORS_ALLOW_ORIGINS")
-    namo_usage_log_path: str | None = Field(None, alias="NAMO_USAGE_LOG_PATH")
+    # --- External Services ---
+    openai_api_key: Optional[str] = None
+    emotion_api_url: Optional[str] = "http://localhost:8082/analyze"
+    memory_api_url: Optional[str] = None
+    memory_api_key: Optional[str] = None
+    public_base_url: Optional[str] = None
+    cors_allow_origins: str = "*"
+    memory_logging: int = 0
 
-    # --- Memory Service Settings ---
-    memory_file_path: str = Field("memory_protocol.json", alias="MEMORY_FILE_PATH")
-    memory_logging: bool = Field(False, alias="MEMORY_LOGGING")
-    memory_api_url: str | None = Field(None, alias="MEMORY_API_URL")
-    memory_api_key: str | None = Field(None, alias="MEMORY_API_KEY")
+    # --- LLM Config ---
+    namo_llm_enabled: bool = False
+    namo_llm_model: str = "gpt-4o-mini"
+    namo_llm_temperature: float = 0.85
+    namo_llm_max_tokens: int = 240
+    namo_llm_memory_turns: int = 6
 
-    # --- API Key and Plan Settings ---
-    namo_api_keys: str | None = Field(None, alias="NAMO_API_KEYS")
-    namo_api_default_plan: str = Field("public", alias="NAMO_API_DEFAULT_PLAN")
+    # --- 🔓 Forbidden Unlock (Dark Mode) ---
+    safety_filter_enabled: bool = True
+    nsfw_allowed: bool = False
+    scene_mode: str = "restricted"
+    api_master_key: Optional[str] = None
+    admin_secret: Optional[str] = None
 
-    class Config:
-        # This allows the settings to be loaded from a .env file.
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    # --- Core Engines ---
+    enable_emotion_parasite: bool = False
+    enable_arousal_detector: bool = False
+    enable_dark_memory: bool = False
 
+    # Configuration to handle .env file and ignore unknown extra fields
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",  # สำคัญ: ถ้ามีตัวแปรเกินมา ไม่ต้อง Error ให้ข้ามไปเลย
+        case_sensitive=False,
+    )
 
-# Create a single, reusable instance of the settings to be used across the app.
 settings = Settings()
