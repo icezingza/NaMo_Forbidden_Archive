@@ -190,6 +190,12 @@ def health_check():
     return {"status": "ok", "engine": "Omega"}
 
 
+@app.get("/v1/status")
+def engine_status():
+    """Full engine status including live emotion snapshot and evolved persona traits."""
+    return engine.get_status()
+
+
 @app.get("/")
 def root():
     return {"status": "NaMo is Horny & Online", "engine": "Omega", "sin": engine.sin_system.get_status()}

@@ -189,12 +189,16 @@ class RinladaAI(BasePersonaEngine):
         self.identity = RinladaIdentity()
         self.brain = AdvancedBrain()
         self.soul = SoulMemory()
-        
+
+        # Cognitive stack (emotion + thoughts + learning)
+        self.init_cognition(save_dir=BASE_DIR)
+
         # แสดงสถานะเริ่มต้น
         print(f"👤 Persona: {self.identity.profile['name']}")
         print(f"🧠 Brain Status: {'Neural Network Active' if self.brain.active else 'Standard Logic Active'}")
         print(f"💖 Heart Level: {self.soul.data['consciousness_level']}/1000")
         print(f"🌀 Evolution Cycle: {self.soul.data['cycle_count']}")
+        print(f"🎭 Cognitive Stack: ONLINE")
         print("-" * 60 + "\n")
 
     def interact(self, user_input):
@@ -227,22 +231,37 @@ class RinladaAI(BasePersonaEngine):
     def process_input(self, user_input: str, session_id: str | None = None) -> dict:
         """Implement BasePersonaEngine contract — usable from server.py."""
         analysis = self.brain.analyze_input(user_input)
-        arousal_gain = 10 if analysis["intent"] == "Lust" else 5
+        intent = analysis["intent"]
+
+        arousal_gain = 10 if intent == "Lust" else 5
         self.soul.data["arousal_level"] = min(100, self.soul.data["arousal_level"] + arousal_gain)
+
+        # Run full cognitive cycle
+        cog_output: dict = {}
+        if self.cognitive is not None:
+            recent_mems = self.soul.data.get("memories", [])[-5:]
+            cog_output = self.cognitive.process(user_input, intent, memories=recent_mems)
+
         strategy = self.brain.choose_strategy(analysis, self.soul.data["arousal_level"])
-        self.soul.update_experience(20, analysis["intent"])
+        self.soul.update_experience(20, intent)
         self.soul.save()
         text_response = self._generate_response(strategy, user_input, analysis)
+
+        system_status = {
+            "arousal": f"{self.soul.data['arousal_level']}%",
+            "intent": intent,
+            "strategy": strategy,
+            "cycle": self.soul.data["cycle_count"],
+            "consciousness": self.soul.data["consciousness_level"],
+        }
+        if cog_output:
+            system_status["emotion"] = cog_output.get("emotion", {})
+            system_status["persona_traits"] = cog_output.get("persona_traits", {})
+
         return {
             "text": text_response,
             "media_trigger": {"image": None, "audio": None, "tts": None},
-            "system_status": {
-                "arousal": f"{self.soul.data['arousal_level']}%",
-                "intent": analysis["intent"],
-                "strategy": strategy,
-                "cycle": self.soul.data["cycle_count"],
-                "consciousness": self.soul.data["consciousness_level"],
-            },
+            "system_status": system_status,
         }
 
     def _build_system_prompt(self, context: str) -> str:
