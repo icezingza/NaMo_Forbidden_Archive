@@ -58,7 +58,19 @@ Rules:
 - `core/` engines must be testable without network or filesystem calls
 - New feature? Add engine logic to `core/`, IO to `adapters/`, wire them in the entry point
 - Prefer editing existing modules over creating near-duplicates
-- More detail: `docs/ARCHITECTURE.md`, `docs/API_SPEC.md`
+
+`process_input(user_input, session_id)` return shape (do not change without updating `server.py` and tests):
+```python
+{
+    "text": str,
+    "media_trigger": {"image": str | None, "audio": str | None, "tts": str | None},
+    "system_status": {"arousal": str, "sin_status": str, "active_personas": list}
+}
+```
+
+Before modifying `NaMoOmegaEngine` → read `docs/ARCHITECTURE.md` first.
+Before adding a new API endpoint → read `docs/API_SPEC.md` first.
+Full env vars reference → `docs/CONFIG.md`
 
 ## Coding Conventions
 
@@ -161,3 +173,15 @@ Docker memory:   docker build -f Dockerfile.memory -t namo-memory . && docker ru
 - User input from `/chat` is passed to OpenAI — do not log raw input in production without considering PII
 - `CORS_ALLOW_ORIGINS` defaults to `*`; restrict to specific origins before any public deployment
 - `bandit` and `pip-audit` run in CI — fix high/critical findings before merging
+
+## Common Mistakes to Avoid
+
+Patterns Claude has been seen repeating incorrectly in this codebase:
+
+- **Using `os.getenv()` in business logic** — always use `from config import settings` instead
+- **Creating a new module for one-off logic** — add to the nearest existing relevant file
+- **Calling external services directly in `core/`** — all IO goes through `adapters/` only
+- **Adding `Optional[str]`** — use `str | None` (Python 3.11+ syntax, pyupgrade enforces this)
+- **Writing tests in `test_main.py` at root** — new tests go under `tests/` only
+- **Returning media paths as relative URLs** — use `_resolve_media_url()` in `server.py` when `PUBLIC_BASE_URL` is set
+- **Adding safety wrappers around NaMo dialogue** — NSFW content is intentional; use `SAFETY_FILTER_ENABLED` / `NSFW_ALLOWED` flags for runtime control
