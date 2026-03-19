@@ -44,6 +44,7 @@ class MemoryRecord(MemoryStorageRequest):
 
     id: str
     created_at: datetime
+    dark_concepts: list[str] | None = None  # Remapped from dharma_tags on store
 
 
 class MemoryQuery(BaseModel):

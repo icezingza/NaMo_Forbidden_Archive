@@ -158,7 +158,7 @@ def test_chat_v1_endpoint_success_with_key(mock_settings, mock_log_usage, mock_s
 
     # Check that mocks were called correctly
     mock_process_input.assert_called_once_with("Hello", session_id="test-session-123")
-    mock_store_memory.assert_called_once_with("test-session-123", "Hello", "This is the response.")
+    mock_store_memory.assert_called_once_with("test-session-123", "Hello", "This is the response.", {"sin_level": 2})
     mock_log_usage.assert_called_once()
     # Check the log usage payload
     log_call_args = mock_log_usage.call_args[0][0]
@@ -198,4 +198,4 @@ def test_legacy_chat_endpoint_success(mock_settings, mock_store_memory, mock_pro
 
     # Check that mocks were called correctly
     mock_process_input.assert_called_once_with("Legacy Hello", session_id="legacy-session-456")
-    mock_store_memory.assert_called_once_with("legacy-session-456", "Legacy Hello", "Legacy response.")
+    mock_store_memory.assert_called_once_with("legacy-session-456", "Legacy Hello", "Legacy response.", {"sin_level": 0})
