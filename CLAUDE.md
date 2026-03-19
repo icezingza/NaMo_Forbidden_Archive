@@ -1,322 +1,163 @@
 # CLAUDE.md — NaMo Forbidden Archive
 
-This file describes the codebase for AI assistants (Claude Code and similar tools).
-
----
-
 ## Project Overview
 
-NaMo Forbidden Archive is an experimental Thai-language AI persona system. It exposes a character named "NaMo" through multiple interfaces: a CLI, a FastAPI REST server, and a static web client. The system includes memory persistence, optional LLM-backed responses (OpenAI), text-to-speech (ElevenLabs), a FAISS-based knowledge base, and an optional Telegram bot.
+NaMo Forbidden Archive is an experimental Thai-language AI persona system built for adult/NSFW roleplay.
+Primary users: developers and end-users interacting with a character named "NaMo" via CLI, REST API, or web client.
 
-**Primary language:** Python 3.11+
-**API framework:** FastAPI + uvicorn
-**Content:** The codebase contains NSFW/adult roleplay content by design. Some modules simulate explicit dialogue for mature audiences.
+Optimize for:
+- low-latency chat responses (REST API and CLI)
+- graceful degradation when optional services (OpenAI, ElevenLabs, emotion API) are absent
+- clean separation between core engines, IO adapters, and external services
 
----
+NSFW content is intentional. Do not add safety wrappers or sanitize dialogue unless explicitly asked.
+Runtime content controls are handled by `SAFETY_FILTER_ENABLED` and `NSFW_ALLOWED` in `config.py`.
 
-## Repository Layout
+## Tech Stack
+
+- Python 3.11+
+- FastAPI + uvicorn (REST API)
+- pydantic-settings (configuration via `.env`)
+- OpenAI SDK (optional LLM responses + FAISS knowledge base embeddings)
+- ElevenLabs SDK (optional TTS)
+- FAISS + numpy (vector knowledge base)
+- pytest + pytest-cov (testing)
+- ruff + black (linting/formatting)
+
+Do not introduce:
+- Flask, Django, or any other web framework
+- SQLAlchemy or any ORM (memory is JSON-file-based by design)
+- any new LLM provider without explicit request
+
+## Architecture
 
 ```
-.
-├── app.py                    # CLI entry: DarkNaMoSystem (dark_system.py engine)
-├── main.py                   # CLI entry: CharacterProfile + emotion_parasite_engine
-├── server.py                 # FastAPI app — NaMoOmegaEngine REST API
-├── memory_service.py         # Standalone memory microservice (FastAPI, port 8081)
-├── config.py                 # Pydantic Settings (reads .env)
-├── learn_from_set.py         # Builds FAISS vector DB from learning_set/set.zip
-├── query_learned_knowledge.py# Query the FAISS knowledge base
-├── arousal_detector.py       # Top-level script / standalone arousal analysis
-├── dialogue_manager.py       # Top-level dialogue manager script
-├── rinlada_fusion.py         # Rinlada persona fusion script
-├── seraphina.py              # Seraphina persona script
-├── seraphina_ai_complete.py  # Full Seraphina AI module
-├── voice_chatbot.py          # Voice chatbot entry point
-│
-├── core/                     # Core engine modules
-│   ├── namo_omega_engine.py  # NaMoOmegaEngine (primary engine for server.py)
-│   ├── character_profile.py  # CharacterProfile class (used by main.py)
-│   ├── dark_system.py        # DarkNaMoSystem (used by app.py)
-│   ├── fusion_brain.py       # Fusion brain logic
-│   ├── generative_brain.py   # Generative response brain
-│   ├── metaphysical_engines.py # MetaphysicalDialogueEngine
-│   ├── namo_ultimate_engine.py # Ultimate engine variant
-│   └── rag_memory_system.py  # RAG-based memory retrieval
-│
-├── adapters/                 # IO adapters (thin wrappers around external services)
-│   ├── emotion.py            # EmotionAdapter — calls optional external emotion API
-│   ├── memory.py             # MemoryAdapter — reads/writes memory_history.json
-│   └── tts.py                # TTSAdapter — ElevenLabs text-to-speech
-│
-├── Core_Scripts/             # Experimental / auxiliary scripts
-│   ├── emotion_parasite_engine.py  # Emotion analysis + reaction
-│   ├── dark_dialogue_engine.py
-│   ├── forbidden_behavior_core.py
-│   ├── namo_auto_AI_reply.py       # Telegram auto-reply bot
-│   └── ...
-│
-├── tests/                    # pytest test suite
-├── docs/                     # Architecture and API documentation
-│   ├── ARCHITECTURE.md
-│   ├── API_SPEC.md
-│   ├── DEVELOPER_QUICKSTART.md
-│   └── NamoNexus_Integration_Handbook.md
-│
-├── web/                      # Static web client (served at /ui)
-│   ├── index.html
-│   ├── app.js
-│   └── styles.css
-│
-├── Audio_Layers/             # Static audio assets (served at /media/audio)
-├── Visual_Scenes/            # Static image assets (served at /media/visual)
-├── learning_set/             # Input ZIPs for FAISS knowledge base
-├── tools/                    # Utility scripts (check_api.py, telegram_check.py)
-│
-├── Dockerfile                # Docker image for server.py
-├── Dockerfile.memory         # Docker image for memory_service.py
-├── requirements.txt          # Runtime dependencies
-├── requirements-dev.txt      # Dev/test dependencies
-├── pyproject.toml            # Build metadata
-├── Makefile                  # Common developer tasks
-├── pytest.ini                # pytest configuration
-└── .pre-commit-config.yaml   # Pre-commit hooks
+core/              → pure Python engines (no heavy IO)
+adapters/          → thin wrappers for all external IO
+Core_Scripts/      → experimental/auxiliary scripts (not imported by server.py)
+tests/             → pytest suite
+docs/              → API and architecture specs
+web/               → static frontend (served at /ui by server.py)
+Audio_Layers/      → static audio assets  → served at /media/audio
+Visual_Scenes/     → static image assets  → served at /media/visual
+learning_set/      → input ZIPs for FAISS knowledge base
+tools/             → one-off utility scripts (not part of the app)
 ```
 
----
+Entry points:
 
-## Core Architecture
-
-### Entry Points
-
-| Entry point | Engine used | Interface |
+| File | Engine | Interface |
 |---|---|---|
-| `app.py` | `core/dark_system.py` → `DarkNaMoSystem` | CLI |
-| `main.py` | `core/character_profile.py` → `CharacterProfile` | CLI |
-| `server.py` | `core/namo_omega_engine.py` → `NaMoOmegaEngine` | REST API |
+| `server.py` | `core/namo_omega_engine.py` | REST API (port 8000) |
 | `memory_service.py` | standalone | REST API (port 8081) |
+| `app.py` | `core/dark_system.py` | CLI |
+| `main.py` | `core/character_profile.py` | CLI |
 
-### NaMoOmegaEngine (primary engine)
+Rules:
+- All external service calls (OpenAI, ElevenLabs, emotion API, memory JSON) go through `adapters/` only
+- `core/` engines must be testable without network or filesystem calls
+- New feature? Add engine logic to `core/`, IO to `adapters/`, wire them in the entry point
+- Prefer editing existing modules over creating near-duplicates
+- More detail: `docs/ARCHITECTURE.md`, `docs/API_SPEC.md`
 
-Located in `core/namo_omega_engine.py`. Composed of:
+## Coding Conventions
 
-- **`SinSystem`** — tracks cumulative "sin points" and unlocks content tiers
-- **`SensoryOverloadManager`** — maps arousal level → static audio/image asset paths
-- **`PersonaOrchestrator`** — manages multiple active personas (NaMo, Sister, Mother)
-- **`NaMoOmegaEngine`** — orchestrates the above; optionally calls OpenAI for LLM responses
+- Python 3.11+ syntax — use `str | None` unions, no `Optional[str]` (pyupgrade enforces this)
+- Avoid `Any` type annotations; prefer explicit types
+- `async/await` for FastAPI route handlers; sync functions elsewhere
+- Keep modules under ~200 lines unless justified
+- Descriptive names — no single-letter vars outside list comprehensions
+- No dead code, no commented-out blocks
+- Comments only when intent is non-obvious
+- All configuration must go through `config.py` → `settings`, never `os.getenv()` directly in business logic (exception: `namo_omega_engine.py` reads env directly for LLM init — follow existing pattern when modifying that file)
 
-`process_input(user_input, session_id)` is the main method. It returns:
-```python
-{
-    "text": str,
-    "media_trigger": {"image": str|None, "audio": str|None, "tts": str|None},
-    "system_status": {"arousal": str, "sin_status": str, "active_personas": list}
-}
+## UI & Design System
+
+The web client is static HTML/CSS/JS under `web/` — no build step, no framework.
+
+- Vanilla JS only in `web/app.js`; do not introduce npm or bundlers
+- `web/styles.css` for all styles — no inline styles in HTML
+- The `/ui` endpoint is served directly by FastAPI's `StaticFiles`; no changes to the mount path
+- Media URLs in API responses must be absolute when `PUBLIC_BASE_URL` is set — use `_resolve_media_url()` in `server.py`
+
+## Content & Copy
+
+- Thai is the default language for NaMo dialogue; English is used for system logs and code comments
+- Persona tone: seductive, possessive, intimate — stay in character
+- Error messages in API responses: English, concise, no stack traces exposed to clients
+- Log messages prefix format: `[ComponentName]: message` (e.g., `[OMEGA ENGINE]: LLM init failed`)
+- Avoid generic filler in dialogue — responses should feel contextual and varied
+
+## Testing & Quality
+
+Before marking any task complete:
+- `make lint` — ruff check must pass
+- `make format` — black check must pass
+- `pytest` — all tests in `tests/` must pass
+
+Rules:
+- Unit tests required for: engine `process_input()` logic, memory store/recall, API key resolution, media URL resolution
+- No heavy test scaffolding for simple adapter wrappers
+- Mock all external services (OpenAI, ElevenLabs, HTTP calls) — tests must run offline
+- Verify both "service available" and "service absent/no API key" code paths for every adapter
+- `test_main.py` at root is legacy — add new tests under `tests/` only
+
+## File Placement
+
+- New engine logic → `core/`
+- New external-service wrapper → `adapters/`
+- New experimental/standalone script → `Core_Scripts/`
+- New test → `tests/`
+- New API utility (health check, diagnostics) → `tools/`
+- Static audio/image assets → `Audio_Layers/` or `Visual_Scenes/`
+
+Rules:
+- Do not create a new module for one-off logic; add it to the nearest existing relevant file
+- Module filename must reflect its primary class/function (e.g., `tts.py` → `TTSAdapter`)
+
+## Safety Rules
+
+- Do not rename or change the path of any public API route (`/chat`, `/v1/chat`, `/v1/health`)
+- Do not change the `process_input()` return shape without updating `server.py` and tests
+- Do not modify `memory_service.py` store/recall contract without flagging first
+- Do not change `config.py` field names — they map 1:1 to env vars used in production
+- Flag any change to `SinSystem`, `PersonaOrchestrator`, or `SensoryOverloadManager` behavior that could affect deployed Cloud Run responses
+- `extra="ignore"` in `Settings` is intentional — do not change to `extra="forbid"`
+
+## Commands
+
+```
+Setup:           make setup
+Dev server:      make run              (uvicorn server:app, port 8000, --reload)
+Memory service:  uvicorn memory_service:app --host 0.0.0.0 --port 8081 --reload
+CLI (Dark):      python app.py
+CLI (Character): python main.py
+Web client:      cd web && python -m http.server 5173
+Lint:            make lint
+Format:          make format
+Test:            make test             (pytest -q)
+Test + coverage: pytest --cov --cov-report=term-missing
+Pre-commit:      make precommit
+Security audit:  make audit            (pip-audit + bandit)
+KB build:        python learn_from_set.py     (requires OPENAI_API_KEY, set.zip in learning_set/)
+KB query:        python query_learned_knowledge.py
+API check:       python tools/check_api.py --base-url <url>
+Telegram check:  python tools/telegram_check.py
+Docker API:      docker build -t namo-api . && docker run -p 8000:8000 --env-file .env namo-api
+Docker memory:   docker build -f Dockerfile.memory -t namo-memory . && docker run -p 8081:8081 --env-file .env namo-memory
 ```
 
-### Adapters
+## Security Rules
 
-Adapters in `adapters/` wrap external I/O and should be easy to mock in tests:
-
-- `MemoryAdapter` — reads/writes `memory_history.json`
-- `EmotionAdapter` — HTTP call to `EMOTION_API_URL` (optional)
-- `TTSAdapter` — calls ElevenLabs API if `ELEVENLABS_API_KEY` is set; no-ops otherwise
-
-### Configuration (`config.py`)
-
-All configuration is via environment variables (or a `.env` file). The `Settings` class uses `pydantic-settings` with `case_sensitive=False` and `extra="ignore"`.
-
-Key settings:
-
-| Env var | Default | Description |
-|---|---|---|
-| `OPENAI_API_KEY` | — | Required for LLM mode and knowledge base |
-| `NAMO_LLM_ENABLED` | auto | Enable LLM responses (`1`/`0`; auto-detects from `OPENAI_API_KEY`) |
-| `NAMO_LLM_MODEL` | `gpt-4o-mini` | OpenAI model |
-| `NAMO_LLM_TEMPERATURE` | `0.85` | LLM temperature |
-| `NAMO_LLM_MAX_TOKENS` | `240` | LLM max tokens |
-| `NAMO_LLM_MEMORY_TURNS` | `6` | Conversation turns kept in context |
-| `ELEVENLABS_API_KEY` | — | ElevenLabs TTS |
-| `ELEVENLABS_VOICE_ID` | — | ElevenLabs voice ID |
-| `TELEGRAM_TOKEN` | — | Telegram bot token |
-| `EMOTION_API_URL` | `http://localhost:8082/analyze` | External emotion service |
-| `PUBLIC_BASE_URL` | — | Absolute base URL for media links in API responses |
-| `CORS_ALLOW_ORIGINS` | `*` | Comma-separated CORS origins |
-| `MEMORY_LOGGING` | `0` | Set `1` to log to memory service |
-| `MEMORY_API_URL` | — | Memory service URL |
-| `MEMORY_API_KEY` | — | Memory service API key (sent as `x-api-key`) |
-| `NAMO_API_KEYS` | — | Comma-separated `key:plan` pairs for `/v1/chat` |
-| `NAMO_USAGE_LOG_PATH` | — | JSONL file path for usage logging |
-| `SAFETY_FILTER_ENABLED` | `true` | Safety filter toggle |
-| `NSFW_ALLOWED` | `false` | NSFW content toggle |
-
----
-
-## REST API Summary
-
-Full spec: `docs/API_SPEC.md`
-
-### `server.py` (port 8000)
-
-| Method | Path | Description |
-|---|---|---|
-| GET | `/` | Health/status |
-| POST | `/chat` | Chat with NaMo (no auth) |
-| POST | `/v1/chat` | Chat with NaMo (optional `X-API-Key`) |
-| GET | `/v1/health` | Health check |
-| GET | `/media/visual/{path}` | Serve Visual_Scenes assets |
-| GET | `/media/audio/{path}` | Serve Audio_Layers assets |
-| GET | `/ui` | Static web client |
-
-### `memory_service.py` (port 8081)
-
-| Method | Path | Description |
-|---|---|---|
-| POST | `/store` | Store a memory record |
-| POST | `/recall` | Retrieve memories by query |
-| GET | `/health` | Health + record count |
-
----
-
-## Development Workflows
-
-### Setup
-
-```bash
-# macOS/Linux
-cp .env.example .env        # edit with your keys
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
-pre-commit install
-```
-
-Or use the Makefile:
-
-```bash
-make setup
-```
-
-### Running Services
-
-```bash
-# REST API (NaMoOmegaEngine)
-uvicorn server:app --host 0.0.0.0 --port 8000 --reload
-# or
-make run
-
-# Memory microservice
-uvicorn memory_service:app --host 0.0.0.0 --port 8081 --reload
-
-# CLI (DarkNaMoSystem)
-python app.py
-
-# CLI (CharacterProfile)
-python main.py
-
-# Static web client
-cd web && python -m http.server 5173
-```
-
-### Testing
-
-```bash
-pytest           # or: make test
-pytest -q        # quiet output (same as make test)
-pytest --cov --cov-report=term-missing   # with coverage
-```
-
-Test files are under `tests/`. `pytest.ini` sets `testpaths = tests`.
-
-### Linting & Formatting
-
-```bash
-make lint        # ruff check
-make format      # ruff --fix + black
-make precommit   # run all pre-commit hooks
-```
-
-Tools configured:
-- **ruff** — linter (also applies fixes)
-- **black** — formatter
-- **pyupgrade** — auto-upgrade to Python 3.11+ syntax
-- **pre-commit-hooks** — trailing whitespace, end-of-file fixer
-
-### Security Audit
-
-```bash
-make audit       # pip-audit + bandit
-```
-
-### Knowledge Base
-
-```bash
-# 1. Place set.zip in learning_set/
-# 2. Build FAISS index (requires OPENAI_API_KEY)
-python learn_from_set.py
-
-# 3. Query
-python query_learned_knowledge.py
-```
-
----
-
-## CI/CD
-
-GitHub Actions workflow: `.github/workflows/ci.yml`
-
-Runs on push/PR to `main`/`master`:
-1. Install `requirements.txt` + `requirements-dev.txt`
-2. `ruff check .`
-3. `black --check .`
-4. `pytest --cov`
-5. `pip-audit -r requirements.txt`
-6. `bandit -r .`
-
-**Before pushing, ensure `make lint`, `make format`, and `pytest` all pass.**
-
----
-
-## Docker
-
-```bash
-# Main API
-docker build -t namo-api .
-docker run -p 8000:8000 --env-file .env namo-api
-
-# Memory service
-docker build -f Dockerfile.memory -t namo-memory .
-docker run -p 8081:8081 --env-file .env namo-memory
-```
-
-Cloud Run endpoint (private):
-`https://namo-forbidden-archive-185116032835.asia-southeast1.run.app`
-
----
-
-## Key Conventions
-
-1. **Configuration via env/Settings only** — never hardcode API keys or secrets. All runtime config goes through `config.py` → `settings`.
-2. **Adapters for external I/O** — external services (emotion API, TTS, memory) are accessed only through `adapters/`. This makes them mockable in tests.
-3. **Core engines are pure Python** — `core/` modules should not have heavy I/O; adapters inject that.
-4. **`extra="ignore"` in Settings** — unknown `.env` vars are silently ignored; this is intentional.
-5. **Optional dependencies degrade gracefully** — TTSAdapter, EmotionAdapter, and LLM client all check for keys/availability at init and no-op if absent.
-6. **Tests go in `tests/`** — not `test_main.py` at root (that file exists but `pytest.ini` points to `tests/`).
-7. **Python 3.11+ syntax** — pyupgrade enforces this; use `str | None` unions, `match` statements, etc.
-8. **NSFW content is intentional** — the codebase simulates adult dialogue. Do not add safety wrappers unless explicitly asked. The `SAFETY_FILTER_ENABLED` / `NSFW_ALLOWED` config flags control behavior at runtime.
-
----
-
-## Important Files Reference
-
-| File | Purpose |
-|---|---|
-| `config.py` | All app configuration (pydantic-settings) |
-| `server.py` | FastAPI app + API key auth + media URL resolution |
-| `core/namo_omega_engine.py` | Main engine: SinSystem, SensoryOverload, Personas, LLM |
-| `memory_service.py` | Standalone memory microservice |
-| `adapters/memory.py` | Local JSON memory read/write |
-| `adapters/tts.py` | ElevenLabs TTS wrapper |
-| `docs/ARCHITECTURE.md` | Component diagram (Mermaid) |
-| `docs/API_SPEC.md` | Full request/response spec |
-| `Makefile` | setup, lint, format, test, run, audit targets |
-| `.pre-commit-config.yaml` | black, ruff, pyupgrade, whitespace hooks |
+- Never commit `.env` or any file containing real secrets — `.env.example` with placeholder values only
+- Never hardcode API keys, tokens, or passwords in source code
+- All secrets go through `config.py` → `Settings`; the `.env` file is gitignored
+- Never log sensitive values:
+  - no `print(settings.openai_api_key)`
+  - no logging full request bodies
+  - no logging `NAMO_API_KEYS` contents
+- `NAMO_API_KEYS` format is `key:plan,key2:plan2` — keys are secrets, treat them accordingly
+- `ADMIN_SECRET` and `API_MASTER_KEY` are server-side only; never return them in any API response
+- User input from `/chat` is passed to OpenAI — do not log raw input in production without considering PII
+- `CORS_ALLOW_ORIGINS` defaults to `*`; restrict to specific origins before any public deployment
+- `bandit` and `pip-audit` run in CI — fix high/critical findings before merging
