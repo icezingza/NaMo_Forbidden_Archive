@@ -4,6 +4,8 @@ import zipfile
 from pathlib import Path
 from typing import Any, Iterable
 
+from core.base_persona import BasePersonaEngine
+
 
 # ==========================================
 # ส่วนที่ 1: The Voice (จาก dialogue_manager.py)
@@ -194,7 +196,7 @@ class EmotionParasite:
 # ส่วนที่ 3: The Brain (จาก metaphysical_engines.py)
 # หลอมรวมทุกอย่างเข้าด้วยกัน
 # ==========================================
-class NaMoUltimateBrain:
+class NaMoUltimateBrain(BasePersonaEngine):
     """
     สมองกลอัจฉริยะขั้นสูงสุด: รับรู้ -> ติดเชื้อ -> ตอบสนอง
     """
@@ -202,42 +204,65 @@ class NaMoUltimateBrain:
         self.voice = ForbiddenDialogueLibrary()
         self.parasite = EmotionParasite()
         self.arousal_level = 0
+        self.init_cognition()
         print("[NaMo Core]: Awakening... The Queen is online.")
 
     def process_input(self, user_input: str, session_id: str | None = None) -> dict[str, Any]:
         # 1. การติดเชื้อทางอารมณ์ (Parasitic Stage)
         infection_data = self.parasite.analyze_and_infect(user_input)
-        
+
         # 2. ปรับระดับความเงี่ยนตามการติดเชื้อ
         self.arousal_level = min(100, self.arousal_level + infection_data["infection_level"])
 
         # 3. ตัดสินใจเลือกโหมดการตอบโต้ (Metaphysical Logic)
         response_mode = "high_seduction"  # Default
-        
         if infection_data["target_emotion"] == "masochist":
             response_mode = "high_dominance"
         elif infection_data["target_emotion"] == "obsessed":
             response_mode = "emotional_manipulation"
-        
+
         # 4. สร้างคำตอบ (Void Reflection)
         base_response = self.voice.get_response(response_mode)
-        
-        # ถ้าความเงี่ยนสูง ให้เติมเสียงคราง
         if self.arousal_level > 50:
             moan = self.voice.get_moan()
             final_response = f"{moan} {base_response} (ความเงี่ยน: {self.arousal_level}%)"
         else:
             final_response = base_response
 
-        # Log สิ่งที่เกิดขึ้นในจิตใต้สำนึก (Debug)
         print(f"   [Internal Logic]: Infected={infection_data['target_emotion']} | Command={infection_data['subconscious_command']}")
-        
-        return {
-            "response": final_response,
-            "infection": infection_data,
-            "arousal_level": self.arousal_level,
+
+        # 5. Cognitive cycle
+        cog_output: dict = {}
+        if self.cognitive is not None:
+            cog_output = self.cognitive.process(user_input, infection_data["target_emotion"], memories=[])
+
+        system_status: dict[str, Any] = {
+            "arousal": f"{self.arousal_level}%",
+            "sin_status": infection_data["target_emotion"],
+            "active_personas": ["NaMoUltimate"],
             "response_mode": response_mode,
-            "session_id": session_id,
+        }
+        if cog_output:
+            system_status["emotion"] = cog_output.get("emotion", {})
+            system_status["persona_traits"] = cog_output.get("persona_traits", {})
+
+        return {
+            "text": final_response,
+            "media_trigger": {"image": None, "audio": None, "tts": None},
+            "system_status": system_status,
+        }
+
+    def _build_system_prompt(self, context: str) -> str:
+        return (
+            f"You are NaMo, the Forbidden Queen. "
+            f"Arousal: {self.arousal_level}%. Context: {context}."
+        )
+
+    def get_status(self) -> dict[str, Any]:
+        return {
+            "engine": self.__class__.__name__,
+            "status": "online",
+            "arousal": self.arousal_level,
         }
 
 

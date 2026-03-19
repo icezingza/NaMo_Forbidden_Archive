@@ -5,6 +5,7 @@ from adapters.emotion import EmotionAdapter
 
 # --- การเชื่อมต่อประสาทสัมผัส (Adapters) ---
 from adapters.memory import MemoryAdapter
+from core.base_persona import BasePersonaEngine
 
 # --- การเชื่อมต่อ "มันสมอง" (The Brain) ---
 from core.metaphysical_engines import MetaphysicalDialogueEngine
@@ -70,7 +71,7 @@ def load_character(character_file: str) -> dict[str, Any]:
 # =============================
 
 
-class DarkNaMoSystem:
+class DarkNaMoSystem(BasePersonaEngine):
     """
     แกนกลางที่วิวัฒนาการสมบูรณ์ (Phase 4.2)
     บัดนี้ได้ติดตั้ง "สมองอภิปรัชญา" (Metaphysical Brain) แล้ว
@@ -86,43 +87,75 @@ class DarkNaMoSystem:
         # 2. โหลด "อัตลักษณ์" (Character)
         self.character = load_character(character_file)
 
-        # 3. --- การผ่าตัดเชื่อมต่อสมอง ---
-        # นี่คือการแทนที่ Placeholder `DarkDialogueEngine` (Phase 3.1)
-        # ด้วย "สมอง" ที่แท้จริงจาก Phase 4.1
-        self.dialogue_engine = MetaphysicalDialogueEngine(self.character)  # <--
-        # --- สิ้นสุดการผ่าตัด ---
+        # 3. เชื่อมต่อสมอง
+        self.dialogue_engine = MetaphysicalDialogueEngine(self.character)
 
         # 4. สร้าง "เครื่องวิเคราะห์" (Analyzer)
         self.analyzer = CosmicDesireAnalyzer(self.emotion_adapter)
 
         self.intensity = self.character.get("default_intensity", 5)
+        self.init_cognition()
         print("[DarkNaMoSystem]: Metaphysical Core Online. Protocol Active.")
 
-    def process_input(self, user_input: str, session_id: str) -> str:
+    def process_input(self, user_input: str, session_id: str | None = None) -> dict[str, Any]:
         """
         กระบวนการทำงานที่สมบูรณ์:
         Input -> Safe Word Check -> Analyze Desire -> Generate Response (via Brain) -> Log Memory
         """
+        effective_session = session_id or "default"
+
         # 1. ตรวจสอบ Safe Word
         if SAFE_WORD in user_input:
-            return self.activate_aftercare(session_id, user_input)
+            text = self.activate_aftercare(effective_session, user_input)
+            desire_map: dict[str, Any] = {"primary_desire": "safe_word"}
+        else:
+            # 2. วิเคราะห์ความปรารถนา (ผ่าน Emotion Adapter)
+            desire_map = self.analyzer.map_desire_patterns(user_input)
 
-        # 2. วิเคราะห์ความปรารถนา (ผ่าน Emotion Adapter)
-        desire_map = self.analyzer.map_desire_patterns(user_input)
+            # 3. ปรับความเข้มข้น
+            if desire_map.get("emotion_analysis", {}).get("intensity", 0) > 0.8:
+                self.intensity = min(10, self.intensity + 1)
 
-        # 3. (Placeholder) ปรับความเข้มข้น
-        if desire_map.get("emotion_analysis", {}).get("intensity", 0) > 0.8:
-            self.intensity = min(10, self.intensity + 1)
+            # 4. สร้างการตอบสนอง (ผ่าน Metaphysical Brain)
+            text = self.dialogue_engine.generate_response(desire_map, self.intensity)
 
-        # 4. สร้างการตอบสนอง (ผ่าน Metaphysical Brain)
-        # "สมอง" จะใช้ ParadoxResolver
-        # และ DharmaProcessor
-        response = self.dialogue_engine.generate_response(desire_map, self.intensity)
+            # 5. บันทึกความทรงจำ (ผ่าน Memory Adapter)
+            self.log_to_memory(user_input, text, desire_map, effective_session)
 
-        # 5. บันทึกความทรงจำ (ผ่าน Memory Adapter)
-        self.log_to_memory(user_input, response, desire_map, session_id)
+        # 6. Cognitive cycle
+        cog_output: dict = {}
+        if self.cognitive is not None:
+            emotion_hint = desire_map.get("emotion_analysis", {}).get("primary_emotion", "neutral")
+            cog_output = self.cognitive.process(user_input, emotion_hint, memories=[])
 
-        return response
+        system_status: dict[str, Any] = {
+            "intensity": self.intensity,
+            "sin_status": desire_map.get("primary_desire", "dialogue"),
+            "active_personas": ["DarkNaMo"],
+        }
+        if cog_output:
+            system_status["emotion"] = cog_output.get("emotion", {})
+            system_status["persona_traits"] = cog_output.get("persona_traits", {})
+
+        return {
+            "text": text,
+            "media_trigger": {"image": None, "audio": None, "tts": None},
+            "system_status": system_status,
+        }
+
+    def _build_system_prompt(self, context: str) -> str:
+        return (
+            f"You are NaMo Deep Darkness. Protocol: {PROTOCOL['Version']}. "
+            f"Intensity: {self.intensity}/10. Context: {context}."
+        )
+
+    def get_status(self) -> dict[str, Any]:
+        return {
+            "engine": self.__class__.__name__,
+            "status": "online",
+            "intensity": self.intensity,
+            "character": self.character.get("name"),
+        }
 
     def activate_aftercare(self, session_id: str, user_input: str) -> str:
         print(f"[DarkNaMoSystem]: SAFE WORD DETECTED ({SAFE_WORD}). Activating Aftercare.")

@@ -16,7 +16,8 @@ from core.base_persona import BasePersonaEngine
 # ==============================================================================
 # ⚙️ SYSTEM CONFIGURATION
 # ==============================================================================
-STATE_PATH = Path(__file__).resolve().parent / "Rinlada_Memory.json"
+BASE_DIR = Path(__file__).resolve().parent
+STATE_PATH = BASE_DIR / "Rinlada_Memory.json"
 LOG_PATH = Path(__file__).resolve().parent / "rinlada_core.log"
 
 # Suppress TensorFlow warnings
