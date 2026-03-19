@@ -5,6 +5,8 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Optional
 
 from adapters.tts import TTSAdapter
+from core.base_persona import BasePersonaEngine
+
 try:
     from openai import OpenAI
 except Exception:  # pragma: no cover - optional dependency at runtime
@@ -124,7 +126,7 @@ class PersonaOrchestrator:
 # =========================================================
 # 🧠 The Omega Brain: Main Processing Unit
 # =========================================================
-class NaMoOmegaEngine:
+class NaMoOmegaEngine(BasePersonaEngine):
     def _resolve_llm_enabled(self) -> bool:
         env_value = os.getenv("NAMO_LLM_ENABLED")
         if env_value is None:
@@ -190,6 +192,19 @@ class NaMoOmegaEngine:
         max_items = max(2, self.llm_memory_turns * 2)
         if len(history) > max_items:
             self.session_history[key] = history[-max_items:]
+
+    def _build_system_prompt(self, context: str) -> str:
+        return self._construct_anlrs_prompt(context)
+
+    def get_status(self) -> dict:
+        return {
+            "engine": self.__class__.__name__,
+            "status": "online",
+            "arousal": self.arousal,
+            "sin_rank": self.sin_system.rank,
+            "active_personas": self.personas.active_personas,
+            "llm_enabled": self.llm_enabled,
+        }
 
     def _construct_anlrs_prompt(self, context: str) -> str:
         """

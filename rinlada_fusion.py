@@ -8,6 +8,10 @@ from pathlib import Path
 from typing import Dict, List, Any
 from collections import defaultdict
 from datetime import datetime
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from core.base_persona import BasePersonaEngine
 
 # ==============================================================================
 # ⚙️ SYSTEM CONFIGURATION
@@ -176,7 +180,7 @@ class SoulMemory:
 # ==============================================================================
 # 💋 MAIN SYSTEM: RINLADA FUSION CORE
 # ==============================================================================
-class RinladaAI:
+class RinladaAI(BasePersonaEngine):
     def __init__(self):
         print("\n" + "=" * 60)
         print("🌹 INITIALIZING RINLADA: FINAL FUSION PROTOCOL 🌹")
@@ -219,6 +223,45 @@ class RinladaAI:
             print(f"   ↳ 🦋 **RINLADA EVOLVED TO CYCLE {self.soul.data['cycle_count']}**")
         print(f"\n💋 น้าริน: {response}")
         print("\n" + "-" * 40)
+
+    def process_input(self, user_input: str, session_id: str | None = None) -> dict:
+        """Implement BasePersonaEngine contract — usable from server.py."""
+        analysis = self.brain.analyze_input(user_input)
+        arousal_gain = 10 if analysis["intent"] == "Lust" else 5
+        self.soul.data["arousal_level"] = min(100, self.soul.data["arousal_level"] + arousal_gain)
+        strategy = self.brain.choose_strategy(analysis, self.soul.data["arousal_level"])
+        self.soul.update_experience(20, analysis["intent"])
+        self.soul.save()
+        text_response = self._generate_response(strategy, user_input, analysis)
+        return {
+            "text": text_response,
+            "media_trigger": {"image": None, "audio": None, "tts": None},
+            "system_status": {
+                "arousal": f"{self.soul.data['arousal_level']}%",
+                "intent": analysis["intent"],
+                "strategy": strategy,
+                "cycle": self.soul.data["cycle_count"],
+                "consciousness": self.soul.data["consciousness_level"],
+            },
+        }
+
+    def _build_system_prompt(self, context: str) -> str:
+        return (
+            f"You are {self.identity.profile['name']} ({self.identity.profile['role']}). "
+            f"Context: {context}. "
+            f"Inner core: {self.identity.psychology['inner_core']}. "
+            f"Outer mask: {self.identity.psychology['outer_mask']}."
+        )
+
+    def get_status(self) -> dict:
+        return {
+            "engine": self.__class__.__name__,
+            "status": "online",
+            "persona": self.identity.profile["name"],
+            "consciousness_level": self.soul.data["consciousness_level"],
+            "cycle": self.soul.data["cycle_count"],
+            "arousal": self.soul.data["arousal_level"],
+        }
 
     def _generate_response(self, strategy, input_text, analysis):
         # คลังคำตอบตามกลยุทธ์ (Simulated Dynamic Response)
