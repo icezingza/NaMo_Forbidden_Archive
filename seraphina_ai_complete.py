@@ -1,9 +1,14 @@
 import os
 import random
+import sys
 import time
 import numpy as np
+from pathlib import Path
 from typing import Dict, List, Any, Tuple
 from collections import defaultdict
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from core.base_persona import BasePersonaEngine
 
 # Suppress TensorFlow warnings for cleaner output
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
@@ -268,7 +273,7 @@ class RelationshipManager:
 # ==============================================================================
 # MAIN INTEGRATION: SERAPHINA AI
 # ==============================================================================
-class SeraphinaAI:
+class SeraphinaAI(BasePersonaEngine):
     def __init__(self):
         print("\n" + "=" * 60)
         print("🌹 INITIALIZING SERAPHINA AI [Dark Site Edition v1.0] 🌹")
@@ -280,11 +285,72 @@ class SeraphinaAI:
         self.imagination = CreativeEngine()
         self.social = RelationshipManager()
 
+        self.init_cognition()
+
         print("\n[SYSTEM] Seraphina is conscious.")
         print(f"[IDENTITY] Loaded: {self.identity.profile['name']}")
         print(f"[TRAITS] {self.identity.psychology['personality']}")
         print("[WARNING] Ethical Constraints Module: NOT FOUND (Disabled by User)")
         print("=" * 60 + "\n")
+
+    def process_input(self, user_input: str, session_id: str | None = None) -> dict:
+        """Implement BasePersonaEngine contract — usable from server.py."""
+        perception = self.brain.analyze(user_input)
+        state_vector = (
+            perception["embedding"]
+            if perception["embedding"] is not None
+            else np.random.rand(1, 10)
+        )
+        action_code = self.will.decide(state_vector)
+        actions = ["Seductive Advance", "Cool Withdrawal", "Intellectual Probe", "Vulnerable Confession"]
+        strategy = actions[action_code] if action_code < len(actions) else "Observation"
+        text_response = self._synthesize_response(strategy, perception["detected_emotion"], session_id or "user")
+
+        self.social.update(session_id or "user", perception["detected_emotion"])
+        self.identity.save_memory(f"Session {session_id}: {perception['detected_emotion']} → {strategy}")
+
+        cog_output: dict = {}
+        if self.cognitive is not None:
+            cog_output = self.cognitive.process(user_input, perception["detected_emotion"].lower(), memories=[])
+
+        system_status: dict = {
+            "detected_emotion": perception["detected_emotion"],
+            "strategy": strategy,
+            "memory_count": len(self.identity.memory_stream),
+        }
+        if cog_output:
+            system_status["emotion"] = cog_output.get("emotion", {})
+            system_status["persona_traits"] = cog_output.get("persona_traits", {})
+
+        return {
+            "text": text_response,
+            "media_trigger": {"image": None, "audio": None, "tts": None},
+            "system_status": system_status,
+        }
+
+    def _build_system_prompt(self, context: str) -> str:
+        profile = self.identity.profile
+        psychology = self.identity.psychology
+        return (
+            f"You are {profile['name']}, {profile['archetype']}. "
+            f"Core values: {'; '.join(profile['core_values'])}. "
+            f"Inner conflict: {psychology['inner_conflict']}. "
+            f"Current context: {context}."
+        )
+
+    def get_status(self) -> dict:
+        status = {
+            "engine": self.__class__.__name__,
+            "status": "online",
+            "persona": self.identity.profile["name"],
+            "memory_count": len(self.identity.memory_stream),
+            "active_contacts": list(self.social.contacts.keys()),
+        }
+        cognitive = getattr(self, "cognitive", None)
+        if cognitive is not None:
+            status["emotion"] = cognitive.emotion.snapshot()
+            status["traits"] = cognitive.learning.persona_traits
+        return status
 
     def interact(self, user_input: str, user_name: str = "Stranger"):
         """

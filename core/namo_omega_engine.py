@@ -197,6 +197,54 @@ class NaMoOmegaEngine(BasePersonaEngine):
         if len(history) > max_items:
             self.session_history[key] = history[-max_items:]
 
+    def stream_input(self, user_input: str, session_id: str | None = None):
+        """Yield text token-by-token via OpenAI streaming.
+
+        Falls back to a single-chunk yield when LLM is unavailable.
+        History and sin/arousal state are updated after the full response.
+        """
+        if not self.llm_client:
+            result = self.process_input(user_input, session_id=session_id)
+            yield result["text"]
+            return
+
+        # --- Build prompt (mirrors _generate_llm_response) ---
+        messages = [
+            {"role": "system", "content": self.llm_system_prompt},
+            {"role": "system", "content": self._build_status_context()},
+        ]
+        cognitive = getattr(self, "cognitive", None)
+        if cognitive is not None:
+            cog_output = cognitive.process(user_input, "neutral", memories=[])
+            messages.append({"role": "system", "content": cognitive.build_context_block(cog_output)})
+        messages.extend(self._get_history(session_id))
+        messages.append({"role": "user", "content": user_input})
+
+        full_text = ""
+        try:
+            stream = self.llm_client.chat.completions.create(
+                model=self.llm_model,
+                messages=messages,
+                temperature=self.llm_temperature,
+                max_tokens=self.llm_max_tokens,
+                stream=True,
+            )
+            for chunk in stream:
+                delta = chunk.choices[0].delta.content or ""
+                if delta:
+                    full_text += delta
+                    yield delta
+        except Exception as exc:
+            print(f"[OMEGA ENGINE]: LLM stream failed: {exc}")
+            fallback = self.personas.generate_dialogue(user_input, self.sin_system.rank)
+            full_text = fallback
+            yield fallback
+
+        # --- Post-stream state update ---
+        if full_text:
+            self._append_history(session_id, "user", user_input)
+            self._append_history(session_id, "assistant", full_text)
+
     def _build_system_prompt(self, context: str) -> str:
         return self._construct_anlrs_prompt(context)
 

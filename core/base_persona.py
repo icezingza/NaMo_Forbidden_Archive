@@ -132,6 +132,16 @@ class BasePersonaEngine(ABC):
         """
         ...
 
+    def stream_input(self, user_input: str, session_id: str | None = None):
+        """Yield text chunks for streaming responses (Server-Sent Events).
+
+        Default implementation calls process_input() and yields the full
+        text as a single chunk.  Override in subclasses that support true
+        token-by-token LLM streaming.
+        """
+        result = self.process_input(user_input, session_id=session_id)
+        yield result["text"]
+
     def _build_system_prompt(self, context: str) -> str:
         """Build the system prompt for the current context.
 

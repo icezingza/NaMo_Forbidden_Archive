@@ -1,3 +1,4 @@
+import asyncio
 import json
 import uuid
 from datetime import datetime
@@ -5,6 +6,7 @@ from datetime import datetime
 import requests
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -183,6 +185,54 @@ async def chat_with_namo_v1(
         "status": result["system_status"],
         "plan": plan,
     }
+
+
+@app.post("/v1/chat/stream")
+async def chat_stream(
+    payload: ChatInput,
+    request: Request,
+    x_api_key: str | None = Header(default=None),
+):
+    plan, allowed = _resolve_plan(x_api_key)
+    if not allowed and settings.namo_api_keys:
+        raise HTTPException(status_code=401, detail="invalid_api_key")
+
+    session_id = payload.session_id or str(uuid.uuid4())
+    base_url = settings.public_base_url
+    if base_url:
+        base_url = _normalize_base_url(base_url)
+    else:
+        base_url = _normalize_base_url(str(request.base_url))
+
+    queue: asyncio.Queue[str | None] = asyncio.Queue()
+    loop = asyncio.get_event_loop()
+
+    def _produce() -> None:
+        full_text: list[str] = []
+        try:
+            for chunk in engine.stream_input(payload.text, session_id=session_id):
+                full_text.append(chunk)
+                data = json.dumps({"chunk": chunk, "session_id": session_id, "plan": plan}, ensure_ascii=False)
+                loop.call_soon_threadsafe(queue.put_nowait, f"data: {data}\n\n")
+        except Exception as exc:
+            err = json.dumps({"error": str(exc)}, ensure_ascii=False)
+            loop.call_soon_threadsafe(queue.put_nowait, f"data: {err}\n\n")
+        finally:
+            assembled = "".join(full_text)
+            _store_memory_if_enabled(session_id, payload.text, assembled)
+            _log_usage({"endpoint": "/v1/chat/stream", "session_id": session_id, "plan": plan, "text_length": len(payload.text)})
+            loop.call_soon_threadsafe(queue.put_nowait, None)  # sentinel
+
+    async def _event_stream():
+        loop.run_in_executor(None, _produce)
+        while True:
+            item = await queue.get()
+            if item is None:
+                yield f"data: {json.dumps({'done': True, 'session_id': session_id})}\n\n"
+                break
+            yield item
+
+    return StreamingResponse(_event_stream(), media_type="text/event-stream")
 
 
 @app.get("/v1/health")
