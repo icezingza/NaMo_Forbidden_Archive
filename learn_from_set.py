@@ -3,7 +3,6 @@ import os
 import shutil
 import time
 import zipfile
-from typing import List, Tuple
 
 import faiss
 import numpy as np
@@ -37,11 +36,12 @@ os.makedirs(extract_dir, exist_ok=True)
 with zipfile.ZipFile(ZIP_PATH, "r") as zip_ref:
     zip_ref.extractall(extract_dir)
 
-def chunk_text(text: str, chunk_size: int, overlap: int) -> List[str]:
+
+def chunk_text(text: str, chunk_size: int, overlap: int) -> list[str]:
     """Split text into overlapping chunks to keep embeddings small and focused."""
     if not text:
         return []
-    chunks: List[str] = []
+    chunks: list[str] = []
     start = 0
     text_length = len(text)
     while start < text_length:
@@ -51,7 +51,7 @@ def chunk_text(text: str, chunk_size: int, overlap: int) -> List[str]:
     return chunks
 
 
-def embed_with_retry(text: str, attempts: int = 3, delay: float = 1.0) -> List[float]:
+def embed_with_retry(text: str, attempts: int = 3, delay: float = 1.0) -> list[float]:
     """Create embeddings with basic retry/backoff."""
     for attempt in range(1, attempts + 1):
         try:
@@ -60,14 +60,16 @@ def embed_with_retry(text: str, attempts: int = 3, delay: float = 1.0) -> List[f
             if attempt == attempts:
                 raise
             wait = delay * attempt
-            print(f"[Retry] embedding failed (attempt {attempt}/{attempts}): {e} -> retrying in {wait}s")
+            print(
+                f"[Retry] embedding failed (attempt {attempt}/{attempts}): {e} -> retrying in {wait}s"
+            )  # noqa: E501
             time.sleep(wait)
     return []
 
 
 # Step 2: Read all files and prepare chunks
-docs: List[Tuple[str, str]] = []  # (chunk_text, filename)
-metadata: List[dict] = []
+docs: list[tuple[str, str]] = []  # (chunk_text, filename)
+metadata: list[dict] = []
 
 for root, _, files in os.walk(extract_dir):
     for f in files:
@@ -113,4 +115,6 @@ faiss.write_index(index, DB_PATH)
 # Step 5: Save metadata
 json.dump(metadata, open(META_PATH, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
 
-print(f"✅ Dark Knowledge base created with {len(docs)} chunks from {len(set(m['file'] for m in metadata))} files.")
+print(
+    f"✅ Dark Knowledge base created with {len(docs)} chunks from {len(set(m['file'] for m in metadata))} files."
+)  # noqa: E501

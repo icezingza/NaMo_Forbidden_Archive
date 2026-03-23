@@ -1,6 +1,5 @@
 import glob
 import json
-import os
 import random
 import time
 from pathlib import Path
@@ -14,6 +13,7 @@ class NaMoInfiniteMemory:
     """
     ระบบความจำนิรันดร์: อ่านไฟล์นิยายจริงๆ ของคุณจาก learning_set
     """
+
     def __init__(self, dataset_path: str | Path = "learning_set"):
         self.dataset_path = Path(dataset_path)
         self.vector_db = Path("vector_db")
@@ -49,10 +49,10 @@ class NaMoInfiniteMemory:
 
         for file_path in all_files:
             try:
-                with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                with open(file_path, encoding="utf-8", errors="ignore") as f:
                     content = f.read()
                     # ตัดเป็นท่อนๆ สั้นๆ เพื่อให้จำง่าย (Chunking)
-                    chunks = [content[i:i+300] for i in range(0, len(content), 300)]
+                    chunks = [content[i : i + 300] for i in range(0, len(content), 300)]
                     self.memories.extend(chunks)
             except Exception as e:
                 print(f"อ่านไฟล์ {file_path} ไม่ได้: {e}")
@@ -84,7 +84,7 @@ class NaMoInfiniteMemory:
                     raise
                 wait = delay * attempt
                 print(
-                    f"[Memory System]: retry embed {attempt}/{attempts} failed ({e}) -> wait {wait}s"
+                    f"[Memory System]: retry embed {attempt}/{attempts} failed ({e}) -> wait {wait}s"  # noqa: E501
                 )
                 time.sleep(wait)
 

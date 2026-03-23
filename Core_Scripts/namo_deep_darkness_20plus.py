@@ -70,7 +70,9 @@ class NaMo:
         elif cmd == self.safe_word:
             self.stop()
         else:
-            print("❓ คำสั่งไม่รู้จักค่ะ ลองพิมพ์ !toy, !sadist, !gentle, !cuckold, !group, หรือ !show")
+            print(
+                "❓ คำสั่งไม่รู้จักค่ะ ลองพิมพ์ !toy, !sadist, !gentle, !cuckold, !group, หรือ !show"
+            )
 
 
 # Example

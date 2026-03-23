@@ -3,14 +3,11 @@ Enhanced NaMo Omega Engine with better error handling, caching, and async suppor
 """
 
 import logging
-import asyncio
-from typing import Dict, Optional, Any, List
-from dataclasses import dataclass, asdict
+import time
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-import json
-from functools import lru_cache
-import time
+from typing import Any
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -32,7 +29,7 @@ class ArousalState:
     level: float  # 0.0 to 1.0
     category: IntensityLevel
     confidence: float
-    triggers: List[str]
+    triggers: list[str]
     timestamp: datetime
 
     def __post_init__(self):
@@ -49,7 +46,7 @@ class SystemStatus:
 
     arousal: str
     sin_status: str
-    active_personas: List[str]
+    active_personas: list[str]
     engine_health: str
     response_time_ms: float
 
@@ -59,20 +56,20 @@ class EngineResponse:
     """Structured response from the engine."""
 
     text: str
-    media_trigger: Optional[Dict[str, Any]] = None
-    system_status: Optional[SystemStatus] = None
-    error: Optional[str] = None
+    media_trigger: dict[str, Any] | None = None
+    system_status: SystemStatus | None = None
+    error: str | None = None
 
 
 class SessionManager:
     """Manages user sessions with automatic cleanup."""
 
     def __init__(self, session_timeout_minutes: int = 60):
-        self.sessions: Dict[str, Dict[str, Any]] = {}
+        self.sessions: dict[str, dict[str, Any]] = {}
         self.session_timeout = timedelta(minutes=session_timeout_minutes)
         self.logger = logging.getLogger(f"{__name__}.SessionManager")
 
-    def create_session(self, session_id: str) -> Dict[str, Any]:
+    def create_session(self, session_id: str) -> dict[str, Any]:
         """Create a new session with metadata."""
         session = {
             "created_at": datetime.now(),
@@ -85,7 +82,7 @@ class SessionManager:
         self.logger.info(f"Created session: {session_id}")
         return session
 
-    def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:
+    def get_session(self, session_id: str) -> dict[str, Any] | None:
         """Get existing session, return None if expired."""
         if session_id not in self.sessions:
             return self.create_session(session_id)
@@ -99,7 +96,7 @@ class SessionManager:
         session["last_active"] = datetime.now()
         return session
 
-    def _is_expired(self, session: Dict[str, Any]) -> bool:
+    def _is_expired(self, session: dict[str, Any]) -> bool:
         """Check if session has expired."""
         return datetime.now() - session["last_active"] > self.session_timeout
 
@@ -121,12 +118,12 @@ class ArousalDetectionMatrix:
         self.base_intensity = 0.5
         self.adaptation_rate = 0.1
         self.logger = logging.getLogger(f"{__name__}.ArousalDetectionMatrix")
-        self._detection_cache: Dict[str, tuple] = {}
+        self._detection_cache: dict[str, tuple] = {}
 
     def detect_arousal(
         self,
         text_input: str,
-        historical_patterns: Optional[List[float]] = None,
+        historical_patterns: list[float] | None = None,
         use_cache: bool = True,
     ) -> ArousalState:
         """
@@ -240,7 +237,7 @@ class ArousalDetectionMatrix:
             self.logger.warning(f"Error analyzing patterns: {str(e)}")
             return 0.5
 
-    def _calculate_temporal_decay(self, historical_patterns: Optional[List[float]]) -> float:
+    def _calculate_temporal_decay(self, historical_patterns: list[float] | None) -> float:
         """Calculate temporal weighting with decay."""
         if not historical_patterns or len(historical_patterns) == 0:
             return 1.0
@@ -267,7 +264,7 @@ class ArousalDetectionMatrix:
         else:
             return IntensityLevel.HIGH
 
-    def _identify_arousal_triggers(self, text: str) -> List[str]:
+    def _identify_arousal_triggers(self, text: str) -> list[str]:
         """Identify specific triggers in the text."""
         triggers = []
 
@@ -302,7 +299,7 @@ class DialogueBank:
     """Manages dialogue templates with efficient retrieval."""
 
     def __init__(self):
-        self.dialogues: Dict[str, List[Dict[str, Any]]] = {"low": [], "medium": [], "high": []}
+        self.dialogues: dict[str, list[dict[str, Any]]] = {"low": [], "medium": [], "high": []}
         self.logger = logging.getLogger(f"{__name__}.DialogueBank")
         self._load_default_dialogues()
 
@@ -335,7 +332,7 @@ class DialogueBank:
             }
         ]
 
-    def get_dialogue(self, intensity: IntensityLevel) -> Optional[Dict[str, Any]]:
+    def get_dialogue(self, intensity: IntensityLevel) -> dict[str, Any] | None:
         """Get appropriate dialogue based on intensity."""
         try:
             intensity_key = intensity.value
@@ -352,7 +349,7 @@ class DialogueBank:
             self.logger.error(f"Error getting dialogue: {str(e)}")
             return None
 
-    def add_dialogue(self, intensity: str, dialogue: Dict[str, Any]):
+    def add_dialogue(self, intensity: str, dialogue: dict[str, Any]):
         """Add custom dialogue."""
         if intensity not in self.dialogues:
             self.logger.warning(f"Unknown intensity level: {intensity}")
@@ -365,7 +362,7 @@ class DialogueBank:
 class NaMoOmegaEngine:
     """Main NaMo Omega Engine with improved architecture."""
 
-    def __init__(self, memory_service_url: Optional[str] = None):
+    def __init__(self, memory_service_url: str | None = None):
         self.session_manager = SessionManager()
         self.arousal_detector = ArousalDetectionMatrix()
         self.dialogue_bank = DialogueBank()
@@ -434,7 +431,8 @@ class NaMoOmegaEngine:
 
             if not dialogue:
                 return EngineResponse(
-                    text="เกิดข้อผิดพลาด: ไม่สามารถสร้างการตอบสนองได้", error="No dialogue available"
+                    text="เกิดข้อผิดพลาด: ไม่สามารถสร้างการตอบสนองได้",
+                    error="No dialogue available",
                 )
 
             # Generate response text
@@ -464,7 +462,7 @@ class NaMoOmegaEngine:
 
             return EngineResponse(text="", error=f"Processing error: {str(e)}")
 
-    def _generate_response(self, dialogue: Dict[str, Any], arousal_state: ArousalState) -> str:
+    def _generate_response(self, dialogue: dict[str, Any], arousal_state: ArousalState) -> str:
         """Generate response from dialogue template."""
         try:
             base_response = dialogue.get("content", "")
@@ -477,7 +475,7 @@ class NaMoOmegaEngine:
             self.logger.error(f"Error generating response: {str(e)}")
             return "NaMo: เสียใจค่ะ เกิดข้อผิดพลาด"
 
-    def get_session_stats(self, session_id: str) -> Optional[Dict[str, Any]]:
+    def get_session_stats(self, session_id: str) -> dict[str, Any] | None:
         """Get statistics for a session."""
         session = self.session_manager.sessions.get(session_id)
 

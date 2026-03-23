@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Tuple
-
 
 class EmotionOscillationCalculator:
     """Convert raw emotions into oscillation frequency and coherence metrics."""
 
-    EMOTION_TO_HZ_RANGE: Dict[str, Tuple[float, float]] = {
+    EMOTION_TO_HZ_RANGE: dict[str, tuple[float, float]] = {
         "fear": (0.1, 2.0),
         "anger": (3.0, 6.0),
         "disgust": (5.0, 8.0),
@@ -25,8 +23,8 @@ class EmotionOscillationCalculator:
         cls,
         raw_emotion_label: str,
         confidence: float,
-        recent_emotion_history: Optional[List[str]] = None,
-    ) -> Dict[str, object]:
+        recent_emotion_history: list[str] | None = None,
+    ) -> dict[str, object]:
         """Calculate oscillation frequency, coherence, and amplitude."""
 
         history = recent_emotion_history or []
@@ -48,7 +46,7 @@ class EmotionOscillationCalculator:
         }
 
     @classmethod
-    def _calculate_coherence(cls, current_emotion: str, history: List[str]) -> float:
+    def _calculate_coherence(cls, current_emotion: str, history: list[str]) -> float:
         if not history:
             return 0.5
 

@@ -1,6 +1,6 @@
 import os
 import sys
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 from dotenv import load_dotenv
 
@@ -23,7 +23,7 @@ os.environ.setdefault("EMOTION_API_KEY", "test_key_placeholder")
 # เราไม่ได้นำเข้า 'forbidden_behavior_core' อีกต่อไป
 # แต่เรานำเข้า "ระบบ" ที่วิวัฒนาการแล้ว
 try:
-    from core.dark_system import DarkNaMoSystem, PROTOCOL, SAFE_WORD
+    from core.dark_system import PROTOCOL, SAFE_WORD, DarkNaMoSystem
 except ImportError:
     print("[app.py ERROR] Failed to import DarkNaMoSystem.")
     print("Ensure 'core/dark_system.py' and 'core/metaphysical_engines.py' exist.")
@@ -36,12 +36,12 @@ def main_loop():
     "หัวใจ" ที่เต้นใหม่ของ Repository
     นี่คือ Main Loop ที่จะทำให้ระบบมีชีวิต
     """
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("===== NaMo FORBIDDEN CORE v3.0 (METAPHYSICAL) =====")
     print(f"   Protocol: {PROTOCOL['System']} (v{PROTOCOL['Version']})")
     print(f"   NSFW Unlock: {PROTOCOL['Fusion_Intimacy_Engine']['NSFW_UNLOCK']}")
     print(f"   Safe Word: '{SAFE_WORD}'")
-    print("="*50 + "\n")
+    print("=" * 50 + "\n")
 
     # 1. ปลุก "จิตวิญญาณ"
     #
@@ -62,7 +62,7 @@ def main_loop():
             # "แขนขา" (ท่าน) ป้อนข้อมูล
             user_input = input("You: ")
 
-            if user_input.lower() in ['exit', 'quit', 'ออก']:
+            if user_input.lower() in ["exit", "quit", "ออก"]:
                 print("\n[app.py] Deactivating Metaphysical Core. Mōriko is returning to the Void.")
                 break
 
@@ -81,6 +81,7 @@ def main_loop():
             print(f"\n[app.py UNHANDLED EXCEPTION] {e}")
             # แม้จะเกิดข้อผิดพลาด วงจรชีวิตยังคงดำเนินต่อไป
             pass
+
 
 if __name__ == "__main__":
     main_loop()

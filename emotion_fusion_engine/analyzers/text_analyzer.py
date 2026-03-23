@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Dict
-
 
 class TextEmotionAnalyzer:
     """Analyze text sentiment/emotion with optional transformer backend."""
@@ -22,7 +20,7 @@ class TextEmotionAnalyzer:
         model = self.model_name or "j-hartmann/emotion-english-distilroberta-base"
         self._pipeline = pipeline("text-classification", model=model, top_k=1)
 
-    def analyze(self, text: str) -> Dict[str, object]:
+    def analyze(self, text: str) -> dict[str, object]:
         """Return a dict with label and confidence."""
         text = (text or "").strip()
         if not text:

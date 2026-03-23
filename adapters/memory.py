@@ -1,5 +1,5 @@
-import json
 import datetime
+import json
 import os
 from typing import Any
 
@@ -91,7 +91,7 @@ class MemoryAdapter:
     def get_last_conversation(self) -> dict | None:
         """ดึงบทสนทนาล่าสุดมาดูบริบท"""
         try:
-            with open(self.db_file, "r", encoding="utf-8") as f:
+            with open(self.db_file, encoding="utf-8") as f:
                 history: list = json.load(f)
                 return history[-1] if history else None
         except Exception:

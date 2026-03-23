@@ -5,8 +5,7 @@ Covers:
 - CognitiveStream: perceive, reflect, to_monologue, clear, thought types
 - LearningEngine : observe, adapt_traits, get_preferences, persistence
 """
-import json
-import os
+
 import sys
 from pathlib import Path
 
@@ -14,14 +13,14 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from core.emotion_engine import EmotionEngine, EmotionVector
 from core.cognitive_stream import CognitiveStream, Thought
+from core.emotion_engine import EmotionEngine, EmotionVector
 from core.learning_engine import LearningEngine
-
 
 # ─────────────────────────────────────────────────────────────
 # EmotionEngine
 # ─────────────────────────────────────────────────────────────
+
 
 class TestEmotionVector:
     def test_clamp_keeps_values_in_range(self):
@@ -100,8 +99,16 @@ class TestEmotionEngine:
     def test_snapshot_keys_are_complete(self):
         engine = EmotionEngine()
         snap = engine.snapshot()
-        for key in ("joy", "arousal", "trust", "anger", "desire",
-                    "dominant", "dominant_intensity", "prose"):
+        for key in (
+            "joy",
+            "arousal",
+            "trust",
+            "anger",
+            "desire",
+            "dominant",
+            "dominant_intensity",
+            "prose",
+        ):
             assert key in snap
 
     def test_values_stay_clamped_after_many_updates(self):
@@ -117,12 +124,12 @@ class TestEmotionEngine:
 # CognitiveStream
 # ─────────────────────────────────────────────────────────────
 
+
 class TestCognitiveStream:
     def _emotion(self, **kwargs) -> EmotionVector:
-        return EmotionVector(**{
-            "joy": 0.5, "arousal": 0.3, "trust": 0.5, "anger": 0.0, "desire": 0.0,
-            **kwargs
-        })
+        return EmotionVector(
+            **{"joy": 0.5, "arousal": 0.3, "trust": 0.5, "anger": 0.0, "desire": 0.0, **kwargs}
+        )
 
     def test_perceive_returns_list_of_thoughts(self):
         stream = CognitiveStream()
@@ -206,6 +213,7 @@ class TestCognitiveStream:
 # LearningEngine
 # ─────────────────────────────────────────────────────────────
 
+
 class TestLearningEngine:
     @pytest.fixture()
     def tmp_engine(self, tmp_path):
@@ -248,7 +256,7 @@ class TestLearningEngine:
     def test_persist_and_reload(self, tmp_path):
         path = tmp_path / "learn.json"
         engine1 = LearningEngine(save_path=path)
-        for _ in range(10):   # triggers a save (SAVE_INTERVAL=10)
+        for _ in range(10):  # triggers a save (SAVE_INTERVAL=10)
             engine1.observe("รัก", "affection", self._snapshot("joy"))
         engine1.topic_affinity["romance"] = 0.77
         engine1._maybe_save()

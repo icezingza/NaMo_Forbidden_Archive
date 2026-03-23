@@ -2,9 +2,9 @@
 Enhanced configuration management with environment variables and validation.
 """
 
-from pydantic import BaseSettings, validator
-from typing import Optional
 import logging
+
+from pydantic import BaseSettings, validator
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ class Settings(BaseSettings):
 
     # Security
     CORS_ORIGINS: list = ["*"]
-    API_KEY: Optional[str] = None
+    API_KEY: str | None = None
 
     @validator("API_PORT")
     def validate_port(cls, v):

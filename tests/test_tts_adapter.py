@@ -1,4 +1,5 @@
 """Tests for adapters/tts.py — both online (mocked) and offline paths."""
+
 import os
 import sys
 from unittest.mock import MagicMock, patch
@@ -8,9 +9,10 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 def _make_adapter(api_key: str | None = None, elevenlabs_available: bool = True):
     """Build a TTSAdapter with controlled environment."""
-    with patch("adapters.tts._ELEVENLABS_AVAILABLE", elevenlabs_available), patch(
-        "adapters.tts.settings"
-    ) as mock_settings:
+    with (
+        patch("adapters.tts._ELEVENLABS_AVAILABLE", elevenlabs_available),
+        patch("adapters.tts.settings") as mock_settings,
+    ):
         mock_settings.elevenlabs_api_key = api_key
         mock_settings.elevenlabs_voice_id = "Rachel"
         mock_settings.elevenlabs_model = "eleven_multilingual_v2"
@@ -34,8 +36,9 @@ def test_synthesize_returns_none_when_no_api_key():
     """TTSAdapter.synthesize() returns None when no API key is configured."""
     from adapters.tts import TTSAdapter
 
-    with patch("adapters.tts.settings") as mock_settings, patch(
-        "adapters.tts._ELEVENLABS_AVAILABLE", True
+    with (
+        patch("adapters.tts.settings") as mock_settings,
+        patch("adapters.tts._ELEVENLABS_AVAILABLE", True),
     ):
         mock_settings.elevenlabs_api_key = None
         mock_settings.elevenlabs_voice_id = "Rachel"
@@ -51,9 +54,10 @@ def test_synthesize_returns_none_when_package_missing():
     """TTSAdapter.synthesize() returns None when elevenlabs package is absent."""
     from adapters.tts import TTSAdapter
 
-    with patch("adapters.tts._ELEVENLABS_AVAILABLE", False), patch(
-        "adapters.tts.settings"
-    ) as mock_settings:
+    with (
+        patch("adapters.tts._ELEVENLABS_AVAILABLE", False),
+        patch("adapters.tts.settings") as mock_settings,
+    ):
         mock_settings.elevenlabs_api_key = "fake-key"
         mock_settings.elevenlabs_voice_id = "Rachel"
         mock_settings.elevenlabs_model = "eleven_multilingual_v2"
@@ -67,16 +71,17 @@ def test_synthesize_returns_none_when_package_missing():
 def test_synthesize_saves_file_and_returns_relative_path(tmp_path):
     """TTSAdapter.synthesize() saves audio bytes and returns an Audio_Layers/tts/... path."""
     import importlib
+
     import adapters.tts as tts_module
 
     fake_audio = b"\x00\x01\x02\x03"
     mock_client = MagicMock()
     mock_client.generate.return_value = fake_audio
 
-    with patch("adapters.tts._ELEVENLABS_AVAILABLE", True), patch(
-        "adapters.tts.settings"
-    ) as mock_settings, patch(
-        "adapters.tts._ElevenLabsClient", return_value=mock_client
+    with (
+        patch("adapters.tts._ELEVENLABS_AVAILABLE", True),
+        patch("adapters.tts.settings") as mock_settings,
+        patch("adapters.tts._ElevenLabsClient", return_value=mock_client),
     ):
         mock_settings.elevenlabs_api_key = "fake-key"
         mock_settings.elevenlabs_voice_id = "Rachel"
@@ -104,7 +109,6 @@ def test_synthesize_saves_file_and_returns_relative_path(tmp_path):
 
 def test_synthesize_returns_none_on_api_error():
     """TTSAdapter.synthesize() returns None (not raises) when the API call fails."""
-    from adapters.tts import TTSAdapter
 
     mock_client = MagicMock()
     mock_client.generate.side_effect = RuntimeError("API down")

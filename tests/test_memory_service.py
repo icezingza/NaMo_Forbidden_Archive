@@ -137,14 +137,22 @@ def test_recall_filters_by_dark_concepts():
     client = TestClient(app)
 
     # Arrange: Store records with different dharma_tags
-    client.post("/store", json={"content": "obsession memory", "dharma_tags": ["metta"]})  # -> Obsession
-    client.post("/store", json={"content": "suffering memory", "dharma_tags": ["dukkha"]})  # -> Managed Suffering
-    client.post("/store", json={"content": "detachment memory", "dharma_tags": ["upekkha"]})  # -> Cold Detachment
+    client.post(
+        "/store", json={"content": "obsession memory", "dharma_tags": ["metta"]}
+    )  # -> Obsession  # noqa: E501
+    client.post(
+        "/store", json={"content": "suffering memory", "dharma_tags": ["dukkha"]}
+    )  # -> Managed Suffering  # noqa: E501
+    client.post(
+        "/store", json={"content": "detachment memory", "dharma_tags": ["upekkha"]}
+    )  # -> Cold Detachment  # noqa: E501
     # This last one will be skipped by recall
     client.post("/store", json={"content": "another obsession", "dharma_tags": ["metta"]})
 
     # Act: Recall with a filter for 'Obsession' and 'Managed Suffering'
-    response = client.post("/recall", json={"dark_concepts_filter": ["Obsession", "Managed Suffering"]})
+    response = client.post(
+        "/recall", json={"dark_concepts_filter": ["Obsession", "Managed Suffering"]}
+    )  # noqa: E501
     data = response.json()
 
     # Assert
@@ -162,14 +170,25 @@ def test_recall_with_combined_filters():
     client = TestClient(app)
 
     # Arrange
-    client.post("/store", json={"content": "long term obsession", "type": "long-term", "dharma_tags": ["metta"]})
-    client.post("/store", json={"content": "short term obsession", "type": "short-term", "dharma_tags": ["metta"]})
-    client.post("/store", json={"content": "long term suffering", "type": "long-term", "dharma_tags": ["dukkha"]})
+    client.post(
+        "/store",
+        json={"content": "long term obsession", "type": "long-term", "dharma_tags": ["metta"]},
+    )  # noqa: E501
+    client.post(
+        "/store",
+        json={"content": "short term obsession", "type": "short-term", "dharma_tags": ["metta"]},
+    )  # noqa: E501
+    client.post(
+        "/store",
+        json={"content": "long term suffering", "type": "long-term", "dharma_tags": ["dukkha"]},
+    )  # noqa: E501
     # This last one will be skipped by recall
     client.post("/store", json={"content": "another record"})
 
     # Act: Recall with filters for type 'long-term' and concept 'Obsession'
-    response = client.post("/recall", json={"memory_types": ["long-term"], "dark_concepts_filter": ["Obsession"]})
+    response = client.post(
+        "/recall", json={"memory_types": ["long-term"], "dark_concepts_filter": ["Obsession"]}
+    )  # noqa: E501
     data = response.json()
 
     # Assert

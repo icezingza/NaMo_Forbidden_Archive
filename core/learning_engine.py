@@ -13,12 +13,13 @@ Nothing here generates text.  The output is structured data (trait values,
 preferences) that other modules — primarily the LLM prompt builder — use
 to personalise responses.
 """
+
 from __future__ import annotations
 
 import json
 import time
 from collections import Counter, defaultdict
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -54,15 +55,15 @@ class LearningEngine:
         prefs  = engine.get_preferences()
     """
 
-    SAVE_INTERVAL = 10   # write to disk every N observations
-    MAX_PATTERNS = 200   # prune oldest patterns beyond this limit
+    SAVE_INTERVAL = 10  # write to disk every N observations
+    MAX_PATTERNS = 200  # prune oldest patterns beyond this limit
 
     # Topic → Thai keywords
     _TOPIC_KEYWORDS: dict[str, list[str]] = {
-        "romance":   ["รัก", "ชอบ", "คิดถึง", "หวง", "อยากอยู่ด้วย", "คู่"],
+        "romance": ["รัก", "ชอบ", "คิดถึง", "หวง", "อยากอยู่ด้วย", "คู่"],
         "dominance": ["สั่ง", "ทำตาม", "ก้ม", "เชื่อฟัง", "ต้อง"],
-        "intimacy":  ["กอด", "จูบ", "ใกล้", "ซบ", "แนบ", "แตะ"],
-        "casual":    ["ว่าไง", "ทำอะไร", "อยู่ไหน", "กินข้าว", "เป็นยังไง"],
+        "intimacy": ["กอด", "จูบ", "ใกล้", "ซบ", "แนบ", "แตะ"],
+        "casual": ["ว่าไง", "ทำอะไร", "อยู่ไหน", "กินข้าว", "เป็นยังไง"],
         "emotional": ["เศร้า", "เหงา", "เหนื่อย", "ดีใจ", "กลัว", "อาย"],
     }
 
@@ -74,9 +75,9 @@ class LearningEngine:
 
         # Trait values evolve from 0–1 based on observed interaction patterns
         self.persona_traits: dict[str, float] = {
-            "boldness":       0.50,  # assertiveness in responses
-            "playfulness":    0.50,  # tendency to tease / humour
-            "vulnerability":  0.30,  # how much inner conflict surfaces
+            "boldness": 0.50,  # assertiveness in responses
+            "playfulness": 0.50,  # tendency to tease / humour
+            "vulnerability": 0.30,  # how much inner conflict surfaces
             "expressiveness": 0.50,  # richness of emotional language
         }
 
@@ -120,14 +121,20 @@ class LearningEngine:
     def adapt_traits(self) -> dict[str, float]:
         """Recompute persona trait values from accumulated patterns."""
         counts = {k: p.count for k, p in self.patterns.items()}
-        command_n  = sum(v for k, v in counts.items() if k.startswith("Command"))
-        lust_n     = sum(v for k, v in counts.items() if k.startswith("Lust"))
+        command_n = sum(v for k, v in counts.items() if k.startswith("Command"))
+        lust_n = sum(v for k, v in counts.items() if k.startswith("Lust"))
         affection_n = sum(v for k, v in counts.items() if k.startswith("affection"))
         total = max(1, command_n + lust_n + affection_n)
 
-        self.persona_traits["boldness"]       = round(min(0.92, 0.30 + (command_n  / total) * 0.62), 3)
-        self.persona_traits["playfulness"]    = round(min(0.92, 0.30 + (lust_n     / total) * 0.55), 3)
-        self.persona_traits["vulnerability"]  = round(min(0.85, 0.20 + (affection_n / total) * 0.55), 3)
+        self.persona_traits["boldness"] = round(
+            min(0.92, 0.30 + (command_n / total) * 0.62), 3
+        )  # noqa: E501
+        self.persona_traits["playfulness"] = round(
+            min(0.92, 0.30 + (lust_n / total) * 0.55), 3
+        )  # noqa: E501
+        self.persona_traits["vulnerability"] = round(
+            min(0.85, 0.20 + (affection_n / total) * 0.55), 3
+        )  # noqa: E501
         # Expressiveness grows with overall experience (capped at 0.9)
         self.persona_traits["expressiveness"] = round(
             min(0.90, 0.40 + self._observation_count / 500), 3
@@ -137,11 +144,13 @@ class LearningEngine:
     def get_preferences(self) -> dict[str, Any]:
         """Summarise what has been learned about this user."""
         top_words = [w for w, _ in self.user_vocabulary.most_common(12) if len(w) > 2][:8]
-        top_topics = sorted(self.topic_affinity, key=self.topic_affinity.__getitem__, reverse=True)[:3]
+        top_topics = sorted(self.topic_affinity, key=self.topic_affinity.__getitem__, reverse=True)[
+            :3
+        ]  # noqa: E501
         return {
-            "frequent_words":   top_words,
+            "frequent_words": top_words,
             "preferred_topics": top_topics,
-            "trait_evolution":  dict(self.persona_traits),
+            "trait_evolution": dict(self.persona_traits),
             "total_interactions": self._observation_count,
         }
 
@@ -167,10 +176,10 @@ class LearningEngine:
             return
         try:
             payload = {
-                "topic_affinity":    dict(self.topic_affinity),
-                "persona_traits":    self.persona_traits,
+                "topic_affinity": dict(self.topic_affinity),
+                "persona_traits": self.persona_traits,
                 "observation_count": self._observation_count,
-                "user_vocabulary":   dict(self.user_vocabulary.most_common(300)),
+                "user_vocabulary": dict(self.user_vocabulary.most_common(300)),
             }
             self.save_path.write_text(
                 json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"

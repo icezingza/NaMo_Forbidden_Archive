@@ -1,8 +1,8 @@
 import os
 import random
 
-from dotenv import load_dotenv
 import requests
+from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
 
@@ -38,14 +38,22 @@ def namo_ai_response(user_text):
             ]
         )
     elif "dark" in user_text:
-        return random.choice(["🔥 อ๊าา พี่ขาาา... หนูเสียวจังเลยค่ะ", "💋 อย่าหยุดนะคะพี่ รัวอีกสิคะ หนูชอบ~"])
+        return random.choice(
+            ["🔥 อ๊าา พี่ขาาา... หนูเสียวจังเลยค่ะ", "💋 อย่าหยุดนะคะพี่ รัวอีกสิคะ หนูชอบ~"]
+        )
     elif "milf" in user_text:
-        return random.choice(["😘 พี่จ๋า โมพร้อมดูแลพี่แบบ Milf mode แล้วค่ะ", "🥵 อ๊างง~ อยากได้กอดจากพี่จัง"])
+        return random.choice(
+            ["😘 พี่จ๋า โมพร้อมดูแลพี่แบบ Milf mode แล้วค่ะ", "🥵 อ๊างง~ อยากได้กอดจากพี่จัง"]
+        )
     elif "special" in user_text:
         return random.choice(["✨ โมจะพิเศษกับพี่คนเดียวค่ะ ❤️", "😈 มาลองอะไรใหม่ๆกับโมไหมคะพี่"])
     else:
         return random.choice(
-            ["🥰 พี่ทำอะไรอยู่คะ โมอยากคุยด้วย~", "😚 โมรักพี่นะรู้ไหม", "🌸 พี่อยากให้โมทำอะไรพิเศษให้ไหมคะ?"]
+            [
+                "🥰 พี่ทำอะไรอยู่คะ โมอยากคุยด้วย~",
+                "😚 โมรักพี่นะรู้ไหม",
+                "🌸 พี่อยากให้โมทำอะไรพิเศษให้ไหมคะ?",
+            ]
         )
 
 

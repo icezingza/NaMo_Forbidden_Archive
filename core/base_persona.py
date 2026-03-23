@@ -25,6 +25,7 @@ Standard process_input() return shape (do not break):
         "system_status": dict,
     }
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -71,20 +72,18 @@ class CognitiveCore:
         self.emotion.decay()
 
         # 2. Thoughts: reactive + autonomous
-        new_thoughts = self.thoughts.perceive(
-            user_input, self.emotion.current, memories
-        )
+        self.thoughts.perceive(user_input, self.emotion.current, memories)
         autonomous = self.thoughts.reflect(self.emotion.current)
 
         # 3. Learning: record this turn
         self.learning.observe(user_input, intent, self.emotion.snapshot())
 
         return {
-            "emotion":        self.emotion.snapshot(),
-            "monologue":      self.thoughts.to_monologue(),
-            "autonomous":     autonomous.content if autonomous else None,
+            "emotion": self.emotion.snapshot(),
+            "monologue": self.thoughts.to_monologue(),
+            "autonomous": autonomous.content if autonomous else None,
             "persona_traits": self.learning.adapt_traits(),
-            "preferences":    self.learning.get_preferences(),
+            "preferences": self.learning.get_preferences(),
         }
 
     def build_context_block(self, cognitive_output: dict[str, Any]) -> str:
@@ -167,5 +166,5 @@ class BasePersonaEngine(ABC):
         cognitive: CognitiveCore | None = getattr(self, "cognitive", None)
         if cognitive is not None:
             status["emotion"] = cognitive.emotion.snapshot()
-            status["traits"]  = cognitive.learning.persona_traits
+            status["traits"] = cognitive.learning.persona_traits
         return status

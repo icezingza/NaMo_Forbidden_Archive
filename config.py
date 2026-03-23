@@ -1,6 +1,3 @@
-import os
-from typing import Optional
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -12,11 +9,11 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     # --- External Services ---
-    openai_api_key: Optional[str] = None
-    emotion_api_url: Optional[str] = "http://localhost:8082/analyze"
-    memory_api_url: Optional[str] = None
-    memory_api_key: Optional[str] = None
-    public_base_url: Optional[str] = None
+    openai_api_key: str | None = None
+    emotion_api_url: str | None = "http://localhost:8082/analyze"
+    memory_api_url: str | None = None
+    memory_api_key: str | None = None
+    public_base_url: str | None = None
     cors_allow_origins: str = "*"
     memory_logging: int = 0
 
@@ -31,8 +28,8 @@ class Settings(BaseSettings):
     safety_filter_enabled: bool = True
     nsfw_allowed: bool = False
     scene_mode: str = "restricted"
-    api_master_key: Optional[str] = None
-    admin_secret: Optional[str] = None
+    api_master_key: str | None = None
+    admin_secret: str | None = None
 
     # --- Core Engines ---
     enable_emotion_parasite: bool = False
@@ -40,7 +37,7 @@ class Settings(BaseSettings):
     enable_dark_memory: bool = False
 
     # --- ElevenLabs TTS ---
-    elevenlabs_api_key: Optional[str] = None
+    elevenlabs_api_key: str | None = None
     elevenlabs_voice_id: str = "Rachel"
     elevenlabs_model: str = "eleven_multilingual_v2"
     tts_output_dir: str = "Audio_Layers/tts"
@@ -49,9 +46,9 @@ class Settings(BaseSettings):
     default_engine: str = "omega"
 
     # --- Legacy / Compatibility ---
-    namo_api_keys: Optional[str] = None
+    namo_api_keys: str | None = None
     namo_api_default_plan: str = "public"
-    namo_usage_log_path: Optional[str] = None
+    namo_usage_log_path: str | None = None
     memory_file_path: str = "memory_protocol.json"
 
     # Configuration to handle .env file and ignore unknown extra fields
@@ -61,5 +58,6 @@ class Settings(BaseSettings):
         extra="ignore",  # สำคัญ: ถ้ามีตัวแปรเกินมา ไม่ต้อง Error ให้ข้ามไปเลย
         case_sensitive=False,
     )
+
 
 settings = Settings()

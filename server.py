@@ -12,7 +12,11 @@ from pydantic import BaseModel
 
 from config import settings
 from core.base_persona import BasePersonaEngine
+from core.dark_system import DarkNaMoSystem
 from core.namo_omega_engine import NaMoOmegaEngine
+from core.namo_ultimate_engine import NaMoUltimateBrain
+from rinlada_fusion import RinladaAI
+from seraphina_ai_complete import SeraphinaAI
 
 app = FastAPI(title="NaMo Forbidden Archive v9.0 (Omega Sensory)")
 
@@ -62,11 +66,6 @@ class _EngineRegistry:
 
 
 # Register engines — omega loads immediately; others are lazy
-from core.dark_system import DarkNaMoSystem
-from core.namo_ultimate_engine import NaMoUltimateBrain
-from rinlada_fusion import RinladaAI
-from seraphina_ai_complete import SeraphinaAI
-
 _EngineRegistry.register("omega", NaMoOmegaEngine)
 _EngineRegistry.register("rinlada", RinladaAI)
 _EngineRegistry.register("seraphina", SeraphinaAI)
@@ -111,7 +110,9 @@ def _normalize_media(media: dict, base_url: str) -> dict:
     return {k: _resolve_media_url(v, base_url) for k, v in media.items()}
 
 
-def _store_memory_if_enabled(session_id: str, user_text: str, response_text: str, system_status: dict | None = None) -> None:
+def _store_memory_if_enabled(
+    session_id: str, user_text: str, response_text: str, system_status: dict | None = None
+) -> None:
     if not settings.memory_logging:
         return
     memory_url = settings.memory_api_url
@@ -131,6 +132,7 @@ def _store_memory_if_enabled(session_id: str, user_text: str, response_text: str
         requests.post(memory_url, json=payload, headers=headers, timeout=2)
     except requests.RequestException as exc:
         print(f"[MemoryLog]: Failed to store memory: {exc}")
+
 
 def _parse_api_key_map(raw: str | None) -> dict[str, str]:
     if not raw:
@@ -286,7 +288,10 @@ async def chat_stream(
         while True:
             item = await queue.get()
             if item is None:
-                yield f"data: {json.dumps({'done': True, 'session_id': session_id, 'engine': engine_name})}\n\n"
+                done_msg = json.dumps(
+                    {"done": True, "session_id": session_id, "engine": engine_name}
+                )  # noqa: E501
+                yield f"data: {done_msg}\n\n"
                 break
             yield item
 
@@ -308,8 +313,7 @@ def health_check():
 def engine_status():
     """Status of all loaded engines."""
     return {
-        name: _EngineRegistry._instances[name].get_status()
-        for name in _EngineRegistry._instances
+        name: _EngineRegistry._instances[name].get_status() for name in _EngineRegistry._instances
     }
 
 
@@ -319,10 +323,13 @@ def _assert_admin(secret: str | None) -> None:
         raise HTTPException(status_code=403, detail="forbidden")
 
 
+_STATE_ATTRS = ("_session_states", "_session_arousal", "_session_intensity", "session_history")
+
+
 def _collect_session_keys(eng_instance: BasePersonaEngine) -> list[str]:
     """Return all known session IDs tracked by an engine instance."""
     keys: set[str] = set()
-    for attr in ("_session_states", "_session_arousal", "_session_intensity", "session_history"):
+    for attr in _STATE_ATTRS:
         store = getattr(eng_instance, attr, None)
         if isinstance(store, dict):
             keys.update(store.keys())
@@ -339,8 +346,7 @@ def list_sessions(x_admin_secret: str | None = Header(default=None)):
     _assert_admin(x_admin_secret)
     return {
         "sessions": {
-            name: _collect_session_keys(inst)
-            for name, inst in _EngineRegistry._instances.items()
+            name: _collect_session_keys(inst) for name, inst in _EngineRegistry._instances.items()
         }
     }
 
@@ -360,7 +366,7 @@ def clear_session(
     cleared: dict[str, bool] = {}
     for name, inst in _EngineRegistry._instances.items():
         removed = False
-        for attr in ("_session_states", "_session_arousal", "_session_intensity", "session_history"):
+        for attr in _STATE_ATTRS:
             store = getattr(inst, attr, None)
             if isinstance(store, dict) and session_id in store:
                 del store[session_id]

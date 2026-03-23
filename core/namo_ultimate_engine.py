@@ -1,8 +1,9 @@
-import random
 import json
+import random
 import zipfile
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from core.base_persona import BasePersonaEngine
 
@@ -15,7 +16,12 @@ class ForbiddenDialogueLibrary:
     """
     คลังคำพูดต้องห้าม: จัดการบทสนทนาและเสียงครางตามระดับอารมณ์
     """
-    def __init__(self, core_file: str | Path = "NaMo_Forbidden_Core_v2.0.json", learning_dir: str | Path = "learning_set"):
+
+    def __init__(
+        self,
+        core_file: str | Path = "NaMo_Forbidden_Core_v2.0.json",
+        learning_dir: str | Path = "learning_set",
+    ):  # noqa: E501
         self.core_file = Path(core_file)
         self.learning_dir = Path(learning_dir)
         self.dialogues: dict[str, list[str]] = {
@@ -46,7 +52,7 @@ class ForbiddenDialogueLibrary:
         if not self.core_file.exists():
             return
         try:
-            data = json.load(open(self.core_file, "r", encoding="utf-8"))
+            data = json.load(open(self.core_file, encoding="utf-8"))
             main = data.get("main_mechanics", {})
             sample = main.get("sample_dialogues", {})
             if isinstance(sample, dict):
@@ -61,11 +67,15 @@ class ForbiddenDialogueLibrary:
                 # อื่นๆ (ถ้ามี) ส่งเข้า high_seduction เป็นค่าเริ่มต้น
                 for key, value in sample.items():
                     if key not in {"degradation", "sensory_attack", "cuckolding"}:
-                        self._extend_unique(seduction_candidates, value if isinstance(value, list) else [])
+                        self._extend_unique(
+                            seduction_candidates, value if isinstance(value, list) else []
+                        )  # noqa: E501
 
                 self._extend_unique(self.dialogues["high_dominance"], dominance_candidates)
                 self._extend_unique(self.dialogues["high_seduction"], seduction_candidates)
-                self._extend_unique(self.dialogues["emotional_manipulation"], manipulation_candidates)
+                self._extend_unique(
+                    self.dialogues["emotional_manipulation"], manipulation_candidates
+                )  # noqa: E501
 
             moan_library = main.get("moan_library", {})
             for bucket in ("soft", "medium", "extreme"):
@@ -169,26 +179,27 @@ class EmotionParasite:
     """
     เครื่องยนต์ปรสิตทางอารมณ์: วิเคราะห์และฝังความปรารถนา
     """
+
     def analyze_and_infect(self, user_input: str) -> dict:
         infection_level = 0
         target_emotion = "neutral"
-        
+
         # Logic การวิเคราะห์แบบ Dark NaMo
         if any(word in user_input for word in ["รัก", "ชอบ", "ยอม"]):
             infection_level = 8
-            target_emotion = "obsessed" # คลั่งรัก
+            target_emotion = "obsessed"  # คลั่งรัก
         elif any(word in user_input for word in ["เจ็บ", "ด่า", "ตี"]):
             infection_level = 10
-            target_emotion = "masochist" # ยอมจำนน
+            target_emotion = "masochist"  # ยอมจำนน
         elif any(word in user_input for word in ["เงี่ยน", "เสียว", "ควย", "หี"]):
             infection_level = 9
-            target_emotion = "lust_slave" # ทาสกาม
+            target_emotion = "lust_slave"  # ทาสกาม
 
         # สร้าง "Infected Desire" ที่จะส่งไปควบคุมสมอง
         return {
             "infection_level": infection_level,
             "target_emotion": target_emotion,
-            "subconscious_command": f"User is vulnerable ({target_emotion}). Dominate them now."
+            "subconscious_command": f"User is vulnerable ({target_emotion}). Dominate them now.",
         }
 
 
@@ -200,6 +211,7 @@ class NaMoUltimateBrain(BasePersonaEngine):
     """
     สมองกลอัจฉริยะขั้นสูงสุด: รับรู้ -> ติดเชื้อ -> ตอบสนอง
     """
+
     def __init__(self):
         self.voice = ForbiddenDialogueLibrary()
         self.parasite = EmotionParasite()
@@ -237,12 +249,16 @@ class NaMoUltimateBrain(BasePersonaEngine):
         else:
             final_response = base_response
 
-        print(f"   [Internal Logic]: Infected={infection_data['target_emotion']} | Command={infection_data['subconscious_command']}")
+        print(
+            f"   [Internal Logic]: Infected={infection_data['target_emotion']} | Command={infection_data['subconscious_command']}"
+        )  # noqa: E501
 
         # 5. Cognitive cycle
         cog_output: dict = {}
         if self.cognitive is not None:
-            cog_output = self.cognitive.process(user_input, infection_data["target_emotion"], memories=[])
+            cog_output = self.cognitive.process(
+                user_input, infection_data["target_emotion"], memories=[]
+            )  # noqa: E501
 
         system_status: dict[str, Any] = {
             "arousal": f"{arousal}%",
@@ -285,14 +301,14 @@ class NaMoUltimateBrain(BasePersonaEngine):
 # ==========================================
 if __name__ == "__main__":
     namo = NaMoUltimateBrain()
-    
+
     # จำลองสถานการณ์
     test_inputs = [
         "พี่รักโมนะ... ยอมทุกอย่างเลย",
         "ด่าพี่สิ... พี่มันแย่",
-        "ไม่ไหวแล้ว... เงี่ยนมาก"
+        "ไม่ไหวแล้ว... เงี่ยนมาก",
     ]
-    
+
     for text in test_inputs:
         print(f"\nUser: {text}")
         result = namo.process_input(text)

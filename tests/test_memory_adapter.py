@@ -1,4 +1,5 @@
 """Tests for adapters/memory.py — local write and unified remote forwarding."""
+
 import json
 import os
 import sys

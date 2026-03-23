@@ -2,16 +2,16 @@
 Enhanced authentication and rate limiting.
 """
 
-import os
-from typing import Optional
-from fastapi import FastAPI, Depends, HTTPException, Header
-from fastapi.security import HTTPBearer, HTTPAuthCredentials
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
-from datetime import datetime, timedelta
-import jwt
 import logging
+import os
+from datetime import datetime, timedelta
+
+import jwt
+from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.security import HTTPAuthCredentials, HTTPBearer
+from slowapi import Limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ class TokenManager:
     """Manage JWT tokens for API authentication."""
 
     @staticmethod
-    def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
         """
         Create JWT access token.
 

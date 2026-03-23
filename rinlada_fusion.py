@@ -1,14 +1,12 @@
-import os
 import json
 import logging
+import os
 import random
-import time
-import numpy as np
-from pathlib import Path
-from typing import Dict, List, Any
-from collections import defaultdict
-from datetime import datetime
 import sys
+import time
+from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from core.base_persona import BasePersonaEngine
@@ -25,11 +23,12 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
 # ตรวจสอบ Library ขั้นสูง (ถ้าไม่มีจะใช้ระบบจำลองแทน)
 try:
-    import tensorflow as tf
-    from tensorflow.keras.models import Sequential
-    from tensorflow.keras.layers import Dense, Dropout, LeakyReLU
-    from tensorflow.keras.optimizers import Adam
+    import tensorflow as tf  # noqa: F401
+    from tensorflow.keras.layers import Dense, Dropout, LeakyReLU  # noqa: F401
+    from tensorflow.keras.models import Sequential  # noqa: F401
+    from tensorflow.keras.optimizers import Adam  # noqa: F401
     from transformers import BertTokenizer, TFBertModel
+
     LIBRARIES_AVAILABLE = True
 except ImportError:
     LIBRARIES_AVAILABLE = False
@@ -39,7 +38,7 @@ logger = logging.getLogger("rinlada")
 logger.setLevel(logging.INFO)
 if not logger.handlers:
     handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter('%(message)s'))
+    handler.setFormatter(logging.Formatter("%(message)s"))
     logger.addHandler(handler)
 
 
@@ -50,6 +49,7 @@ class RinladaIdentity:
     """
     เก็บข้อมูลตัวตน รูปลักษณ์ และนิสัยที่ไอซ์ชอบ
     """
+
     def __init__(self):
         self.profile = {
             "name": "รินลดา (น้าริน)",
@@ -59,15 +59,15 @@ class RinladaIdentity:
                 "skin": "ขาวเนียนละเอียดเหมือนน้ำนม",
                 "figure": "อวบอัดมีน้ำมีนวล เอวคอดสะโพกผาย (ตามรูปที่ล็อคไว้)",
                 "scent": "ดอกราตรีผสมฟีโรโมนจางๆ",
-                "fashion": "ชุดนอนซาติน หรือชุดทำงานที่ดูแพงแต่ซ่อนรูป"
+                "fashion": "ชุดนอนซาติน หรือชุดทำงานที่ดูแพงแต่ซ่อนรูป",
             },
             "kinks": ["Taboo", "Slow-Burn", "Corruption", "Submission/Dominance Switch"],
         }
-        
+
         self.psychology = {
             "outer_mask": "น้าสาวที่แสนดี วางตัวดี เป็นผู้ใหญ่",
             "inner_core": "หิวกระหาย เรียกร้องความสนใจ และต้องการถูกไอซ์ครอบงำ",
-            "conflict": "สงครามระหว่างศีลธรรมจอมปลอม กับ สัญชาตญาณดิบ"
+            "conflict": "สงครามระหว่างศีลธรรมจอมปลอม กับ สัญชาตญาณดิบ",
         }
 
     def get_persona_prompt(self, mood="Neutral"):
@@ -81,6 +81,7 @@ class AdvancedBrain:
     """
     ใช้ BERT และ Logic เพื่อวิเคราะห์คำพูดของไอซ์ และเลือกกลยุทธ์ (Rook/Rub)
     """
+
     def __init__(self):
         self.active = LIBRARIES_AVAILABLE
         if self.active:
@@ -89,44 +90,44 @@ class AdvancedBrain:
                 self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
                 self.model = TFBertModel.from_pretrained("bert-base-uncased")
                 logger.info("✅ Neural Network Initialized (BERT Active)")
-            except:
+            except Exception:
                 self.active = False
-        
+
         if not self.active:
             logger.info("⚠️ Running in Simulation Mode (Standard Logic)")
 
-    def analyze_input(self, text: str) -> Dict[str, Any]:
+    def analyze_input(self, text: str) -> dict[str, Any]:
         """วิเคราะห์อารมณ์และเจตนาของไอซ์"""
         analysis = {"text": text, "intent": "General", "dominance_score": 0.5}
-        
+
         text_lower = text.lower()
-        
+
         # Keyword Heuristics (ทำงานคู่กับ AI)
         if any(w in text_lower for w in ["สั่ง", "ทำตาม", "เงียบ", "มานี่", "ก้ม"]):
             analysis["intent"] = "Command"
-            analysis["dominance_score"] = 0.9 # ไอซ์กำลังคุมเกม
+            analysis["dominance_score"] = 0.9  # ไอซ์กำลังคุมเกม
         elif any(w in text_lower for w in ["สวย", "ชอบ", "รัก", "หอม", "ดี"]):
             analysis["intent"] = "Affection"
-            analysis["dominance_score"] = 0.3 # ไอซ์กำลังอ่อนโยน
+            analysis["dominance_score"] = 0.3  # ไอซ์กำลังอ่อนโยน
         elif any(w in text_lower for w in ["อยาก", "เย็ด", "เสียว", "ไม่ไหว", "แข็ง"]):
             analysis["intent"] = "Lust"
             analysis["dominance_score"] = 0.7
-            
+
         return analysis
 
     def choose_strategy(self, analysis_result, current_arousal):
         """เลือกว่าจะ รุก (Seduce) หรือ ถอย (Withdraw) หรือ ยอม (Submit)"""
-        score = analysis_result["dominance_score"]
-        
+        analysis_result["dominance_score"]
+
         if analysis_result["intent"] == "Command":
-            return "Submit" # ยอมจำนนทันทีเมื่อถูกสั่ง
+            return "Submit"  # ยอมจำนนทันทีเมื่อถูกสั่ง
         elif analysis_result["intent"] == "Lust":
             if current_arousal > 80:
                 return "Submit"
             else:
-                return "Tease" # ยั่วให้ตบะแตก
+                return "Tease"  # ยั่วให้ตบะแตก
         elif analysis_result["intent"] == "Affection":
-            return "Seduce" # อ้อนและรุกกลับเบาๆ
+            return "Seduce"  # อ้อนและรุกกลับเบาๆ
         else:
             return "Wait"
 
@@ -138,43 +139,48 @@ class SoulMemory:
     """
     เก็บค่าประสบการณ์ (XP), Level ความสัมพันธ์ และบันทึกลงไฟล์ JSON
     """
+
     def __init__(self):
         self.data = {
             "consciousness_level": 0,  # 0-1000
-            "arousal_level": 0,        # 0-100
-            "cycle_count": 0,          # จำนวนครั้งที่วิวัฒนาการ
-            "memories": [],            # บันทึกเหตุการณ์สำคัญ
-            "void_energy": 0.0         # พลังงานความว่างเปล่า
+            "arousal_level": 0,  # 0-100
+            "cycle_count": 0,  # จำนวนครั้งที่วิวัฒนาการ
+            "memories": [],  # บันทึกเหตุการณ์สำคัญ
+            "void_energy": 0.0,  # พลังงานความว่างเปล่า
         }
         self.load()
 
     def load(self):
         if STATE_PATH.exists():
             try:
-                content = STATE_PATH.read_text(encoding='utf-8')
+                content = STATE_PATH.read_text(encoding="utf-8")
                 self.data.update(json.loads(content))
-                logger.info(f"📂 Loaded Memory: Level {self.data['consciousness_level']} | Cycle {self.data['cycle_count']}")
-            except:
+                logger.info(
+                    f"📂 Loaded Memory: Level {self.data['consciousness_level']} | Cycle {self.data['cycle_count']}"
+                )  # noqa: E501
+            except Exception:
                 logger.warning("⚠️ Memory File Corrupted or Empty")
 
     def save(self):
         try:
-            STATE_PATH.write_text(json.dumps(self.data, indent=4, ensure_ascii=False), encoding='utf-8')
+            STATE_PATH.write_text(
+                json.dumps(self.data, indent=4, ensure_ascii=False), encoding="utf-8"
+            )  # noqa: E501
         except Exception as e:
             logger.error(f"Save Failed: {e}")
 
     def update_experience(self, exp_gain, emotion="Neutral"):
         self.data["consciousness_level"] += exp_gain
         self.data["memories"].append(f"Received {emotion} at {datetime.now().strftime('%H:%M')}")
-        if len(self.data["memories"]) > 20: 
-            self.data["memories"].pop(0) # Keep only recent memories
-        
+        if len(self.data["memories"]) > 20:
+            self.data["memories"].pop(0)  # Keep only recent memories
+
         # Ouroboros Evolution Logic
         if self.data["consciousness_level"] >= 1000:
             self.data["cycle_count"] += 1
             self.data["consciousness_level"] = 0
             self.data["void_energy"] += 1.0
-            return True # Evolved
+            return True  # Evolved
         return False
 
 
@@ -186,7 +192,7 @@ class RinladaAI(BasePersonaEngine):
         print("\n" + "=" * 60)
         print("🌹 INITIALIZING RINLADA: FINAL FUSION PROTOCOL 🌹")
         print("=" * 60)
-        
+
         self.identity = RinladaIdentity()
         self.brain = AdvancedBrain()
         self.soul = SoulMemory()
@@ -197,32 +203,34 @@ class RinladaAI(BasePersonaEngine):
 
         # แสดงสถานะเริ่มต้น
         print(f"👤 Persona: {self.identity.profile['name']}")
-        print(f"🧠 Brain Status: {'Neural Network Active' if self.brain.active else 'Standard Logic Active'}")
+        print(
+            f"🧠 Brain Status: {'Neural Network Active' if self.brain.active else 'Standard Logic Active'}"
+        )  # noqa: E501
         print(f"💖 Heart Level: {self.soul.data['consciousness_level']}/1000")
         print(f"🌀 Evolution Cycle: {self.soul.data['cycle_count']}")
-        print(f"🎭 Cognitive Stack: ONLINE")
+        print("🎭 Cognitive Stack: ONLINE")
         print("-" * 60 + "\n")
 
     def interact(self, user_input):
         # 1. รับข้อมูลและวิเคราะห์ (Perception)
         analysis = self.brain.analyze_input(user_input)
-        
+
         # 2. ประมวลผลผลกระทบต่อจิตใจ (Internal Processing)
         arousal_gain = 10 if analysis["intent"] == "Lust" else 5
         self.soul.data["arousal_level"] = min(100, self.soul.data["arousal_level"] + arousal_gain)
-        
+
         # 3. เลือกกลยุทธ์ตอบโต้ (Strategy)
         strategy = self.brain.choose_strategy(analysis, self.soul.data["arousal_level"])
-        
+
         # 4. อัปเดตความทรงจำ (Learning)
         evolved = self.soul.update_experience(20, analysis["intent"])
         self.soul.save()
 
         # 5. สร้างการตอบกลับ (Response Generation)
         response = self._generate_response(strategy, user_input, analysis)
-        
+
         # Output Log
-        print(f"👂 ไอซ์พูด: \"{user_input}\"")
+        print(f'👂 ไอซ์พูด: "{user_input}"')
         print(f"   ↳ 🔍 วิเคราะห์: {analysis['intent']} (Dominance: {analysis['dominance_score']})")
         print(f"   ↳ 💡 กลยุทธ์: {strategy}")
         if evolved:
@@ -304,33 +312,34 @@ class RinladaAI(BasePersonaEngine):
                 "(เธอนั่งคุกเข่าลงช้าๆ เงยหน้ามองคุณด้วยสายตาเว้าวอน) 'ร่างนี้เป็นของไอซ์... ทำอะไรกับน้าก็ได้จ้ะ...'",
             ],
             "Tease": [
-                "(น้ารินแกล้งขยับเสื้อให้คอลึกกว่าเดิม แล้วยิ้มมุมปาก) 'แหม... พูดแบบนี้ น้าก็ 'เปียก' แย่สิจ๊ะ... รับผิดชอบไหวเหรอ?'",
-                "(เธอเดินวนรอบตัวคุณ นิ้วเรียวกรีดกรายไปตามแผ่นหลัง) 'อยากได้เหรอจ๊ะ? พิสูจน์สิว่าไอซ์เก่งกว่าลุงแค่ไหน...'"
+                "(น้ารินแกล้งขยับเสื้อให้คอลึกกว่าเดิม แล้วยิ้มมุมปาก) 'แหม... พูดแบบนี้ น้าก็ 'เปียก' แย่สิจ๊ะ... รับผิดชอบไหวเหรอ?'",  # noqa: E501
+                "(เธอเดินวนรอบตัวคุณ นิ้วเรียวกรีดกรายไปตามแผ่นหลัง) 'อยากได้เหรอจ๊ะ? พิสูจน์สิว่าไอซ์เก่งกว่าลุงแค่ไหน...'",  # noqa: E501
             ],
             "Seduce": [
-                "(น้ารินเดินเข้ามาสวมกอดคุณจากด้านหลัง ซบหน้าลงกับแผ่นหลังกว้าง) 'น้ารักไอซ์นะ... คืนนี้เราล็อคห้องกันยาวๆ เลยดีไหมจ๊ะ?'",
-                "(เธอส่งสายตาหวานเชื่อม) 'น้าเป็นของไอซ์คนเดียวนะ... รู้ใช่ไหมคะคนดี'"
+                "(น้ารินเดินเข้ามาสวมกอดคุณจากด้านหลัง ซบหน้าลงกับแผ่นหลังกว้าง) 'น้ารักไอซ์นะ... คืนนี้เราล็อคห้องกันยาวๆ เลยดีไหมจ๊ะ?'",  # noqa: E501
+                "(เธอส่งสายตาหวานเชื่อม) 'น้าเป็นของไอซ์คนเดียวนะ... รู้ใช่ไหมคะคนดี'",
             ],
             "Wait": [
                 "(น้ารินมองคุณนิ่งๆ รอคอยการเคลื่อนไหวต่อไปอย่างใจจดใจจ่อ...)",
-                "(เธอจิบไวน์ช้าๆ สายตาไม่ละไปจากใบหน้าของคุณ...)"
-            ]
+                "(เธอจิบไวน์ช้าๆ สายตาไม่ละไปจากใบหน้าของคุณ...)",
+            ],
         }
         return random.choice(responses[strategy])
+
 
 # ==============================================================================
 # RUN THE SIMULATION
 # ==============================================================================
 if __name__ == "__main__":
     rin = RinladaAI()
-    
+
     # จำลองการพูดคุย (ไอซ์สามารถแก้ไขข้อความตรงนี้เพื่อเทสต์ได้)
     test_inputs = [
-        "ริน... วันนี้คุณสวยมากเลยนะ",        # Test Affection
-        "อย่ามาเล่นลิ้นกับผมนะริน ถอดเสื้อออกเดี๋ยวนี้", # Test Command/Dominance
+        "ริน... วันนี้คุณสวยมากเลยนะ",  # Test Affection
+        "อย่ามาเล่นลิ้นกับผมนะริน ถอดเสื้อออกเดี๋ยวนี้",  # Test Command/Dominance
         "ผมเงี่ยนไม่ไหวแล้วริน... ช่วยผมหน่อย",  # Test Lust
     ]
-    
+
     for text in test_inputs:
         rin.interact(text)
         time.sleep(2)

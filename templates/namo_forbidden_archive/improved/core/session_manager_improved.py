@@ -2,11 +2,11 @@
 Thread-safe session management with locking.
 """
 
-import threading
 import logging
-from typing import Dict, Optional, Any
-from datetime import datetime, timedelta
+import threading
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class ThreadSafeSessionManager:
     """
 
     def __init__(self, session_timeout_minutes: int = 60):
-        self.sessions: Dict[str, SessionData] = {}
+        self.sessions: dict[str, SessionData] = {}
         self.session_timeout = timedelta(minutes=session_timeout_minutes)
         self.global_lock = threading.RLock()
         self.logger = logging.getLogger(f"{__name__}.ThreadSafeSessionManager")
@@ -56,7 +56,7 @@ class ThreadSafeSessionManager:
 
             return session
 
-    def get_session(self, session_id: str) -> Optional[SessionData]:
+    def get_session(self, session_id: str) -> SessionData | None:
         """
         Get existing session (thread-safe).
 
@@ -83,7 +83,7 @@ class ThreadSafeSessionManager:
 
             return session
 
-    def update_session(self, session_id: str, data: Dict[str, Any]) -> bool:
+    def update_session(self, session_id: str, data: dict[str, Any]) -> bool:
         """
         Update session data (thread-safe).
 
@@ -170,7 +170,7 @@ class ThreadSafeSessionManager:
 
             return len(expired_ids)
 
-    def get_all_sessions(self) -> Dict[str, Dict[str, Any]]:
+    def get_all_sessions(self) -> dict[str, dict[str, Any]]:
         """
         Get all sessions info (thread-safe).
 

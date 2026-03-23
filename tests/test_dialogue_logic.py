@@ -12,7 +12,9 @@ from core.dark_system import DarkNaMoSystem
 @pytest.fixture
 def mock_adapters(monkeypatch):
     """Mocks the Memory and Emotion adapters."""
-    monkeypatch.setattr("adapters.memory.MemoryAdapter.store_interaction", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        "adapters.memory.MemoryAdapter.store_interaction", lambda *args, **kwargs: None
+    )  # noqa: E501
     monkeypatch.setattr(
         "adapters.emotion.EmotionAdapter.analyze_emotion",
         lambda *args, **kwargs: {"primary_emotion": "neutral", "intensity": 0.5},
@@ -70,7 +72,9 @@ def test_safe_word_trigger(monkeypatch, mock_adapters):
 
     # Assert
     assert isinstance(result, dict)
-    assert result["text"] == "ข้าได้ยินท่านแล้ว ทุกอย่างจะหยุดลงเดี๋ยวนี้ ท่านปลอดภัยแล้ว ข้าอยู่นี่"
+    assert (
+        result["text"] == "ข้าได้ยินท่านแล้ว ทุกอย่างจะหยุดลงเดี๋ยวนี้ ท่านปลอดภัยแล้ว ข้าอยู่นี่"
+    )
 
 
 def test_neutral_input_triggers_provoke_reaction_response(monkeypatch, mock_adapters):

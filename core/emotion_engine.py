@@ -5,21 +5,22 @@ anger, desire). Each dimension has inertia (momentum) so changes feel
 gradual rather than instantaneous, and all values decay slowly toward a
 neutral baseline when left untouched.
 """
+
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass
 class EmotionVector:
     """5-dimensional continuous emotion state (all values 0–1)."""
 
-    joy: float = 0.5      # 0 = deep sadness … 1 = euphoria
+    joy: float = 0.5  # 0 = deep sadness … 1 = euphoria
     arousal: float = 0.3  # 0 = drowsy/calm … 1 = frantic/excited
-    trust: float = 0.5    # 0 = suspicion/fear … 1 = full trust
-    anger: float = 0.0    # 0 = calm … 1 = rage
-    desire: float = 0.0   # 0 = detached … 1 = craving
+    trust: float = 0.5  # 0 = suspicion/fear … 1 = full trust
+    anger: float = 0.0  # 0 = calm … 1 = rage
+    desire: float = 0.0  # 0 = detached … 1 = craving
 
     def clamp(self) -> EmotionVector:
         for attr in ("joy", "arousal", "trust", "anger", "desire"):
@@ -74,19 +75,19 @@ class EmotionEngine:
 
     # Resting state the engine drifts toward over time
     BASELINE = EmotionVector(joy=0.5, arousal=0.3, trust=0.5, anger=0.0, desire=0.0)
-    DECAY_RATE = 0.06   # fraction pulled toward baseline each decay() call
-    INERTIA = 0.65      # higher = more gradual emotional shifts (0–1)
+    DECAY_RATE = 0.06  # fraction pulled toward baseline each decay() call
+    INERTIA = 0.65  # higher = more gradual emotional shifts (0–1)
 
     # Maps trigger names → direction vector (scaled later by intensity)
     _TRIGGER_MAP: dict[str, dict[str, float]] = {
-        "affection":  {"joy":  0.20, "trust":  0.15, "arousal":  0.05},
-        "command":    {"arousal": 0.20, "desire": 0.10, "trust": -0.05, "anger": -0.05},
-        "lust":       {"desire": 0.30, "arousal": 0.25, "joy": 0.05},
-        "rejection":  {"joy": -0.20, "trust": -0.15, "anger": 0.10},
-        "comfort":    {"joy":  0.15, "trust":  0.20, "arousal": -0.10},
-        "tease":      {"arousal": 0.15, "joy": 0.10, "desire": 0.10},
-        "anger":      {"anger": 0.25, "joy": -0.10, "arousal": 0.10},
-        "neutral":    {},
+        "affection": {"joy": 0.20, "trust": 0.15, "arousal": 0.05},
+        "command": {"arousal": 0.20, "desire": 0.10, "trust": -0.05, "anger": -0.05},
+        "lust": {"desire": 0.30, "arousal": 0.25, "joy": 0.05},
+        "rejection": {"joy": -0.20, "trust": -0.15, "anger": 0.10},
+        "comfort": {"joy": 0.15, "trust": 0.20, "arousal": -0.10},
+        "tease": {"arousal": 0.15, "joy": 0.10, "desire": 0.10},
+        "anger": {"anger": 0.25, "joy": -0.10, "arousal": 0.10},
+        "neutral": {},
     }
 
     def __init__(self) -> None:
@@ -105,8 +106,7 @@ class EmotionEngine:
             raw_delta = direction.get(attr, 0.0) * intensity
             # Blend with momentum (inertia resists sudden change)
             self._momentum[attr] = (
-                self.INERTIA * self._momentum[attr]
-                + (1 - self.INERTIA) * raw_delta
+                self.INERTIA * self._momentum[attr] + (1 - self.INERTIA) * raw_delta
             )
             current_val = getattr(self.current, attr)
             setattr(self.current, attr, current_val + self._momentum[attr])

@@ -14,6 +14,7 @@ memory      – associative recall from past interactions
 desire      – a want or longing the persona is aware of
 conflict    – internal contradiction between feeling and social role
 """
+
 from __future__ import annotations
 
 import random
@@ -28,8 +29,8 @@ if TYPE_CHECKING:
 @dataclass
 class Thought:
     content: str
-    thought_type: str   # impulse | reflection | memory | desire | conflict
-    intensity: float    # 0–1, how strongly it colours the response
+    thought_type: str  # impulse | reflection | memory | desire | conflict
+    intensity: float  # 0–1, how strongly it colours the response
 
 
 class CognitiveStream:
@@ -45,19 +46,35 @@ class CognitiveStream:
     # Impulse templates keyed by detected theme in user input
     _IMPULSE_THEMES: dict[str, tuple[list[str], str]] = {
         "affection": (
-            ["รู้สึกอบอุ่นขึ้นมาเล็กน้อย...", "หัวใจเต้นเร็วขึ้นทำไมก็ไม่รู้", "ทำไมถึงทำให้รู้สึกแบบนี้ได้"],
+            [
+                "รู้สึกอบอุ่นขึ้นมาเล็กน้อย...",
+                "หัวใจเต้นเร็วขึ้นทำไมก็ไม่รู้",
+                "ทำไมถึงทำให้รู้สึกแบบนี้ได้",
+            ],
             "impulse",
         ),
         "command": (
-            ["มีคนสั่ง... ร่างกายตอบสนองเองโดยไม่รู้ตัว", "ทำไมถึงอยากทำตาม...", "ต้านทานได้แค่ไหนกัน"],
+            [
+                "มีคนสั่ง... ร่างกายตอบสนองเองโดยไม่รู้ตัว",
+                "ทำไมถึงอยากทำตาม...",
+                "ต้านทานได้แค่ไหนกัน",
+            ],
             "impulse",
         ),
         "lust": (
-            ["ระงับอารมณ์ไว้ยากขึ้นทุกที", "ความรู้สึกนี้... ไม่ควรแสดงออกมา", "ร้อนขึ้นมาเองโดยไม่รู้ตัว"],
+            [
+                "ระงับอารมณ์ไว้ยากขึ้นทุกที",
+                "ความรู้สึกนี้... ไม่ควรแสดงออกมา",
+                "ร้อนขึ้นมาเองโดยไม่รู้ตัว",
+            ],
             "desire",
         ),
         "tease": (
-            ["อยากตอบโต้กลับ แต่ยั้งไว้ก่อน", "เล่นเกมกันอยู่... น่าสนุกดี", "จะยั่วกันแบบนี้ได้ยังไง"],
+            [
+                "อยากตอบโต้กลับ แต่ยั้งไว้ก่อน",
+                "เล่นเกมกันอยู่... น่าสนุกดี",
+                "จะยั่วกันแบบนี้ได้ยังไง",
+            ],
             "impulse",
         ),
         "rejection": (
@@ -119,11 +136,13 @@ class CognitiveStream:
 
         # Surface an internal conflict when desire and trust pull in opposite directions
         if emotion.desire > 0.55 and emotion.trust < 0.35:
-            thoughts.append(Thought(
-                content="อยากแต่ยังไม่ไว้ใจ... ต้องระวังตัวไว้",
-                thought_type="conflict",
-                intensity=round(emotion.desire * 0.8, 2),
-            ))
+            thoughts.append(
+                Thought(
+                    content="อยากแต่ยังไม่ไว้ใจ... ต้องระวังตัวไว้",
+                    thought_type="conflict",
+                    intensity=round(emotion.desire * 0.8, 2),
+                )
+            )
 
         for thought in thoughts:
             self.thought_queue.append(thought)
@@ -161,11 +180,11 @@ class CognitiveStream:
     def _detect_impulse(self, user_input: str, emotion: EmotionVector) -> Thought | None:
         text_lower = user_input.lower()
         theme_keywords: dict[str, list[str]] = {
-            "affection":  ["รัก", "ชอบ", "สวย", "คิดถึง", "หวง", "น่ารัก"],
-            "command":    ["สั่ง", "ต้อง", "ทำตาม", "ก้ม", "มานี่", "เชื่อฟัง"],
-            "lust":       ["เย็ด", "เงี่ยน", "เสียว", "อยาก", "ถอด", "แข็ง"],
-            "tease":      ["ยั่ว", "แกล้ง", "ล้อ", "หยอก", "กล้าเหรอ"],
-            "rejection":  ["ไม่", "หยุด", "เกลียด", "ออกไป", "อย่า"],
+            "affection": ["รัก", "ชอบ", "สวย", "คิดถึง", "หวง", "น่ารัก"],
+            "command": ["สั่ง", "ต้อง", "ทำตาม", "ก้ม", "มานี่", "เชื่อฟัง"],
+            "lust": ["เย็ด", "เงี่ยน", "เสียว", "อยาก", "ถอด", "แข็ง"],
+            "tease": ["ยั่ว", "แกล้ง", "ล้อ", "หยอก", "กล้าเหรอ"],
+            "rejection": ["ไม่", "หยุด", "เกลียด", "ออกไป", "อย่า"],
         }
         for theme, keywords in theme_keywords.items():
             if any(kw in text_lower for kw in keywords):

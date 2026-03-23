@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from typing import List
 
 from flask import Flask, jsonify, request
 
@@ -12,7 +11,6 @@ from emotion_fusion_engine.emotion_oscillation_calculator import (
     EmotionOscillationCalculator,
 )
 
-
 app = Flask(__name__)
 
 text_analyzer = TextEmotionAnalyzer()
@@ -20,7 +18,7 @@ image_analyzer = ImageEmotionAnalyzer()
 audio_analyzer = AudioEmotionAnalyzer()
 
 
-def _parse_history(value: str | None) -> List[str]:
+def _parse_history(value: str | None) -> list[str]:
     if not value:
         return []
     try:
@@ -32,7 +30,7 @@ def _parse_history(value: str | None) -> List[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
-def _make_response(label: str, confidence: float, history: List[str], engine: str):
+def _make_response(label: str, confidence: float, history: list[str], engine: str):
     metrics = EmotionOscillationCalculator.calculate_oscillation(label, confidence, history)
     return {
         "emotion": {

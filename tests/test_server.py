@@ -8,7 +8,13 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 from fastapi.testclient import TestClient
 
 # We need to import the app from server.py
-from server import _normalize_base_url, _normalize_media, _parse_api_key_map, _resolve_plan, app, engine
+from server import (
+    _normalize_base_url,
+    _normalize_media,
+    _parse_api_key_map,
+    _resolve_plan,
+    app,
+)
 
 # Create a client for testing
 client = TestClient(app)
@@ -140,7 +146,9 @@ def test_normalize_media_helpers():
 @patch("server._store_memory_if_enabled")
 @patch("server._log_usage")
 @patch("server.settings")
-def test_chat_v1_endpoint_success_with_key(mock_settings, mock_log_usage, mock_store_memory, mock_process_input):
+def test_chat_v1_endpoint_success_with_key(
+    mock_settings, mock_log_usage, mock_store_memory, mock_process_input
+):  # noqa: E501
     """Tests a successful call to the /v1/chat endpoint with a valid API key."""
     # Arrange
     mock_settings.namo_api_keys = "my-secret-key:premium"
@@ -220,6 +228,7 @@ def test_legacy_chat_endpoint_success(mock_settings, mock_store_memory, mock_pro
 # ---------------------------------------------------------------------------
 # Admin session management
 # ---------------------------------------------------------------------------
+
 
 def test_list_sessions_no_auth_required_when_no_admin_secret():
     """GET /v1/admin/sessions returns 200 when ADMIN_SECRET is not set."""
