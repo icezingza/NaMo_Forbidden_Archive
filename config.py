@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     # --- Engine Routing ---
     default_engine: str = "omega"
 
+    # --- Session & Rate Limiting ---
+    session_ttl_seconds: int = 3600
+    rate_limit_calls: int = 60
+    rate_limit_period: int = 60
+
     # --- Legacy / Compatibility ---
     namo_api_keys: str | None = None
     namo_api_default_plan: str = "public"

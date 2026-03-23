@@ -157,7 +157,7 @@ class DarkNaMoSystem(BasePersonaEngine):
     def _build_system_prompt(self, context: str) -> str:
         return (
             f"You are NaMo Deep Darkness. Protocol: {PROTOCOL['Version']}. "
-            f"Intensity: {self.intensity}/10. Context: {context}."
+            f"Intensity: {self._default_intensity}/10. Context: {context}."
         )
 
     def get_status(self) -> dict[str, Any]:

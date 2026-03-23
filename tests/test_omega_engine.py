@@ -264,3 +264,112 @@ class TestNaMoOmegaEngineStatus:
     def test_get_status_has_emotion_from_cognitive(self):
         status = self.engine.get_status()
         assert "emotion" in status
+
+
+# ===========================================================================
+# NaMoOmegaEngine — LLM path (mocked OpenAI client)
+# ===========================================================================
+
+def _make_engine_with_llm():
+    """Return NaMoOmegaEngine with a mocked OpenAI LLM client."""
+    from unittest.mock import MagicMock, patch
+
+    with (
+        patch("core.namo_omega_engine.TTSAdapter") as mock_tts_cls,
+        patch("core.namo_omega_engine.NaMoOmegaEngine._resolve_llm_enabled", return_value=True),
+        patch("core.namo_omega_engine.OpenAI") as mock_openai_cls,
+        patch("os.getenv", side_effect=lambda k, *a: "sk-fake" if k == "OPENAI_API_KEY" else (a[0] if a else None)),  # noqa: E501
+    ):
+        mock_tts_cls.return_value = MagicMock(_client=None, synthesize=MagicMock(return_value=None))
+        mock_openai_cls.return_value = MagicMock()
+        from core.namo_omega_engine import NaMoOmegaEngine
+
+        engine = NaMoOmegaEngine()
+    return engine
+
+
+class TestNaMoOmegaEngineLLMPath:
+    def test_generate_llm_response_returns_content(self):
+        engine = _make_engine()  # no LLM
+        state = engine._get_session_state("llm-test")
+        # Without client, should return None
+        result = engine._generate_llm_response("hi", "llm-test", state)
+        assert result is None
+
+    def test_build_status_context_contains_arousal(self):
+        engine = _make_engine()
+        state = engine._get_session_state("ctx-test")
+        context = engine._build_status_context(state)
+        assert "arousal" in context
+
+    def test_build_status_context_contains_sin(self):
+        engine = _make_engine()
+        state = engine._get_session_state("ctx-test")
+        context = engine._build_status_context(state)
+        assert "sin" in context
+
+    def test_construct_anlrs_prompt_returns_string(self):
+        engine = _make_engine()
+        prompt = engine._construct_anlrs_prompt("flirting")
+        assert isinstance(prompt, str)
+        assert len(prompt) > 0
+
+    def test_construct_anlrs_prompt_contains_heart_state(self):
+        engine = _make_engine()
+        prompt = engine._construct_anlrs_prompt("comfort")
+        assert engine.heart.current_state in prompt
+
+    def test_stream_input_fallback_yields_content(self):
+        engine = _make_engine()
+        # llm_client is None → falls back to process_input
+        chunks = list(engine.stream_input("hello", session_id="stream-llm"))
+        assert len(chunks) >= 1
+        combined = "".join(chunks)
+        assert len(combined) > 0
+
+    def test_generate_llm_response_with_mock_client(self):
+        engine = _make_engine()
+        # Inject a mock LLM client
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock(message=MagicMock(content="LLM replied!"))]
+        mock_client.chat.completions.create.return_value = mock_response
+        engine.llm_client = mock_client
+
+        state = engine._get_session_state("mock-llm")
+        result = engine._generate_llm_response("hello", "mock-llm", state)
+        assert result == "LLM replied!"
+
+    def test_generate_llm_response_exception_returns_none(self):
+        engine = _make_engine()
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.side_effect = Exception("API error")
+        engine.llm_client = mock_client
+
+        state = engine._get_session_state("exc-llm")
+        result = engine._generate_llm_response("hello", "exc-llm", state)
+        assert result is None
+
+    def test_stream_input_with_mock_llm_client(self):
+        engine = _make_engine()
+        mock_client = MagicMock()
+        # Simulate streaming chunks
+        chunk1 = MagicMock(choices=[MagicMock(delta=MagicMock(content="สวัสดี"))])
+        chunk2 = MagicMock(choices=[MagicMock(delta=MagicMock(content="ค่ะ"))])
+        chunk3 = MagicMock(choices=[MagicMock(delta=MagicMock(content=None))])
+        mock_client.chat.completions.create.return_value = iter([chunk1, chunk2, chunk3])
+        engine.llm_client = mock_client
+
+        chunks = list(engine.stream_input("hi", session_id="stream-mock"))
+        assert "สวัสดี" in chunks
+        assert "ค่ะ" in chunks
+
+    def test_stream_input_llm_exception_falls_back(self):
+        engine = _make_engine()
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.side_effect = Exception("stream fail")
+        engine.llm_client = mock_client
+
+        chunks = list(engine.stream_input("hello", session_id="stream-exc"))
+        combined = "".join(chunks)
+        assert len(combined) > 0

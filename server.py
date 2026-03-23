@@ -1,6 +1,9 @@
 import asyncio
 import json
+import time
 import uuid
+from collections import defaultdict
+from contextlib import asynccontextmanager
 from datetime import datetime
 
 import requests
@@ -18,7 +21,71 @@ from core.namo_ultimate_engine import NaMoUltimateBrain
 from rinlada_fusion import RinladaAI
 from seraphina_ai_complete import SeraphinaAI
 
-app = FastAPI(title="NaMo Forbidden Archive v9.0 (Omega Sensory)")
+
+# ---------------------------------------------------------------------------
+# Rate limiter — sliding-window, keyed by client IP
+# ---------------------------------------------------------------------------
+class _RateLimiter:
+    def __init__(self, max_calls: int, period_seconds: float) -> None:
+        self._max = max_calls
+        self._period = period_seconds
+        self._buckets: dict[str, list[float]] = defaultdict(list)
+
+    def is_allowed(self, key: str) -> bool:
+        now = time.time()
+        self._buckets[key] = [t for t in self._buckets[key] if now - t < self._period]
+        if len(self._buckets[key]) >= self._max:
+            return False
+        self._buckets[key].append(now)
+        return True
+
+
+# ---------------------------------------------------------------------------
+# Session TTL — track last-active timestamp and evict stale sessions
+# ---------------------------------------------------------------------------
+_session_timestamps: dict[str, float] = {}
+
+
+def _touch_session(session_id: str) -> None:
+    _session_timestamps[session_id] = time.time()
+
+
+def cleanup_expired_sessions(ttl_seconds: float | None = None) -> int:
+    """Remove sessions older than ttl_seconds from all loaded engines.
+
+    Returns the number of sessions evicted.
+    """
+    effective_ttl = ttl_seconds if ttl_seconds is not None else float(settings.session_ttl_seconds)
+    now = time.time()
+    expired = [sid for sid, ts in list(_session_timestamps.items()) if now - ts > effective_ttl]
+    for sid in expired:
+        _session_timestamps.pop(sid, None)
+        for inst in _EngineRegistry._instances.values():
+            for attr in _STATE_ATTRS:
+                store = getattr(inst, attr, None)
+                if isinstance(store, dict):
+                    store.pop(sid, None)
+    return len(expired)
+
+
+async def _session_cleanup_loop() -> None:
+    while True:
+        await asyncio.sleep(settings.session_ttl_seconds)
+        cleanup_expired_sessions()
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    task = asyncio.create_task(_session_cleanup_loop())
+    yield
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
+
+
+app = FastAPI(title="NaMo Forbidden Archive v9.0 (Omega Sensory)", lifespan=lifespan)
 
 # --- CORS + Static Media ---
 cors_origins = [o.strip() for o in settings.cors_allow_origins.split(",") if o.strip()]
@@ -75,6 +142,12 @@ _EngineRegistry.register("ultimate", NaMoUltimateBrain)
 # Pre-load default engine at startup
 print("[System]: Awakening NaMo Omega...")
 engine = _EngineRegistry.get(settings.default_engine)
+
+# Rate limiter instance — initialized from settings
+_rate_limiter = _RateLimiter(
+    max_calls=settings.rate_limit_calls,
+    period_seconds=float(settings.rate_limit_period),
+)
 
 
 class ChatInput(BaseModel):
@@ -189,6 +262,7 @@ def _resolve_engine_from_payload(payload: ChatInput) -> BasePersonaEngine:
 async def chat_with_namo(payload: ChatInput, request: Request):
     active_engine = _resolve_engine_from_payload(payload)
     session_id = payload.session_id or str(uuid.uuid4())
+    _touch_session(session_id)
     result = active_engine.process_input(payload.text, session_id=session_id)
 
     media = _normalize_media(result["media_trigger"], _get_base_url(request))
@@ -209,12 +283,17 @@ async def chat_with_namo_v1(
     request: Request,
     x_api_key: str | None = Header(default=None),
 ):
+    client_ip = request.client.host if request.client else "unknown"
+    if not _rate_limiter.is_allowed(client_ip):
+        raise HTTPException(status_code=429, detail="rate_limit_exceeded")
+
     plan, allowed = _resolve_plan(x_api_key)
     if not allowed and settings.namo_api_keys:
         raise HTTPException(status_code=401, detail="invalid_api_key")
 
     active_engine = _resolve_engine_from_payload(payload)
     session_id = payload.session_id or str(uuid.uuid4())
+    _touch_session(session_id)
     result = active_engine.process_input(payload.text, session_id=session_id)
 
     media = _normalize_media(result["media_trigger"], _get_base_url(request))
@@ -245,12 +324,17 @@ async def chat_stream(
     request: Request,
     x_api_key: str | None = Header(default=None),
 ):
+    client_ip = request.client.host if request.client else "unknown"
+    if not _rate_limiter.is_allowed(client_ip):
+        raise HTTPException(status_code=429, detail="rate_limit_exceeded")
+
     plan, allowed = _resolve_plan(x_api_key)
     if not allowed and settings.namo_api_keys:
         raise HTTPException(status_code=401, detail="invalid_api_key")
 
     active_engine = _resolve_engine_from_payload(payload)
     session_id = payload.session_id or str(uuid.uuid4())
+    _touch_session(session_id)
     engine_name = active_engine.__class__.__name__
 
     queue: asyncio.Queue[str | None] = asyncio.Queue()

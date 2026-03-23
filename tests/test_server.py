@@ -1,6 +1,6 @@
 import os
 import sys
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 # Ensure project root is on sys.path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -9,11 +9,16 @@ from fastapi.testclient import TestClient
 
 # We need to import the app from server.py
 from server import (
+    _log_usage,
     _normalize_base_url,
     _normalize_media,
     _parse_api_key_map,
+    _RateLimiter,
     _resolve_plan,
+    _store_memory_if_enabled,
+    _touch_session,
     app,
+    cleanup_expired_sessions,
 )
 
 # Create a client for testing
@@ -277,3 +282,220 @@ def test_clear_session_removes_from_engine():
         assert test_sid not in eng._session_states
     if hasattr(eng, "session_history"):
         assert test_sid not in eng.session_history
+
+
+# ---------------------------------------------------------------------------
+# _store_memory_if_enabled
+# ---------------------------------------------------------------------------
+
+
+@patch("server.settings")
+def test_store_memory_disabled_when_flag_off(mock_settings):
+    mock_settings.memory_logging = 0
+    with patch("server.requests.post") as mock_post:
+        _store_memory_if_enabled("s1", "hi", "hello", None)
+    mock_post.assert_not_called()
+
+
+@patch("server.settings")
+def test_store_memory_disabled_when_no_url(mock_settings):
+    mock_settings.memory_logging = 1
+    mock_settings.memory_api_url = None
+    with patch("server.requests.post") as mock_post:
+        _store_memory_if_enabled("s1", "hi", "hello", None)
+    mock_post.assert_not_called()
+
+
+@patch("server.settings")
+def test_store_memory_posts_when_configured(mock_settings):
+    mock_settings.memory_logging = 1
+    mock_settings.memory_api_url = "http://memory.local/store"
+    mock_settings.memory_api_key = "secret"
+    with patch("server.requests.post") as mock_post:
+        mock_post.return_value = MagicMock(status_code=200)
+        _store_memory_if_enabled("s1", "user text", "bot reply", {"stat": 1})
+    mock_post.assert_called_once()
+    payload = mock_post.call_args.kwargs["json"]
+    assert "user text" in payload["content"]
+    assert "bot reply" in payload["content"]
+    assert payload["session_id"] == "s1"
+    assert mock_post.call_args.kwargs["headers"]["x-api-key"] == "secret"
+
+
+@patch("server.settings")
+def test_store_memory_exception_silent(mock_settings):
+    import requests as _req
+
+    mock_settings.memory_logging = 1
+    mock_settings.memory_api_url = "http://memory.local/store"
+    mock_settings.memory_api_key = None
+    with patch("server.requests.post", side_effect=_req.RequestException("timeout")):
+        _store_memory_if_enabled("s1", "hi", "bye", None)  # should not raise
+
+
+# ---------------------------------------------------------------------------
+# _log_usage
+# ---------------------------------------------------------------------------
+
+def test_log_usage_writes_to_file(tmp_path):
+    log_path = str(tmp_path / "usage.jsonl")
+    with patch("server.settings") as mock_settings:
+        mock_settings.namo_usage_log_path = log_path
+        _log_usage({"endpoint": "/v1/chat", "session_id": "s1", "plan": "pro"})
+
+    import json as _json
+
+    with open(log_path) as f:
+        line = _json.loads(f.read().strip())
+    assert line["endpoint"] == "/v1/chat"
+    assert "timestamp" in line
+
+
+def test_log_usage_no_path_is_noop():
+    with patch("server.settings") as mock_settings:
+        mock_settings.namo_usage_log_path = None
+        _log_usage({"endpoint": "/v1/chat"})  # should not raise
+
+
+def test_log_usage_oserror_is_silenced(tmp_path):
+    with patch("server.settings") as mock_settings:
+        mock_settings.namo_usage_log_path = "/nonexistent/path/usage.jsonl"
+        _log_usage({"endpoint": "/v1/chat"})  # should not raise
+
+
+# ---------------------------------------------------------------------------
+# Session TTL — cleanup_expired_sessions
+# ---------------------------------------------------------------------------
+
+def test_cleanup_expired_sessions_removes_stale(monkeypatch):
+    import server
+
+    # Inject a fake old session
+    server._session_timestamps["stale-session"] = 0.0  # epoch = always expired
+    removed = cleanup_expired_sessions(ttl_seconds=1.0)
+    assert removed >= 1
+    assert "stale-session" not in server._session_timestamps
+
+
+def test_cleanup_keeps_fresh_sessions(monkeypatch):
+    import time as _time
+
+    import server
+
+    sid = "fresh-session-xyz"
+    server._session_timestamps[sid] = _time.time()  # just now
+    cleanup_expired_sessions(ttl_seconds=3600.0)
+    assert sid in server._session_timestamps
+    # cleanup
+    server._session_timestamps.pop(sid, None)
+
+
+def test_touch_session_records_timestamp():
+    import time as _time
+
+    import server
+
+    before = _time.time()
+    _touch_session("ts-test-session")
+    after = _time.time()
+    ts = server._session_timestamps.get("ts-test-session", 0)
+    assert before <= ts <= after
+    server._session_timestamps.pop("ts-test-session", None)
+
+
+# ---------------------------------------------------------------------------
+# Rate limiter (_RateLimiter)
+# ---------------------------------------------------------------------------
+
+
+def test_rate_limiter_allows_within_limit():
+    limiter = _RateLimiter(max_calls=5, period_seconds=60)
+    for _ in range(5):
+        assert limiter.is_allowed("ip-1") is True
+
+
+def test_rate_limiter_blocks_when_exceeded():
+    limiter = _RateLimiter(max_calls=3, period_seconds=60)
+    for _ in range(3):
+        limiter.is_allowed("ip-2")
+    assert limiter.is_allowed("ip-2") is False
+
+
+def test_rate_limiter_resets_after_period():
+    import time as _time
+
+    limiter = _RateLimiter(max_calls=2, period_seconds=0.05)
+    limiter.is_allowed("ip-3")
+    limiter.is_allowed("ip-3")
+    assert limiter.is_allowed("ip-3") is False
+    _time.sleep(0.1)
+    assert limiter.is_allowed("ip-3") is True
+
+
+def test_rate_limiter_different_keys_independent():
+    limiter = _RateLimiter(max_calls=1, period_seconds=60)
+    assert limiter.is_allowed("ip-A") is True
+    assert limiter.is_allowed("ip-A") is False
+    assert limiter.is_allowed("ip-B") is True  # different key, not affected
+
+
+# ---------------------------------------------------------------------------
+# /v1/chat/stream endpoint
+# ---------------------------------------------------------------------------
+
+@patch("server.settings")
+def test_stream_endpoint_returns_sse(mock_settings):
+    mock_settings.namo_api_keys = None
+    mock_settings.namo_api_default_plan = "public"
+    mock_settings.public_base_url = None
+    mock_settings.default_engine = "omega"
+    mock_settings.rate_limit_calls = 1000
+    mock_settings.rate_limit_period = 60
+    mock_settings.memory_logging = 0
+    mock_settings.namo_usage_log_path = None
+
+    with patch("server._rate_limiter") as mock_rl:
+        mock_rl.is_allowed.return_value = True
+        with patch("server.engine.stream_input") as mock_stream:
+            mock_stream.return_value = iter(["สวัสดี", "ค่ะ"])
+            response = client.post(
+                "/v1/chat/stream",
+                json={"text": "hello", "session_id": "stream-test"},
+            )
+
+    assert response.status_code == 200
+    assert "text/event-stream" in response.headers["content-type"]
+
+
+# ---------------------------------------------------------------------------
+# /v1/status endpoint
+# ---------------------------------------------------------------------------
+
+def test_engine_status_endpoint():
+    response = client.get("/v1/status")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, dict)
+
+
+# ---------------------------------------------------------------------------
+# Per-request engine override
+# ---------------------------------------------------------------------------
+
+@patch("server.settings")
+def test_chat_with_engine_override(mock_settings):
+    mock_settings.namo_api_keys = None
+    mock_settings.namo_api_default_plan = "public"
+    mock_settings.public_base_url = None
+    mock_settings.default_engine = "omega"
+    mock_settings.memory_logging = 0
+
+    with patch("server._store_memory_if_enabled"):
+        response = client.post(
+            "/chat",
+            json={"text": "สวัสดี", "engine": "ultimate", "session_id": "override-test"},
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["engine"] == "NaMoUltimateBrain"
