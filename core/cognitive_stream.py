@@ -197,8 +197,8 @@ class CognitiveStream:
                 )
         return None
 
-    def _memory_association(self, memory: dict, emotion: EmotionVector) -> Thought:
-        snippet = str(memory.get("text", ""))[:25]
+    def _memory_association(self, memory: dict | str, emotion: EmotionVector) -> Thought:
+        snippet = (memory if isinstance(memory, str) else str(memory.get("text", "")))[:25]
         return Thought(
             content=f"นึกถึงตอนที่คุยเรื่อง '{snippet}...' — ความรู้สึกนั้นยังอยู่ไหม",
             thought_type="memory",
