@@ -9,6 +9,7 @@ try:
 
     _ELEVENLABS_AVAILABLE = True
 except ImportError:
+    _ElevenLabsClient = None  # type: ignore[assignment,misc]
     _ELEVENLABS_AVAILABLE = False
 
 

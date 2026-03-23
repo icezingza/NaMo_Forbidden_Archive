@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"from core.namo_omega_engine import NaMoOmegaEngine\")",
+      "Bash(python -m pytest tests/test_omega_engine.py -q)",
+      "Bash(python -m pytest -q)",
+      "Bash(python -m ruff check core/namo_omega_engine.py core/relationship_engine.py tests/test_omega_engine.py)",
+      "Bash(python -m pytest tests/test_tts_adapter.py -q)",
+      "Bash(python -m ruff check --fix core/relationship_engine.py)",
+      "Bash(python -m black --check core/namo_omega_engine.py core/relationship_engine.py tests/test_omega_engine.py)",
+      "Bash(python -m black core/namo_omega_engine.py core/relationship_engine.py tests/test_omega_engine.py)",
+      "Bash(python -m pytest tests/test_omega_engine.py)",
+      "Bash(python -m pytest tests/test_intent_analyzer.py tests/test_omega_engine.py tests/test_cognitive_stack.py -v)",
+      "Bash(python -m pytest)",
+      "Bash(python -m ruff check adapters/tts.py)",
+      "Bash(python -m black --check adapters/tts.py)"
+    ]
+  }
+}

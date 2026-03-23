@@ -15,6 +15,7 @@ os.environ["DEBUG"] = "0"
 # Helpers: import with LLM + RAG disabled
 # ---------------------------------------------------------------------------
 
+
 def _make_engine():
     """Return a NaMoOmegaEngine with LLM and RAG mocked out."""
     with (
@@ -31,6 +32,7 @@ def _make_engine():
 # ===========================================================================
 # SinSystem
 # ===========================================================================
+
 
 class TestSinSystem:
     def setup_method(self):
@@ -71,6 +73,7 @@ class TestSinSystem:
 # SensoryOverloadManager
 # ===========================================================================
 
+
 class TestSensoryOverloadManager:
     def setup_method(self):
         from core.namo_omega_engine import SensoryOverloadManager
@@ -105,6 +108,7 @@ class TestSensoryOverloadManager:
 # ===========================================================================
 # PersonaOrchestrator
 # ===========================================================================
+
 
 class TestPersonaOrchestrator:
     def setup_method(self):
@@ -144,6 +148,7 @@ class TestPersonaOrchestrator:
 # NaMoOmegaEngine — process_input (no LLM)
 # ===========================================================================
 
+
 class TestNaMoOmegaEngineProcessInput:
     def setup_method(self):
         self.engine = _make_engine()
@@ -160,6 +165,7 @@ class TestNaMoOmegaEngineProcessInput:
         assert "arousal" in status
         assert "sin_status" in status
         assert "active_personas" in status
+        assert "relationship" in status
 
     def test_sin_trigger_raises_arousal(self):
         result = self.engine.process_input("เย็ด", session_id="sin-test")
@@ -207,6 +213,7 @@ class TestNaMoOmegaEngineProcessInput:
 # NaMoOmegaEngine — history management
 # ===========================================================================
 
+
 class TestNaMoOmegaEngineHistory:
     def setup_method(self):
         self.engine = _make_engine()
@@ -229,6 +236,7 @@ class TestNaMoOmegaEngineHistory:
 # NaMoOmegaEngine — stream_input fallback (no LLM)
 # ===========================================================================
 
+
 class TestNaMoOmegaEngineStream:
     def setup_method(self):
         self.engine = _make_engine()
@@ -247,6 +255,7 @@ class TestNaMoOmegaEngineStream:
 # ===========================================================================
 # NaMoOmegaEngine — get_status
 # ===========================================================================
+
 
 class TestNaMoOmegaEngineStatus:
     def setup_method(self):
@@ -279,6 +288,7 @@ class TestNaMoOmegaEngineStatus:
 # NaMoOmegaEngine — LLM path (mocked OpenAI client)
 # ===========================================================================
 
+
 def _make_engine_with_llm():
     """Return NaMoOmegaEngine with a mocked OpenAI LLM client."""
     from unittest.mock import MagicMock, patch
@@ -287,7 +297,10 @@ def _make_engine_with_llm():
         patch("core.namo_omega_engine.TTSAdapter") as mock_tts_cls,
         patch("core.namo_omega_engine.NaMoOmegaEngine._resolve_llm_enabled", return_value=True),
         patch("core.namo_omega_engine.OpenAI") as mock_openai_cls,
-        patch("os.getenv", side_effect=lambda k, *a: "sk-fake" if k == "OPENAI_API_KEY" else (a[0] if a else None)),  # noqa: E501
+        patch(
+            "os.getenv",
+            side_effect=lambda k, *a: "sk-fake" if k == "OPENAI_API_KEY" else (a[0] if a else None),
+        ),  # noqa: E501
     ):
         mock_tts_cls.return_value = MagicMock(_client=None, synthesize=MagicMock(return_value=None))
         mock_openai_cls.return_value = MagicMock()
@@ -317,16 +330,18 @@ class TestNaMoOmegaEngineLLMPath:
         context = engine._build_status_context(state)
         assert "sin" in context
 
-    def test_construct_anlrs_prompt_returns_string(self):
+    def test_build_dynamic_prompt_returns_string(self):
         engine = _make_engine()
-        prompt = engine._construct_anlrs_prompt("flirting")
+        state = engine._get_session_state("prompt-test")
+        prompt = engine._build_dynamic_prompt(state)
         assert isinstance(prompt, str)
         assert len(prompt) > 0
 
-    def test_construct_anlrs_prompt_contains_heart_state(self):
+    def test_build_dynamic_prompt_contains_relationship_stage(self):
         engine = _make_engine()
-        prompt = engine._construct_anlrs_prompt("comfort")
-        assert engine.heart.current_state in prompt
+        state = engine._get_session_state("prompt-test2")
+        prompt = engine._build_dynamic_prompt(state)
+        assert state["relationship"].current_stage.name in prompt
 
     def test_stream_input_fallback_yields_content(self):
         engine = _make_engine()
@@ -391,7 +406,9 @@ class TestNaMoOmegaEngineLLMPath:
         mock_client.chat.completions.create.return_value = mock_response
         engine.llm_client = mock_client
 
-        with patch.object(engine.cognitive, "process", wraps=engine.cognitive.process) as mock_process:
+        with patch.object(
+            engine.cognitive, "process", wraps=engine.cognitive.process
+        ) as mock_process:  # noqa: E501
             result = engine.process_input("รักนะ", session_id="llm-cognitive")
 
         assert result["text"] == "LLM replied!"
