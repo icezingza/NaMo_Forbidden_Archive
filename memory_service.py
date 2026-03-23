@@ -253,8 +253,8 @@ async def store(
 
 @app.post("/recall", response_model=list[MemoryRecord])
 async def recall(
-    query: MemoryQuery, manager: MemoryManager = Depends(get_memory_manager)
-):  # noqa: B008
+    query: MemoryQuery, manager: MemoryManager = Depends(get_memory_manager)  # noqa: B008
+):
     """
     Recalls memory records based on a query.
 

@@ -156,8 +156,8 @@ class SoulMemory:
                 content = STATE_PATH.read_text(encoding="utf-8")
                 self.data.update(json.loads(content))
                 logger.info(
-                    f"📂 Loaded Memory: Level {self.data['consciousness_level']} | Cycle {self.data['cycle_count']}"
-                )  # noqa: E501
+                    f"📂 Loaded Memory: Level {self.data['consciousness_level']} | Cycle {self.data['cycle_count']}"  # noqa: E501
+                )
             except Exception:
                 logger.warning("⚠️ Memory File Corrupted or Empty")
 
@@ -204,8 +204,8 @@ class RinladaAI(BasePersonaEngine):
         # แสดงสถานะเริ่มต้น
         print(f"👤 Persona: {self.identity.profile['name']}")
         print(
-            f"🧠 Brain Status: {'Neural Network Active' if self.brain.active else 'Standard Logic Active'}"
-        )  # noqa: E501
+            f"🧠 Brain Status: {'Neural Network Active' if self.brain.active else 'Standard Logic Active'}"  # noqa: E501
+        )
         print(f"💖 Heart Level: {self.soul.data['consciousness_level']}/1000")
         print(f"🌀 Evolution Cycle: {self.soul.data['cycle_count']}")
         print("🎭 Cognitive Stack: ONLINE")

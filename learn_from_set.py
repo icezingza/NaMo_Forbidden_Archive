@@ -61,8 +61,8 @@ def embed_with_retry(text: str, attempts: int = 3, delay: float = 1.0) -> list[f
                 raise
             wait = delay * attempt
             print(
-                f"[Retry] embedding failed (attempt {attempt}/{attempts}): {e} -> retrying in {wait}s"
-            )  # noqa: E501
+                f"[Retry] embedding failed (attempt {attempt}/{attempts}): {e} -> retrying in {wait}s"  # noqa: E501
+            )
             time.sleep(wait)
     return []
 
@@ -116,5 +116,5 @@ faiss.write_index(index, DB_PATH)
 json.dump(metadata, open(META_PATH, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
 
 print(
-    f"✅ Dark Knowledge base created with {len(docs)} chunks from {len(set(m['file'] for m in metadata))} files."
-)  # noqa: E501
+    f"✅ Dark Knowledge base created with {len(docs)} chunks from {len(set(m['file'] for m in metadata))} files."  # noqa: E501
+)

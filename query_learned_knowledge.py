@@ -24,8 +24,8 @@ def embed_with_retry(text: str, attempts: int = 3, delay: float = 1.0):
                 raise
             wait = delay * attempt
             print(
-                f"[Retry] embedding failed (attempt {attempt}/{attempts}): {e} -> retrying in {wait}s"
-            )  # noqa: E501
+                f"[Retry] embedding failed (attempt {attempt}/{attempts}): {e} -> retrying in {wait}s"  # noqa: E501
+            )
             time.sleep(wait)
 
 
