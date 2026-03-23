@@ -215,3 +215,56 @@ def test_legacy_chat_endpoint_success(mock_settings, mock_store_memory, mock_pro
     mock_store_memory.assert_called_once_with(
         "legacy-session-456", "Legacy Hello", "Legacy response.", {"sin_level": 0}
     )
+
+
+# ---------------------------------------------------------------------------
+# Admin session management
+# ---------------------------------------------------------------------------
+
+def test_list_sessions_no_auth_required_when_no_admin_secret():
+    """GET /v1/admin/sessions returns 200 when ADMIN_SECRET is not set."""
+    with patch("server.settings") as mock_settings:
+        mock_settings.admin_secret = None
+        response = client.get("/v1/admin/sessions")
+    assert response.status_code == 200
+    data = response.json()
+    assert "sessions" in data
+
+
+def test_list_sessions_returns_403_with_wrong_secret():
+    """GET /v1/admin/sessions returns 403 when ADMIN_SECRET is set and header is wrong."""
+    with patch("server.settings") as mock_settings:
+        mock_settings.admin_secret = "correct-secret"
+        response = client.get("/v1/admin/sessions", headers={"x-admin-secret": "wrong"})
+    assert response.status_code == 403
+
+
+def test_clear_session_removes_from_engine():
+    """DELETE /v1/admin/sessions/{id} clears session data from loaded engines."""
+    # Inject a fake session directly into the omega engine's session_states
+    from server import _EngineRegistry
+
+    eng = _EngineRegistry._instances.get("omega")
+    if eng is None:
+        return  # engine not loaded in this test run
+
+    test_sid = "admin-test-session-xyz"
+    if hasattr(eng, "_session_states"):
+        eng._session_states[test_sid] = {"arousal": 5, "sin_system": None, "personas": None}
+    if hasattr(eng, "session_history"):
+        eng.session_history[test_sid] = []
+
+    with patch("server.settings") as mock_settings:
+        mock_settings.admin_secret = None  # no auth required
+        response = client.delete(f"/v1/admin/sessions/{test_sid}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["session_id"] == test_sid
+    assert "cleared_from" in data
+
+    # Session should be gone from the engine
+    if hasattr(eng, "_session_states"):
+        assert test_sid not in eng._session_states
+    if hasattr(eng, "session_history"):
+        assert test_sid not in eng.session_history

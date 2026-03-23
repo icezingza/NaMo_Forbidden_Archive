@@ -135,12 +135,21 @@ class BasePersonaEngine(ABC):
     def stream_input(self, user_input: str, session_id: str | None = None):
         """Yield text chunks for streaming responses (Server-Sent Events).
 
-        Default implementation calls process_input() and yields the full
-        text as a single chunk.  Override in subclasses that support true
-        token-by-token LLM streaming.
+        Default implementation calls process_input(), then splits the response
+        on Thai/ASCII sentence boundaries so clients receive progressive chunks.
+        Override in subclasses that support true token-by-token LLM streaming.
         """
+        import re
+
         result = self.process_input(user_input, session_id=session_id)
-        yield result["text"]
+        text: str = result["text"]
+
+        # Split on sentence-ending punctuation (Thai & ASCII) followed by
+        # optional whitespace, or on line breaks.
+        parts = re.split(r"(?<=[.!?…\n])\s*|(?<=ๆ)\s+", text)
+        for part in parts:
+            if part.strip():
+                yield part
 
     def _build_system_prompt(self, context: str) -> str:
         """Build the system prompt for the current context.

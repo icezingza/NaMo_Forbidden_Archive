@@ -74,12 +74,21 @@ Never use `os.getenv()` directly in business logic — always import `settings` 
 
 ## ElevenLabs TTS
 
-Loaded directly by `adapters/tts.py` — not in `config.py` Settings class.
+Loaded via `config.py` → `Settings` and used by `adapters/tts.py`.
+TTS is optional — the adapter gracefully degrades when the key is absent or the package is not installed.
 
-| Env var | Description |
-|---|---|
-| `ELEVENLABS_API_KEY` | ElevenLabs API key |
-| `ELEVENLABS_VOICE_ID` | Voice ID for TTS synthesis |
+| Env var | Default | Description |
+|---|---|---|
+| `ELEVENLABS_API_KEY` | — | ElevenLabs API key; TTS is disabled when not set |
+| `ELEVENLABS_VOICE_ID` | `Rachel` | ElevenLabs voice ID |
+| `ELEVENLABS_MODEL` | `eleven_multilingual_v2` | Synthesis model |
+| `TTS_OUTPUT_DIR` | `Audio_Layers/tts` | Directory for saved TTS `.mp3` files (served at `/media/audio/tts/`) |
+
+## Engine Routing
+
+| Env var | Default | Description |
+|---|---|---|
+| `DEFAULT_ENGINE` | `omega` | Default persona engine (`omega`, `rinlada`, `seraphina`, `dark`, `ultimate`) |
 
 ## Telegram
 

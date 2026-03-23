@@ -193,6 +193,7 @@ class RinladaAI(BasePersonaEngine):
 
         # Cognitive stack (emotion + thoughts + learning)
         self.init_cognition(save_dir=BASE_DIR)
+        self._session_arousal: dict[str, int] = {}  # per-session arousal (not persisted)
 
         # แสดงสถานะเริ่มต้น
         print(f"👤 Persona: {self.identity.profile['name']}")
@@ -229,13 +230,25 @@ class RinladaAI(BasePersonaEngine):
         print(f"\n💋 น้าริน: {response}")
         print("\n" + "-" * 40)
 
+    def _get_session_arousal(self, session_id: str | None) -> int:
+        key = session_id or "default"
+        if key not in self._session_arousal:
+            # Seed from soul's base value only once per session
+            self._session_arousal[key] = self.soul.data.get("arousal_level", 0)
+        return self._session_arousal[key]
+
+    def _set_session_arousal(self, session_id: str | None, value: int) -> None:
+        self._session_arousal[session_id or "default"] = min(100, max(0, value))
+
     def process_input(self, user_input: str, session_id: str | None = None) -> dict:
         """Implement BasePersonaEngine contract — usable from server.py."""
         analysis = self.brain.analyze_input(user_input)
         intent = analysis["intent"]
 
         arousal_gain = 10 if intent == "Lust" else 5
-        self.soul.data["arousal_level"] = min(100, self.soul.data["arousal_level"] + arousal_gain)
+        current_arousal = self._get_session_arousal(session_id) + arousal_gain
+        self._set_session_arousal(session_id, current_arousal)
+        current_arousal = self._get_session_arousal(session_id)
 
         # Run full cognitive cycle
         cog_output: dict = {}
@@ -243,13 +256,13 @@ class RinladaAI(BasePersonaEngine):
             recent_mems = self.soul.data.get("memories", [])[-5:]
             cog_output = self.cognitive.process(user_input, intent, memories=recent_mems)
 
-        strategy = self.brain.choose_strategy(analysis, self.soul.data["arousal_level"])
+        strategy = self.brain.choose_strategy(analysis, current_arousal)
         self.soul.update_experience(20, intent)
         self.soul.save()
         text_response = self._generate_response(strategy, user_input, analysis)
 
         system_status = {
-            "arousal": f"{self.soul.data['arousal_level']}%",
+            "arousal": f"{current_arousal}%",
             "intent": intent,
             "strategy": strategy,
             "cycle": self.soul.data["cycle_count"],

@@ -313,6 +313,62 @@ def engine_status():
     }
 
 
+def _assert_admin(secret: str | None) -> None:
+    """Raise 403 if ADMIN_SECRET is configured and the header does not match."""
+    if settings.admin_secret and secret != settings.admin_secret:
+        raise HTTPException(status_code=403, detail="forbidden")
+
+
+def _collect_session_keys(eng_instance: BasePersonaEngine) -> list[str]:
+    """Return all known session IDs tracked by an engine instance."""
+    keys: set[str] = set()
+    for attr in ("_session_states", "_session_arousal", "_session_intensity", "session_history"):
+        store = getattr(eng_instance, attr, None)
+        if isinstance(store, dict):
+            keys.update(store.keys())
+    return sorted(keys)
+
+
+@app.get("/v1/admin/sessions")
+def list_sessions(x_admin_secret: str | None = Header(default=None)):
+    """List active sessions for all loaded engines.
+
+    Protected by X-Admin-Secret header (requires ADMIN_SECRET env var).
+    When ADMIN_SECRET is not set, the endpoint is open (dev mode).
+    """
+    _assert_admin(x_admin_secret)
+    return {
+        "sessions": {
+            name: _collect_session_keys(inst)
+            for name, inst in _EngineRegistry._instances.items()
+        }
+    }
+
+
+@app.delete("/v1/admin/sessions/{session_id}")
+def clear_session(
+    session_id: str,
+    x_admin_secret: str | None = Header(default=None),
+):
+    """Purge a session from all loaded engines.
+
+    Removes the session from every per-session state store
+    (_session_states, _session_arousal, _session_intensity, session_history).
+    Returns which engines actually had data for that session.
+    """
+    _assert_admin(x_admin_secret)
+    cleared: dict[str, bool] = {}
+    for name, inst in _EngineRegistry._instances.items():
+        removed = False
+        for attr in ("_session_states", "_session_arousal", "_session_intensity", "session_history"):
+            store = getattr(inst, attr, None)
+            if isinstance(store, dict) and session_id in store:
+                del store[session_id]
+                removed = True
+        cleared[name] = removed
+    return {"session_id": session_id, "cleared_from": cleared}
+
+
 @app.get("/")
 def root():
     return {
