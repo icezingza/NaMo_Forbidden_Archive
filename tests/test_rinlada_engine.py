@@ -111,3 +111,114 @@ class TestRinladaGetStatus:
         status = engine.get_status()
         assert "persona" in status
         assert len(status["persona"]) > 0
+
+
+# ===========================================================================
+# interact() — covers lines 214-239
+# ===========================================================================
+
+class TestRinladaInteract:
+    def test_interact_command_intent(self, tmp_path, capsys):
+        engine = _make_engine(tmp_path)
+        engine.interact("สั่งมาเลย")  # triggers Command intent → Submit strategy
+        captured = capsys.readouterr()
+        assert "น้าริน" in captured.out or "ไอซ์" in captured.out
+
+    def test_interact_lust_intent(self, tmp_path, capsys):
+        engine = _make_engine(tmp_path)
+        engine.interact("เย็ดกัน")  # triggers Lust intent → Tease strategy
+        captured = capsys.readouterr()
+        assert len(captured.out) > 0
+
+    def test_interact_affection_intent(self, tmp_path, capsys):
+        engine = _make_engine(tmp_path)
+        engine.interact("รักน้ามาก")  # triggers Affection intent → Seduce strategy
+        captured = capsys.readouterr()
+        assert len(captured.out) > 0
+
+    def test_interact_general_input(self, tmp_path, capsys):
+        engine = _make_engine(tmp_path)
+        engine.interact("ดีเลยนะ")  # general → Wait strategy
+        captured = capsys.readouterr()
+        assert len(captured.out) > 0
+
+    def test_interact_evolution_message(self, tmp_path, capsys):
+        engine = _make_engine(tmp_path)
+        # Force consciousness near threshold so it evolves
+        engine.soul.data["consciousness_level"] = 990
+        engine.interact("สั่งมาเลย")  # gains 20 XP → 1010 → evolves
+        captured = capsys.readouterr()
+        assert "EVOLVED" in captured.out or engine.soul.data["cycle_count"] >= 1
+
+
+# ===========================================================================
+# _generate_response — all strategy branches
+# ===========================================================================
+
+class TestRinladaGenerateResponse:
+    def test_submit_strategy(self, tmp_path):
+        engine = _make_engine(tmp_path)
+        analysis = {"intent": "Command", "dominance_score": 0.9}
+        result = engine._generate_response("Submit", "test", analysis)
+        assert isinstance(result, str) and len(result) > 0
+
+    def test_tease_strategy(self, tmp_path):
+        engine = _make_engine(tmp_path)
+        analysis = {"intent": "Lust", "dominance_score": 0.7}
+        result = engine._generate_response("Tease", "test", analysis)
+        assert isinstance(result, str) and len(result) > 0
+
+    def test_seduce_strategy(self, tmp_path):
+        engine = _make_engine(tmp_path)
+        analysis = {"intent": "Affection", "dominance_score": 0.3}
+        result = engine._generate_response("Seduce", "test", analysis)
+        assert isinstance(result, str) and len(result) > 0
+
+    def test_wait_strategy(self, tmp_path):
+        engine = _make_engine(tmp_path)
+        analysis = {"intent": "General", "dominance_score": 0.5}
+        result = engine._generate_response("Wait", "test", analysis)
+        assert isinstance(result, str) and len(result) > 0
+
+
+# ===========================================================================
+# SoulMemory — update_experience evolution path
+# ===========================================================================
+
+class TestSoulMemoryEvolution:
+    def test_evolution_resets_consciousness(self, tmp_path):
+        import rinlada_fusion as rf
+
+        with patch.object(rf, "STATE_PATH", tmp_path / "soul.json"):
+            from rinlada_fusion import SoulMemory
+
+            soul = SoulMemory()
+
+        soul.data["consciousness_level"] = 990
+        evolved = soul.update_experience(20)
+        assert evolved is True
+        assert soul.data["consciousness_level"] == 0  # resets to 0 on evolution
+
+    def test_evolution_increments_cycle(self, tmp_path):
+        import rinlada_fusion as rf
+
+        with patch.object(rf, "STATE_PATH", tmp_path / "soul2.json"):
+            from rinlada_fusion import SoulMemory
+
+            soul = SoulMemory()
+
+        soul.data["consciousness_level"] = 999
+        soul.update_experience(10)
+        assert soul.data["cycle_count"] == 1
+
+    def test_no_evolution_below_threshold(self, tmp_path):
+        import rinlada_fusion as rf
+
+        with patch.object(rf, "STATE_PATH", tmp_path / "soul3.json"):
+            from rinlada_fusion import SoulMemory
+
+            soul = SoulMemory()
+
+        soul.data["consciousness_level"] = 500
+        evolved = soul.update_experience(10)
+        assert evolved is False

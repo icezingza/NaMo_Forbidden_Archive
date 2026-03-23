@@ -129,3 +129,72 @@ def test_synthesize_returns_none_on_api_error():
         adapter._output_dir = Path("/tmp/tts_err")
 
     assert adapter.synthesize("error test") is None
+
+
+def test_init_success_path_sets_client(tmp_path):
+    """TTSAdapter.__init__ sets _client when ElevenLabs is available and key is set."""
+    mock_client = MagicMock()
+
+    with (
+        patch("adapters.tts._ELEVENLABS_AVAILABLE", True),
+        patch("adapters.tts._ElevenLabsClient", return_value=mock_client) as mock_cls,
+        patch("adapters.tts.settings") as mock_settings,
+    ):
+        mock_settings.elevenlabs_api_key = "real-key"
+        mock_settings.elevenlabs_voice_id = "Rachel"
+        mock_settings.elevenlabs_model = "eleven_multilingual_v2"
+        mock_settings.tts_output_dir = str(tmp_path)
+
+        from adapters.tts import TTSAdapter
+
+        adapter = TTSAdapter()
+
+    mock_cls.assert_called_once_with(api_key="real-key")
+    assert adapter._client is mock_client
+
+
+def test_init_exception_sets_client_none(tmp_path):
+    """TTSAdapter.__init__ sets _client=None when ElevenLabsClient raises."""
+    with (
+        patch("adapters.tts._ELEVENLABS_AVAILABLE", True),
+        patch("adapters.tts._ElevenLabsClient", side_effect=RuntimeError("auth fail")),
+        patch("adapters.tts.settings") as mock_settings,
+    ):
+        mock_settings.elevenlabs_api_key = "bad-key"
+        mock_settings.elevenlabs_voice_id = "Rachel"
+        mock_settings.elevenlabs_model = "eleven_multilingual_v2"
+        mock_settings.tts_output_dir = str(tmp_path)
+
+        from adapters.tts import TTSAdapter
+
+        adapter = TTSAdapter()
+
+    assert adapter._client is None
+
+
+def test_synthesize_consumes_generator(tmp_path):
+    """TTSAdapter.synthesize() joins generator chunks into bytes."""
+    mock_client = MagicMock()
+    # Return a generator instead of bytes
+    mock_client.generate.return_value = (chunk for chunk in [b"\x00\x01", b"\x02\x03"])
+
+    with patch("adapters.tts.settings") as mock_settings:
+        mock_settings.elevenlabs_api_key = "fake-key"
+        mock_settings.elevenlabs_voice_id = "Rachel"
+        mock_settings.elevenlabs_model = "eleven_multilingual_v2"
+        mock_settings.tts_output_dir = str(tmp_path)
+        from adapters.tts import TTSAdapter as _A
+
+        adapter = _A.__new__(_A)
+
+    adapter._client = mock_client
+    adapter._voice_id = "Rachel"
+    adapter._model = "eleven_multilingual_v2"
+    adapter._output_dir = tmp_path
+
+    result = adapter.synthesize("hello")
+
+    assert result is not None
+    assert result.startswith("Audio_Layers/tts/")
+    filename = result.split("/")[-1]
+    assert (tmp_path / filename).read_bytes() == b"\x00\x01\x02\x03"

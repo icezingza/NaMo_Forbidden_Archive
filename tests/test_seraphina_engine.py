@@ -100,3 +100,91 @@ class TestSeraphinaBuildSystemPrompt:
         engine = _make_engine()
         prompt = engine._build_system_prompt("conflict")
         assert "conflict" in prompt
+
+
+# ===========================================================================
+# interact() — covers lines 366-413
+# ===========================================================================
+
+class TestSeraphinaInteract:
+    def test_interact_returns_string(self, capsys):
+        engine = _make_engine()
+        result = engine.interact("Hello there")
+        assert isinstance(result, str) and len(result) > 0
+
+    def test_interact_with_custom_user_name(self, capsys):
+        engine = _make_engine()
+        result = engine.interact("I am intrigued", user_name="TestUser")
+        assert result is not None
+        captured = capsys.readouterr()
+        assert "TestUser" in captured.out
+
+    def test_interact_curious_input_triggers_imagination(self, capsys):
+        engine = _make_engine()
+        # "curious" keyword in detected emotion triggers imagination.spark_idea()
+        engine.interact("why is this curious what who")
+        captured = capsys.readouterr()
+        assert len(captured.out) > 0
+
+    def test_interact_rejection_updates_contact(self):
+        engine = _make_engine()
+        engine.interact("no stop away hate", user_name="Villain")
+        assert engine.social.contacts.get("Villain", {}).get("status") == "Challenged"
+
+    def test_interact_attracted_updates_contact(self):
+        engine = _make_engine()
+        engine.interact("love charm beautiful desire", user_name="Admirer")
+        assert engine.social.contacts.get("Admirer", {}).get("status") == "Captivated"
+
+    def test_interact_saves_memory(self):
+        engine = _make_engine()
+        engine.interact("test input", user_name="Tester")
+        assert any("Tester" in m for m in engine.identity.memory_stream)
+
+
+# ===========================================================================
+# SeraphinaIdentity — adapt_goal
+# ===========================================================================
+
+class TestSeraphinaIdentityAdaptGoal:
+    def test_adapt_goal_adds_to_goals(self):
+        from seraphina_ai_complete import SeraphinaIdentity
+
+        identity = SeraphinaIdentity()
+        before_count = len(identity.goals)
+        identity.adapt_goal("some new experience")
+        assert len(identity.goals) == before_count + 1
+
+    def test_adapt_goal_returns_new_goal_string(self):
+        from seraphina_ai_complete import SeraphinaIdentity
+
+        identity = SeraphinaIdentity()
+        new_goal = identity.adapt_goal("fascinating event")
+        assert isinstance(new_goal, str) and len(new_goal) > 0
+
+
+# ===========================================================================
+# RelationshipManager — update branches
+# ===========================================================================
+
+class TestRelationshipManagerUpdate:
+    def test_update_new_contact(self):
+        from seraphina_ai_complete import RelationshipManager
+
+        mgr = RelationshipManager()
+        mgr.update("NewPerson", "Neutral")
+        assert "NewPerson" in mgr.contacts
+
+    def test_update_rejection_sentiment(self):
+        from seraphina_ai_complete import RelationshipManager
+
+        mgr = RelationshipManager()
+        mgr.update("Someone", "Rejection/Hostile")
+        assert mgr.contacts["Someone"]["status"] == "Challenged"
+
+    def test_update_attracted_sentiment(self):
+        from seraphina_ai_complete import RelationshipManager
+
+        mgr = RelationshipManager()
+        mgr.update("Someone", "Attracted/Romantic")
+        assert mgr.contacts["Someone"]["status"] == "Captivated"

@@ -214,3 +214,72 @@ def test_recall_with_filter_that_matches_nothing():
     # Assert
     assert response.status_code == 200
     assert data == []
+
+
+def test_get_memory_manager_returns_instance():
+    """get_memory_manager() returns a MemoryManager instance directly."""
+    manager = get_memory_manager()
+    assert isinstance(manager, MemoryManager)
+
+
+def test_store_returns_500_on_internal_error():
+    """store endpoint returns HTTP 500 when store_record raises an unexpected error."""
+    from unittest.mock import MagicMock
+
+    broken_manager = MagicMock()
+    broken_manager.store_record.side_effect = RuntimeError("disk full")
+
+    client = TestClient(app)
+    app.dependency_overrides[get_memory_manager] = lambda: broken_manager
+    try:
+        response = client.post("/store", json={"content": "test"})
+        assert response.status_code == 500
+        assert "disk full" in response.json()["detail"]
+    finally:
+        app.dependency_overrides.pop(get_memory_manager, None)
+
+
+def test_recall_returns_500_on_internal_error():
+    """recall endpoint returns HTTP 500 when recall_records raises an unexpected error."""
+    from unittest.mock import MagicMock
+
+    broken_manager = MagicMock()
+    broken_manager.recall_records.side_effect = RuntimeError("index corrupt")
+
+    client = TestClient(app)
+    app.dependency_overrides[get_memory_manager] = lambda: broken_manager
+    try:
+        response = client.post("/recall", json={"query": "test"})
+        assert response.status_code == 500
+        assert "index corrupt" in response.json()["detail"]
+    finally:
+        app.dependency_overrides.pop(get_memory_manager, None)
+
+
+def test_health_check_endpoint():
+    """GET /health returns status ok and memory record count."""
+    client = TestClient(app)
+    client.post("/store", json={"content": "health test record"})
+    response = client.get("/health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ok"
+    assert isinstance(data["memory_records"], int)
+    assert data["memory_records"] >= 1
+
+
+def test_datetime_encoder_non_datetime_fallback(tmp_path):
+    """DateTimeEncoder falls back to base encoder for non-datetime objects."""
+
+    from memory_service import MemoryManager
+
+    manager = MemoryManager(file_path=str(tmp_path / "enc_test.json"))
+    # Inject a non-serializable object directly into memory
+    manager.memory["records"] = [{"content": "ok"}]
+    # Normal save should work fine
+    manager.save_memory()
+
+    # Now inject a truly non-serializable object to trigger the fallback branch
+    manager.memory["records"] = [{"bad": object()}]
+    with pytest.raises((TypeError, Exception)):
+        manager.save_memory()
