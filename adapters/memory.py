@@ -1,38 +1,47 @@
+import datetime
 import json
 import os
-import datetime
+from typing import Any
+
+import requests
+
+from config import settings
 
 
 class MemoryAdapter:
+    """Adapter สำหรับบันทึกความทรงจำระยะยาว
+
+    เขียนลงไฟล์ JSON เสมอ (local store).
+    ถ้า MEMORY_API_URL ถูกตั้งค่าไว้ จะ forward ไปยัง memory service ด้วย
+    เพื่อให้ทุก engine ใช้ store เดียวกัน (unified memory).
     """
-    Adapter สำหรับบันทึกความทรงจำระยะยาวลงไฟล์ Local
-    """
-    def __init__(self, db_file="memory_history.json"):
+
+    def __init__(self, db_file: str = "memory_history.json") -> None:
         self.db_file = db_file
+        self._memory_url: str | None = settings.memory_api_url
+        self._memory_key: str | None = settings.memory_api_key
+
         if not os.path.exists(self.db_file):
-            with open(self.db_file, 'w', encoding='utf-8') as f:
+            with open(self.db_file, "w", encoding="utf-8") as f:
                 json.dump([], f)
-        print(f"[MemoryAdapter]: Initialized. Storage: {self.db_file}")
+
+        remote = f" + remote({self._memory_url})" if self._memory_url else ""
+        print(f"[MemoryAdapter]: Initialized. Storage: {self.db_file}{remote}")
 
     def store_interaction(
         self,
-        user_input,
-        response,
-        emotions=None,
+        user_input: str,
+        response: str,
+        emotions: Any = None,
         *,
-        arousal_level=None,
-        infection_status=None,
-        session_id=None,
-        desire_map=None,
-    ):
-        """
-        บันทึกสิ่งที่คุยกัน พร้อม metadata เพิ่มเติม
-        - emotions: ภาพรวมสถานะอารมณ์/สเตตัส ณ ขณะนั้น
-        - arousal_level: ค่าความเงี่ยนล่าสุด (0-100)
-        - infection_status: สถานะการติดเชื้อ/อารมณ์ที่ถูกฝัง
-        """
-        entry = {
-            "timestamp": str(datetime.datetime.now()),
+        arousal_level: int | None = None,
+        infection_status: str | None = None,
+        session_id: str | None = None,
+        desire_map: dict | None = None,
+    ) -> None:
+        """บันทึกบทสนทนาพร้อม metadata ลง local JSON และ (optionally) memory service."""
+        entry: dict[str, Any] = {
+            "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
             "session_id": session_id,
             "user": user_input,
             "bot": response,
@@ -41,24 +50,49 @@ class MemoryAdapter:
             "infection_status": infection_status,
             "desire_map": desire_map,
         }
-
-        # ตัด key ที่เป็น None ออกเพื่อไม่ให้ไฟล์รก
+        # Drop None values to keep the file tidy
         entry = {k: v for k, v in entry.items() if v is not None}
-        
+
+        # 1. Local JSON store
         try:
-            with open(self.db_file, 'r+', encoding='utf-8') as f:
-                history = json.load(f)
+            with open(self.db_file, "r+", encoding="utf-8") as f:
+                history: list = json.load(f)
                 history.append(entry)
                 f.seek(0)
                 json.dump(history, f, ensure_ascii=False, indent=4)
-        except Exception as e:
-            print(f"[MemoryError]: {e}")
+        except Exception as exc:
+            print(f"[MemoryAdapter]: local write error: {exc}")
 
-    def get_last_conversation(self):
+        # 2. Forward to memory service when configured (unified store)
+        if self._memory_url:
+            self._forward_to_service(user_input, response, session_id, entry)
+
+    def _forward_to_service(
+        self,
+        user_input: str,
+        response: str,
+        session_id: str | None,
+        metadata: dict,
+    ) -> None:
+        payload = {
+            "content": f"user: {user_input}\nassistant: {response}",
+            "type": "contextual",
+            "session_id": session_id,
+            "metadata": metadata,
+        }
+        headers: dict[str, str] = {}
+        if self._memory_key:
+            headers["x-api-key"] = self._memory_key
+        try:
+            requests.post(self._memory_url, json=payload, headers=headers, timeout=2)
+        except requests.RequestException as exc:
+            print(f"[MemoryAdapter]: remote forward failed: {exc}")
+
+    def get_last_conversation(self) -> dict | None:
         """ดึงบทสนทนาล่าสุดมาดูบริบท"""
         try:
-            with open(self.db_file, 'r', encoding='utf-8') as f:
-                history = json.load(f)
+            with open(self.db_file, encoding="utf-8") as f:
+                history: list = json.load(f)
                 return history[-1] if history else None
-        except:
+        except Exception:
             return None

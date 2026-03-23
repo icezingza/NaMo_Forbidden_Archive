@@ -31,7 +31,13 @@ def _inject_telegram_stub():
     dummy_filters = types.SimpleNamespace(TEXT=DummyFilter("TEXT"), COMMAND=DummyFilter("COMMAND"))
 
     telegram.ext = types.SimpleNamespace(
-        ApplicationBuilder=lambda: types.SimpleNamespace(token=lambda *_: types.SimpleNamespace(build=lambda: types.SimpleNamespace(add_handler=lambda *_: None, run_polling=lambda: None))),
+        ApplicationBuilder=lambda: types.SimpleNamespace(
+            token=lambda *_: types.SimpleNamespace(
+                build=lambda: types.SimpleNamespace(
+                    add_handler=lambda *_: None, run_polling=lambda: None
+                )
+            )
+        ),  # noqa: E501
         CommandHandler=object,
         MessageHandler=lambda *args, **kwargs: None,
         filters=dummy_filters,

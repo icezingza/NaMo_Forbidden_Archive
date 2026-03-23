@@ -209,3 +209,6 @@ NaMo_Forbidden_Arch_Integrated_v2.1/
 vector_db/
 learning_set/set.zip
 Audio_Layers/generated/
+Rinlada_Memory.json
+learned_patterns.json
+usage_events.jsonl

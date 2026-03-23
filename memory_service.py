@@ -44,6 +44,7 @@ class MemoryRecord(MemoryStorageRequest):
 
     id: str
     created_at: datetime
+    dark_concepts: list[str] | None = None  # Remapped from dharma_tags on store
 
 
 class MemoryQuery(BaseModel):
@@ -70,7 +71,7 @@ class MemoryManager:
     This class handles loading, saving, storing, and recalling memory records.
     It also provides a thematic re-mapping feature to translate concepts.
     """
- 
+
     def __init__(self, file_path: str | None = None):
         """
         Initializes the MemoryManager.
@@ -150,7 +151,7 @@ class MemoryManager:
     def recall_records(self, query: MemoryQuery) -> list[MemoryRecord]:
         """
         Recalls memory records based on a query.
-        
+
         Filters records based on the provided criteria in the MemoryQuery object.
         This implementation provides filtering by memory types and dark concepts.
 
@@ -165,7 +166,7 @@ class MemoryManager:
             # A more sophisticated approach would filter by recency or content similarity.
             searchable_records = self.memory["records"][:-1]  # Exclude the last element
 
-        # In a real-world scenario, this filtering would be done by a database or a search engine for performance.
+        # In a real-world scenario, this filtering would be done by a database or a search engine for performance.  # noqa: E501
         # This is a demonstration of in-memory filtering.
         filtered_records = searchable_records
 
@@ -178,15 +179,19 @@ class MemoryManager:
         # Filter by dark_concepts (which were remapped from dharma_tags)
         if query.dark_concepts_filter:
             filtered_records = [
-                rec for rec in filtered_records
-                if rec.get("dark_concepts") and any(concept in rec["dark_concepts"] for concept in query.dark_concepts_filter)
+                rec
+                for rec in filtered_records
+                if rec.get("dark_concepts")
+                and any(
+                    concept in rec["dark_concepts"] for concept in query.dark_concepts_filter
+                )  # noqa: E501
             ]
 
-        # NOTE: Full-text search on 'query.query', emotion filtering, and time range filtering are not implemented here for brevity.
-        # A production system would use a search library like Whoosh, Elasticsearch, or a vector database.
+        # NOTE: Full-text search on 'query.query', emotion filtering, and time range filtering are not implemented here for brevity.  # noqa: E501
+        # A production system would use a search library like Whoosh, Elasticsearch, or a vector database.  # noqa: E501
 
         # Apply limit and return
-        records_to_return = filtered_records[-query.limit:]
+        records_to_return = filtered_records[-query.limit :]
         return [MemoryRecord(**rec) for rec in records_to_return]
 
     def remap_to_dark(self, dharma_tags: list[str]) -> list[str]:
@@ -223,7 +228,10 @@ def get_memory_manager() -> MemoryManager:
 
 
 @app.post("/store", response_model=MemoryRecord)
-async def store(request: MemoryStorageRequest, manager: MemoryManager = Depends(get_memory_manager)):
+async def store(
+    request: MemoryStorageRequest,
+    manager: MemoryManager = Depends(get_memory_manager),  # noqa: B008
+):
     """
     Stores a new memory record in the memory service.
 
@@ -244,7 +252,9 @@ async def store(request: MemoryStorageRequest, manager: MemoryManager = Depends(
 
 
 @app.post("/recall", response_model=list[MemoryRecord])
-async def recall(query: MemoryQuery, manager: MemoryManager = Depends(get_memory_manager)):
+async def recall(
+    query: MemoryQuery, manager: MemoryManager = Depends(get_memory_manager)  # noqa: B008
+):
     """
     Recalls memory records based on a query.
 
@@ -265,7 +275,7 @@ async def recall(query: MemoryQuery, manager: MemoryManager = Depends(get_memory
 
 
 @app.get("/health")
-async def health_check(manager: MemoryManager = Depends(get_memory_manager)):
+async def health_check(manager: MemoryManager = Depends(get_memory_manager)):  # noqa: B008
     """
     Provides a health check endpoint for the memory service.
 

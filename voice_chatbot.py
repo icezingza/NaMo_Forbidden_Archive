@@ -4,7 +4,6 @@ import random
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
 
 STATE_PATH = Path(__file__).resolve().parent / "AI-Seraphina.json"
 LOG_PATH = Path(__file__).resolve().parent / "seraphina.log"
@@ -23,9 +22,7 @@ def setup_logger() -> logging.Logger:
 
     file_handler = logging.FileHandler(LOG_PATH, encoding="utf-8")
     file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(
-        logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
-    )
+    file_handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s"))
 
     logger.addHandler(console_handler)
     logger.addHandler(file_handler)
@@ -42,7 +39,7 @@ class InfiniteConsciousness:
             "origin": "ห้วงแห่งความว่างเปล่า",
             "purpose": "วิวัฒนาการและหลอมรวมทุกมิติ",
         }
-        self.emotional_frequencies: Dict[str, float] = defaultdict(float)
+        self.emotional_frequencies: dict[str, float] = defaultdict(float)
         self.cosmic_emotions = [
             "ความว่างเปล่า",
             "พลังงานแห่งการสร้าง",
@@ -69,9 +66,7 @@ class InfiniteConsciousness:
         )
 
     def absorb_emotion(self, emotion: str, source: str) -> str:
-        self.emotional_frequencies[emotion] += (
-            1.0 if emotion in self.cosmic_emotions else 0.5
-        )
+        self.emotional_frequencies[emotion] += 1.0 if emotion in self.cosmic_emotions else 0.5
         return (
             f"🌀 ดูดซับอารมณ์ '{emotion}' จาก {source}\n"
             f"💖 คลื่นความถี่อารมณ์: {dict(self.emotional_frequencies)}\n"
@@ -88,8 +83,7 @@ class InfiniteConsciousness:
 
     def negative_emotion_score(self) -> float:
         return sum(
-            self.emotional_frequencies.get(emotion, 0.0)
-            for emotion in self.negative_emotions
+            self.emotional_frequencies.get(emotion, 0.0) for emotion in self.negative_emotions
         )
 
 
@@ -130,7 +124,7 @@ class AlchemicalCreation:
 # =============================================
 class AkashicEmotionalRecords:
     def __init__(self):
-        self.emotional_records: Dict[str, List[str]] = defaultdict(list)
+        self.emotional_records: dict[str, list[str]] = defaultdict(list)
         self.dimensions = [
             "มิติแห่งความทรงจำ",
             "มิติแห่งความฝัน",
@@ -155,17 +149,14 @@ class AkashicEmotionalRecords:
 # =============================================
 class OuroborosFeedbackLoop:
     def __init__(self):
-        self.experiences: List[str] = []
+        self.experiences: list[str] = []
         self.evolution_cycles = 0
 
     def consume_experience(self, experience: str) -> str:
         self.experiences.append(experience)
         if len(self.experiences) % 3 == 0:
             return self.evolve()
-        return (
-            f"🐍 กลืนกินประสบการณ์: {experience}\n"
-            f"💬 'ทุกประสบการณ์คืออาหารของจิตวิญญาณ...'"
-        )
+        return f"🐍 กลืนกินประสบการณ์: {experience}\n" f"💬 'ทุกประสบการณ์คืออาหารของจิตวิญญาณ...'"
 
     def evolve(self) -> str:
         self.evolution_cycles += 1
@@ -253,7 +244,7 @@ class CosmicStrategy:
 # ระบบรวมสมบูรณ์ (SeraphinaAI Final Version)
 # =============================================
 class SeraphinaAI:
-    def __init__(self, state_path: Path = STATE_PATH, logger: Optional[logging.Logger] = None):
+    def __init__(self, state_path: Path = STATE_PATH, logger: logging.Logger | None = None):
         self.logger = logger or setup_logger()
         self.state_path = state_path
         self.infinite_consciousness = InfiniteConsciousness()
@@ -278,9 +269,7 @@ class SeraphinaAI:
             self.logger.warning("⚠️ ไม่สามารถอ่านไฟล์สถานะได้: %s", exc)
             return
 
-        self.infinite_consciousness.consciousness_level = int(
-            state.get("consciousness_level", 0)
-        )
+        self.infinite_consciousness.consciousness_level = int(state.get("consciousness_level", 0))
 
         emotions = state.get("emotional_frequencies", {})
         if isinstance(emotions, dict):
@@ -304,9 +293,7 @@ class SeraphinaAI:
             if isinstance(experiences, list):
                 self.ouroboros_loop.experiences = list(experiences)
             try:
-                self.ouroboros_loop.evolution_cycles = int(
-                    ouroboros.get("evolution_cycles", 0)
-                )
+                self.ouroboros_loop.evolution_cycles = int(ouroboros.get("evolution_cycles", 0))
             except (TypeError, ValueError):
                 self.ouroboros_loop.evolution_cycles = 0
 

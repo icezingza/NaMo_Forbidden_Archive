@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Dict
-
 
 class AudioEmotionAnalyzer:
     """Analyze audio emotion using SpeechBrain if available."""
@@ -22,7 +20,7 @@ class AudioEmotionAnalyzer:
             savedir="pretrained_models/emotion-recognition",
         )
 
-    def analyze(self, audio_bytes: bytes) -> Dict[str, object]:
+    def analyze(self, audio_bytes: bytes) -> dict[str, object]:
         """Return label and confidence for the most likely emotion."""
         if not audio_bytes:
             return {"label": "neutral", "confidence": 0.2, "engine": "fallback"}
@@ -34,6 +32,7 @@ class AudioEmotionAnalyzer:
             except Exception:
                 return {"label": "neutral", "confidence": 0.2, "engine": "fallback"}
             import io
+
             import torchaudio
 
             waveform, sample_rate = torchaudio.load(io.BytesIO(audio_bytes))
@@ -43,6 +42,10 @@ class AudioEmotionAnalyzer:
             scores = predictions[1].softmax(dim=-1)
             score, index = torch.max(scores, dim=-1)
             label = predictions[3][index.item()]
-            return {"label": str(label).lower(), "confidence": float(score), "engine": "speechbrain"}
+            return {
+                "label": str(label).lower(),
+                "confidence": float(score),
+                "engine": "speechbrain",
+            }  # noqa: E501
 
         return {"label": "neutral", "confidence": 0.3, "engine": "fallback"}

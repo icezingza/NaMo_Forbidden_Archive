@@ -2,14 +2,13 @@
 Memory service with SQLite backend instead of JSON.
 """
 
-import sqlite3
-import logging
 import json
-from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
-from pathlib import Path
+import logging
+import sqlite3
 import threading
 from contextlib import contextmanager
+from datetime import datetime, timedelta
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +102,7 @@ class MemoryServiceDB:
             conn.commit()
             self.logger.info("Database initialized successfully")
 
-    def store_memory(self, memory_data: Dict[str, Any]) -> Dict[str, Any]:
+    def store_memory(self, memory_data: dict[str, Any]) -> dict[str, Any]:
         """
         Store memory in database.
 
@@ -175,7 +174,7 @@ class MemoryServiceDB:
                     "created_at": datetime.now().isoformat(),
                 }
 
-    def recall_memories(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+    def recall_memories(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
         """
         Recall memories using full-text search.
 
@@ -221,9 +220,9 @@ class MemoryServiceDB:
                         "content": row["content"],
                         "type": row["type"],
                         "session_id": row["session_id"],
-                        "emotion_context": json.loads(row["emotion_json"])
-                        if row["emotion_json"]
-                        else None,
+                        "emotion_context": (
+                            json.loads(row["emotion_json"]) if row["emotion_json"] else None
+                        ),
                         "dharma_tags": json.loads(row["tags_json"]) if row["tags_json"] else None,
                         "created_at": row["created_at"],
                     }
@@ -234,7 +233,7 @@ class MemoryServiceDB:
                 self.logger.info(f"Recalled {len(results)} memories for query: {query}")
                 return results
 
-    def search_by_tag(self, tag: str, limit: int = 10) -> List[Dict[str, Any]]:
+    def search_by_tag(self, tag: str, limit: int = 10) -> list[dict[str, Any]]:
         """
         Search memories by tag.
 
@@ -269,9 +268,9 @@ class MemoryServiceDB:
                         "content": row["content"],
                         "type": row["type"],
                         "session_id": row["session_id"],
-                        "emotion_context": json.loads(row["emotion_json"])
-                        if row["emotion_json"]
-                        else None,
+                        "emotion_context": (
+                            json.loads(row["emotion_json"]) if row["emotion_json"] else None
+                        ),
                         "dharma_tags": json.loads(row["tags_json"]) if row["tags_json"] else None,
                         "created_at": row["created_at"],
                     }
@@ -279,7 +278,7 @@ class MemoryServiceDB:
 
                 return results
 
-    def get_session_memories(self, session_id: str) -> List[Dict[str, Any]]:
+    def get_session_memories(self, session_id: str) -> list[dict[str, Any]]:
         """
         Get all memories for a session.
 
@@ -311,9 +310,9 @@ class MemoryServiceDB:
                         "content": row["content"],
                         "type": row["type"],
                         "session_id": row["session_id"],
-                        "emotion_context": json.loads(row["emotion_json"])
-                        if row["emotion_json"]
-                        else None,
+                        "emotion_context": (
+                            json.loads(row["emotion_json"]) if row["emotion_json"] else None
+                        ),
                         "dharma_tags": json.loads(row["tags_json"]) if row["tags_json"] else None,
                         "created_at": row["created_at"],
                     }
@@ -352,7 +351,7 @@ class MemoryServiceDB:
 
                 return deleted_count
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         Get database statistics.
 
@@ -391,7 +390,7 @@ class MemoryServiceDB:
                     "avg_access_count": stats_row["avg_access"] or 0,
                 }
 
-    def get_popular_memories(self, limit: int = 10) -> List[Dict[str, Any]]:
+    def get_popular_memories(self, limit: int = 10) -> list[dict[str, Any]]:
         """
         Get most accessed memories.
 
@@ -425,9 +424,9 @@ class MemoryServiceDB:
                         "content": row["content"],
                         "type": row["type"],
                         "session_id": row["session_id"],
-                        "emotion_context": json.loads(row["emotion_json"])
-                        if row["emotion_json"]
-                        else None,
+                        "emotion_context": (
+                            json.loads(row["emotion_json"]) if row["emotion_json"] else None
+                        ),
                         "dharma_tags": json.loads(row["tags_json"]) if row["tags_json"] else None,
                         "created_at": row["created_at"],
                         "access_count": row["access_count"],

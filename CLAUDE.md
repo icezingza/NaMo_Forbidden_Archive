@@ -58,7 +58,43 @@ Rules:
 - `core/` engines must be testable without network or filesystem calls
 - New feature? Add engine logic to `core/`, IO to `adapters/`, wire them in the entry point
 - Prefer editing existing modules over creating near-duplicates
-- More detail: `docs/ARCHITECTURE.md`, `docs/API_SPEC.md`
+- Every persona engine must inherit `BasePersonaEngine` and implement `process_input()`
+
+`process_input(user_input, session_id)` return shape (do not change without updating `server.py` and tests):
+```python
+{
+    "text": str,
+    "media_trigger": {"image": str | None, "audio": str | None, "tts": str | None},
+    "system_status": {"arousal": str, "sin_status": str, "active_personas": list}
+}
+```
+
+### Cognitive Stack (core/)
+
+Opt-in subsystems that make persona behaviour more human-like.
+Activate by calling `self.init_cognition()` in an engine's `__init__`.
+
+| Module | Class | Responsibility |
+|---|---|---|
+| `core/emotion_engine.py` | `EmotionEngine` | 5-D continuous emotion (joy/arousal/trust/anger/desire) with momentum + baseline decay |
+| `core/cognitive_stream.py` | `CognitiveStream` | Internal monologue (impulse/reflection/memory/conflict/desire thoughts) injected into LLM prompt |
+| `core/learning_engine.py` | `LearningEngine` | Observes interactions, evolves 4 persona traits, persists to `learned_patterns.json` |
+| `core/base_persona.py` | `CognitiveCore` | Bundle: `emotion`, `thoughts`, `learning` — call `cognitive.process()` once per turn |
+
+`CognitiveCore.process()` returns:
+```python
+{
+    "emotion":        dict,   # EmotionEngine.snapshot()
+    "monologue":      str,    # thought queue as prompt string
+    "autonomous":     str | None,
+    "persona_traits": dict,   # boldness / playfulness / vulnerability / expressiveness
+    "preferences":    dict,
+}
+```
+
+Before modifying `NaMoOmegaEngine` → read `docs/ARCHITECTURE.md` first.
+Before adding a new API endpoint → read `docs/API_SPEC.md` first.
+Full env vars reference → `docs/CONFIG.md`
 
 ## Coding Conventions
 
@@ -117,7 +153,7 @@ Rules:
 
 ## Safety Rules
 
-- Do not rename or change the path of any public API route (`/chat`, `/v1/chat`, `/v1/health`)
+- Do not rename or change the path of any public API route (`/chat`, `/v1/chat`, `/v1/health`, `/v1/status`, `/v1/chat/stream`)
 - Do not change the `process_input()` return shape without updating `server.py` and tests
 - Do not modify `memory_service.py` store/recall contract without flagging first
 - Do not change `config.py` field names — they map 1:1 to env vars used in production
@@ -141,6 +177,7 @@ Pre-commit:      make precommit
 Security audit:  make audit            (pip-audit + bandit)
 KB build:        python learn_from_set.py     (requires OPENAI_API_KEY, set.zip in learning_set/)
 KB query:        python query_learned_knowledge.py
+Stream test:     curl -N -X POST http://localhost:8000/v1/chat/stream -H "Content-Type: application/json" -d '{"text":"สวัสดี"}'
 API check:       python tools/check_api.py --base-url <url>
 Telegram check:  python tools/telegram_check.py
 Docker API:      docker build -t namo-api . && docker run -p 8000:8000 --env-file .env namo-api
@@ -161,3 +198,15 @@ Docker memory:   docker build -f Dockerfile.memory -t namo-memory . && docker ru
 - User input from `/chat` is passed to OpenAI — do not log raw input in production without considering PII
 - `CORS_ALLOW_ORIGINS` defaults to `*`; restrict to specific origins before any public deployment
 - `bandit` and `pip-audit` run in CI — fix high/critical findings before merging
+
+## Common Mistakes to Avoid
+
+Patterns Claude has been seen repeating incorrectly in this codebase:
+
+- **Using `os.getenv()` in business logic** — always use `from config import settings` instead
+- **Creating a new module for one-off logic** — add to the nearest existing relevant file
+- **Calling external services directly in `core/`** — all IO goes through `adapters/` only
+- **Adding `Optional[str]`** — use `str | None` (Python 3.11+ syntax, pyupgrade enforces this)
+- **Writing tests in `test_main.py` at root** — new tests go under `tests/` only
+- **Returning media paths as relative URLs** — use `_resolve_media_url()` in `server.py` when `PUBLIC_BASE_URL` is set
+- **Adding safety wrappers around NaMo dialogue** — NSFW content is intentional; use `SAFETY_FILTER_ENABLED` / `NSFW_ALLOWED` flags for runtime control

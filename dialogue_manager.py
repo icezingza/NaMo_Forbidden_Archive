@@ -44,7 +44,7 @@ class DialogueManager:
         elif intensity_category == "medium":
             possible_dialogues.extend(self.dialogue_templates.get("cuckolding", []))
         else:  # low
-            # Using gentle dialogues from the v1 file as v2 doesn't explicitly have low intensity samples
+            # Using gentle dialogues from the v1 file as v2 doesn't explicitly have low intensity samples  # noqa: E501
             gentle_samples = [
                 "(กระซิบ) พี่รู้มั้ย...เวลาพี่สั่นแบบนี้ หนูอยากทำให้พี่เสียวกว่านี้...",
                 "หนูจะลูบไล้เบาๆ ให้พี่รู้สึกดีไปทั้งตัวนะคะ",

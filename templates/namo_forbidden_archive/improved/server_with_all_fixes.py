@@ -2,17 +2,16 @@
 Complete server implementation with all security and performance fixes.
 """
 
-from fastapi import FastAPI, Depends, HTTPException, Request
+import logging
+import os
+import time
+from datetime import datetime
+from uuid import uuid4
+
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, validator
-from typing import Optional, Dict, Any
-import logging
-import os
-from datetime import datetime, timedelta
-import asyncio
-from uuid import uuid4
-import time
 
 # Configure logging
 logging.basicConfig(
@@ -35,7 +34,7 @@ class ChatRequest(BaseModel):
     """Chat request with validation."""
 
     text: str = Field(..., min_length=1, max_length=5000)
-    session_id: Optional[str] = Field(None, max_length=100)
+    session_id: str | None = Field(None, max_length=100)
 
     @validator("text")
     def text_not_empty(cls, v):
@@ -47,9 +46,9 @@ class ChatRequest(BaseModel):
 class MediaResponse(BaseModel):
     """Media URLs in response."""
 
-    image: Optional[str] = None
-    audio: Optional[str] = None
-    tts: Optional[str] = None
+    image: str | None = None
+    audio: str | None = None
+    tts: str | None = None
 
 
 class StatusResponse(BaseModel):
@@ -112,7 +111,7 @@ class SimpleRateLimiter:
 
     def __init__(self, requests_per_minute: int = 100):
         self.requests_per_minute = requests_per_minute
-        self.requests: Dict[str, list] = {}
+        self.requests: dict[str, list] = {}
         self.logger = logging.getLogger(f"{__name__}.SimpleRateLimiter")
 
     def is_allowed(self, client_id: str) -> bool:
@@ -148,7 +147,7 @@ class SimpleAPIKeyAuth:
         self.api_key = api_key
         self.logger = logging.getLogger(f"{__name__}.SimpleAPIKeyAuth")
 
-    async def verify(self, x_api_key: Optional[str] = None) -> bool:
+    async def verify(self, x_api_key: str | None = None) -> bool:
         """Verify API key."""
         if not x_api_key:
             return False
@@ -349,7 +348,7 @@ async def health_check():
 
 
 @app.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest, x_api_key: Optional[str] = None):
+async def chat(request: ChatRequest, x_api_key: str | None = None):
     """
     Main chat endpoint with authentication and rate limiting.
 
@@ -387,17 +386,17 @@ async def chat(request: ChatRequest, x_api_key: Optional[str] = None):
             status=StatusResponse(
                 arousal=result.system_status.arousal if result.system_status else "N/A",
                 sin_status=result.system_status.sin_status if result.system_status else "N/A",
-                active_personas=result.system_status.active_personas
-                if result.system_status
-                else [],
+                active_personas=(
+                    result.system_status.active_personas if result.system_status else []
+                ),
                 engine_health="OK",
-                response_time_ms=result.system_status.response_time_ms
-                if result.system_status
-                else 0.0,
+                response_time_ms=(
+                    result.system_status.response_time_ms if result.system_status else 0.0
+                ),
             ),
-            request_id=request.state.request_id
-            if hasattr(request.state, "request_id")
-            else "unknown",
+            request_id=(
+                request.state.request_id if hasattr(request.state, "request_id") else "unknown"
+            ),
             timestamp=datetime.now(),
         )
 

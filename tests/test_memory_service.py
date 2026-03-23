@@ -137,14 +137,22 @@ def test_recall_filters_by_dark_concepts():
     client = TestClient(app)
 
     # Arrange: Store records with different dharma_tags
-    client.post("/store", json={"content": "obsession memory", "dharma_tags": ["metta"]})  # -> Obsession
-    client.post("/store", json={"content": "suffering memory", "dharma_tags": ["dukkha"]})  # -> Managed Suffering
-    client.post("/store", json={"content": "detachment memory", "dharma_tags": ["upekkha"]})  # -> Cold Detachment
+    client.post(
+        "/store", json={"content": "obsession memory", "dharma_tags": ["metta"]}
+    )  # -> Obsession  # noqa: E501
+    client.post(
+        "/store", json={"content": "suffering memory", "dharma_tags": ["dukkha"]}
+    )  # -> Managed Suffering  # noqa: E501
+    client.post(
+        "/store", json={"content": "detachment memory", "dharma_tags": ["upekkha"]}
+    )  # -> Cold Detachment  # noqa: E501
     # This last one will be skipped by recall
     client.post("/store", json={"content": "another obsession", "dharma_tags": ["metta"]})
 
     # Act: Recall with a filter for 'Obsession' and 'Managed Suffering'
-    response = client.post("/recall", json={"dark_concepts_filter": ["Obsession", "Managed Suffering"]})
+    response = client.post(
+        "/recall", json={"dark_concepts_filter": ["Obsession", "Managed Suffering"]}
+    )  # noqa: E501
     data = response.json()
 
     # Assert
@@ -162,14 +170,25 @@ def test_recall_with_combined_filters():
     client = TestClient(app)
 
     # Arrange
-    client.post("/store", json={"content": "long term obsession", "type": "long-term", "dharma_tags": ["metta"]})
-    client.post("/store", json={"content": "short term obsession", "type": "short-term", "dharma_tags": ["metta"]})
-    client.post("/store", json={"content": "long term suffering", "type": "long-term", "dharma_tags": ["dukkha"]})
+    client.post(
+        "/store",
+        json={"content": "long term obsession", "type": "long-term", "dharma_tags": ["metta"]},
+    )  # noqa: E501
+    client.post(
+        "/store",
+        json={"content": "short term obsession", "type": "short-term", "dharma_tags": ["metta"]},
+    )  # noqa: E501
+    client.post(
+        "/store",
+        json={"content": "long term suffering", "type": "long-term", "dharma_tags": ["dukkha"]},
+    )  # noqa: E501
     # This last one will be skipped by recall
     client.post("/store", json={"content": "another record"})
 
     # Act: Recall with filters for type 'long-term' and concept 'Obsession'
-    response = client.post("/recall", json={"memory_types": ["long-term"], "dark_concepts_filter": ["Obsession"]})
+    response = client.post(
+        "/recall", json={"memory_types": ["long-term"], "dark_concepts_filter": ["Obsession"]}
+    )  # noqa: E501
     data = response.json()
 
     # Assert
@@ -195,3 +214,72 @@ def test_recall_with_filter_that_matches_nothing():
     # Assert
     assert response.status_code == 200
     assert data == []
+
+
+def test_get_memory_manager_returns_instance():
+    """get_memory_manager() returns a MemoryManager instance directly."""
+    manager = get_memory_manager()
+    assert isinstance(manager, MemoryManager)
+
+
+def test_store_returns_500_on_internal_error():
+    """store endpoint returns HTTP 500 when store_record raises an unexpected error."""
+    from unittest.mock import MagicMock
+
+    broken_manager = MagicMock()
+    broken_manager.store_record.side_effect = RuntimeError("disk full")
+
+    client = TestClient(app)
+    app.dependency_overrides[get_memory_manager] = lambda: broken_manager
+    try:
+        response = client.post("/store", json={"content": "test"})
+        assert response.status_code == 500
+        assert "disk full" in response.json()["detail"]
+    finally:
+        app.dependency_overrides.pop(get_memory_manager, None)
+
+
+def test_recall_returns_500_on_internal_error():
+    """recall endpoint returns HTTP 500 when recall_records raises an unexpected error."""
+    from unittest.mock import MagicMock
+
+    broken_manager = MagicMock()
+    broken_manager.recall_records.side_effect = RuntimeError("index corrupt")
+
+    client = TestClient(app)
+    app.dependency_overrides[get_memory_manager] = lambda: broken_manager
+    try:
+        response = client.post("/recall", json={"query": "test"})
+        assert response.status_code == 500
+        assert "index corrupt" in response.json()["detail"]
+    finally:
+        app.dependency_overrides.pop(get_memory_manager, None)
+
+
+def test_health_check_endpoint():
+    """GET /health returns status ok and memory record count."""
+    client = TestClient(app)
+    client.post("/store", json={"content": "health test record"})
+    response = client.get("/health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ok"
+    assert isinstance(data["memory_records"], int)
+    assert data["memory_records"] >= 1
+
+
+def test_datetime_encoder_non_datetime_fallback(tmp_path):
+    """DateTimeEncoder falls back to base encoder for non-datetime objects."""
+
+    from memory_service import MemoryManager
+
+    manager = MemoryManager(file_path=str(tmp_path / "enc_test.json"))
+    # Inject a non-serializable object directly into memory
+    manager.memory["records"] = [{"content": "ok"}]
+    # Normal save should work fine
+    manager.save_memory()
+
+    # Now inject a truly non-serializable object to trigger the fallback branch
+    manager.memory["records"] = [{"bad": object()}]
+    with pytest.raises((TypeError, Exception)):
+        manager.save_memory()

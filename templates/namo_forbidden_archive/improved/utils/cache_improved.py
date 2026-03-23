@@ -2,12 +2,13 @@
 Cache with TTL and automatic expiration.
 """
 
-import time
-import threading
 import logging
-from typing import Any, Optional, Callable
-from functools import wraps
+import threading
+import time
+from collections.abc import Callable
 from dataclasses import dataclass
+from functools import wraps
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +60,7 @@ class TTLCache:
         cleanup_thread = threading.Thread(target=cleanup_loop, daemon=True)
         cleanup_thread.start()
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None):
+    def set(self, key: str, value: Any, ttl: int | None = None):
         """
         Set cache value with TTL.
 
@@ -82,7 +83,7 @@ class TTLCache:
 
             self.logger.debug(f"Cached key: {key} (TTL: {ttl_value}s)")
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """
         Get cache value if not expired.
 

@@ -23,7 +23,9 @@ def embed_with_retry(text: str, attempts: int = 3, delay: float = 1.0):
             if attempt == attempts:
                 raise
             wait = delay * attempt
-            print(f"[Retry] embedding failed (attempt {attempt}/{attempts}): {e} -> retrying in {wait}s")
+            print(
+                f"[Retry] embedding failed (attempt {attempt}/{attempts}): {e} -> retrying in {wait}s"  # noqa: E501
+            )
             time.sleep(wait)
 
 
@@ -37,7 +39,7 @@ def query_knowledge(question, top_k=3):
     distances, indices = index.search(q_emb, top_k)
     meta = json.load(open(META_PATH, encoding="utf-8"))
     results = []
-    for i, dist in zip(indices[0], distances[0]):
+    for i, dist in zip(indices[0], distances[0], strict=False):
         if i < len(meta):
             item = meta[i]
             item["score"] = float(dist)

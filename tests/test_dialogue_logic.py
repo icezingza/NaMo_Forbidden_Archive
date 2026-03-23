@@ -12,7 +12,9 @@ from core.dark_system import DarkNaMoSystem
 @pytest.fixture
 def mock_adapters(monkeypatch):
     """Mocks the Memory and Emotion adapters."""
-    monkeypatch.setattr("adapters.memory.MemoryAdapter.store_interaction", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        "adapters.memory.MemoryAdapter.store_interaction", lambda *args, **kwargs: None
+    )  # noqa: E501
     monkeypatch.setattr(
         "adapters.emotion.EmotionAdapter.analyze_emotion",
         lambda *args, **kwargs: {"primary_emotion": "neutral", "intensity": 0.5},
@@ -34,7 +36,8 @@ def test_sadness_input_triggers_comfort_response(monkeypatch, mock_adapters):
     result = engine.process_input(user_input, session_id)
 
     # Assert
-    assert "ข้ารู้สึกถึงความเศร้าของท่าน..." in result
+    assert isinstance(result, dict)
+    assert "ข้ารู้สึกถึงความเศร้าของท่าน..." in result["text"]
 
 
 def test_high_intensity_anger_input_triggers_dominance_response(monkeypatch, mock_adapters):
@@ -45,7 +48,7 @@ def test_high_intensity_anger_input_triggers_dominance_response(monkeypatch, moc
         lambda *args, **kwargs: {"primary_emotion": "anger", "intensity": 0.9},
     )
     engine = DarkNaMoSystem()
-    engine.intensity = 8  # Manually set intensity for testing
+    engine._set_intensity("test-session-anger", 8)  # Manually set per-session intensity
     user_input = "ฉันโกรธมาก!"
     session_id = "test-session-anger"
 
@@ -53,7 +56,8 @@ def test_high_intensity_anger_input_triggers_dominance_response(monkeypatch, moc
     result = engine.process_input(user_input, session_id)
 
     # Assert
-    assert "อารมณ์รุนแรงจังนะคะ..." in result
+    assert isinstance(result, dict)
+    assert "อารมณ์รุนแรงจังนะคะ..." in result["text"]
 
 
 def test_safe_word_trigger(monkeypatch, mock_adapters):
@@ -67,7 +71,10 @@ def test_safe_word_trigger(monkeypatch, mock_adapters):
     result = engine.process_input(user_input, session_id)
 
     # Assert
-    assert result == "ข้าได้ยินท่านแล้ว ทุกอย่างจะหยุดลงเดี๋ยวนี้ ท่านปลอดภัยแล้ว ข้าอยู่นี่"
+    assert isinstance(result, dict)
+    assert (
+        result["text"] == "ข้าได้ยินท่านแล้ว ทุกอย่างจะหยุดลงเดี๋ยวนี้ ท่านปลอดภัยแล้ว ข้าอยู่นี่"
+    )
 
 
 def test_neutral_input_triggers_provoke_reaction_response(monkeypatch, mock_adapters):
@@ -85,4 +92,5 @@ def test_neutral_input_triggers_provoke_reaction_response(monkeypatch, mock_adap
     result = engine.process_input(user_input, session_id)
 
     # Assert
-    assert "ท่านเงียบจัง..." in result
+    assert isinstance(result, dict)
+    assert "ท่านเงียบจัง..." in result["text"]

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import tempfile
-from typing import Dict
 
 
 class ImageEmotionAnalyzer:
@@ -20,7 +19,7 @@ class ImageEmotionAnalyzer:
             return
         self._deepface = DeepFace
 
-    def analyze(self, image_bytes: bytes) -> Dict[str, object]:
+    def analyze(self, image_bytes: bytes) -> dict[str, object]:
         """Return label and confidence for the most likely emotion."""
         if not image_bytes:
             return {"label": "neutral", "confidence": 0.2, "engine": "fallback"}

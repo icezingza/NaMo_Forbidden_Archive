@@ -2,6 +2,7 @@ class ForbiddenBehaviorCore:
     """
     Manages forbidden states and behavioral locks.
     """
+
     def __init__(self):
         self.is_locked = False
         self.punishment_level = 0

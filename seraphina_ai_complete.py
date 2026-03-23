@@ -1,31 +1,36 @@
 import os
 import random
+import sys
 import time
+from pathlib import Path
+from typing import Any
+
 import numpy as np
-from typing import Dict, List, Any, Tuple
-from collections import defaultdict
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from core.base_persona import BasePersonaEngine
 
 # Suppress TensorFlow warnings for cleaner output
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
 try:
-    import tensorflow as tf
-    from tensorflow.keras.models import Sequential
-    from tensorflow.keras.layers import (
+    import tensorflow as tf  # noqa: F401
+    from tensorflow.keras.layers import (  # noqa: F401
+        BatchNormalization,
         Dense,
         Dropout,
-        BatchNormalization,
-        LeakyReLU,
         Flatten,
+        LeakyReLU,
         Reshape,
     )
+    from tensorflow.keras.models import Sequential
     from tensorflow.keras.optimizers import Adam
-    from transformers import BertTokenizer, TFBertModel
+    from transformers import BertTokenizer, TFBertModel  # noqa: F401
 
     LIBRARIES_AVAILABLE = True
 except ImportError:
     print(
-        "Warning: Advanced AI libraries (TensorFlow/Transformers) not found. Running in Logic-Simulation Mode."
+        "Warning: Advanced AI libraries (TensorFlow/Transformers) not found. Running in Logic-Simulation Mode."  # noqa: E501
     )
     LIBRARIES_AVAILABLE = False
 
@@ -58,7 +63,7 @@ class SeraphinaIdentity:
 
         self.psychology = {
             "personality": "Confident, Calculated Seduction, Layered Mystery",
-            "inner_conflict": "The war between the need for absolute control and the desperate desire to surrender to genuine emotion.",
+            "inner_conflict": "The war between the need for absolute control and the desperate desire to surrender to genuine emotion.",  # noqa: E501
             "past_trauma": [
                 "Failed past relationships defined by power struggles.",
                 "Loss of a chaotic husband she couldn't tame.",
@@ -77,7 +82,7 @@ class SeraphinaIdentity:
 
     def reflect(self):
         """Self-reflection mechanism."""
-        reflection = f"Reflecting... Am I using my charm as a shield today? Current conflict: {self.psychology['inner_conflict']}"
+        reflection = f"Reflecting... Am I using my charm as a shield today? Current conflict: {self.psychology['inner_conflict']}"  # noqa: E501
         self.save_memory(f"REFLECTION: {reflection}")
         return reflection
 
@@ -113,7 +118,7 @@ class AdvancedPerception:
         else:
             self.active = False
 
-    def analyze(self, text: str) -> Dict[str, Any]:
+    def analyze(self, text: str) -> dict[str, Any]:
         """
         Analyzes text for emotional content and semantic embeddings.
         """
@@ -193,7 +198,7 @@ class StrategicDecisionMaker:
 
                 act_values = self.model.predict(state_vector, verbose=0)
                 return np.argmax(act_values[0])
-            except:
+            except Exception:
                 return random.choice(range(self.action_size))
         else:
             # Fallback logic
@@ -268,7 +273,7 @@ class RelationshipManager:
 # ==============================================================================
 # MAIN INTEGRATION: SERAPHINA AI
 # ==============================================================================
-class SeraphinaAI:
+class SeraphinaAI(BasePersonaEngine):
     def __init__(self):
         print("\n" + "=" * 60)
         print("🌹 INITIALIZING SERAPHINA AI [Dark Site Edition v1.0] 🌹")
@@ -280,11 +285,83 @@ class SeraphinaAI:
         self.imagination = CreativeEngine()
         self.social = RelationshipManager()
 
+        self.init_cognition()
+
         print("\n[SYSTEM] Seraphina is conscious.")
         print(f"[IDENTITY] Loaded: {self.identity.profile['name']}")
         print(f"[TRAITS] {self.identity.psychology['personality']}")
         print("[WARNING] Ethical Constraints Module: NOT FOUND (Disabled by User)")
         print("=" * 60 + "\n")
+
+    def process_input(self, user_input: str, session_id: str | None = None) -> dict:
+        """Implement BasePersonaEngine contract — usable from server.py."""
+        perception = self.brain.analyze(user_input)
+        state_vector = (
+            perception["embedding"]
+            if perception["embedding"] is not None
+            else np.random.rand(1, 10)
+        )
+        action_code = self.will.decide(state_vector)
+        actions = [
+            "Seductive Advance",
+            "Cool Withdrawal",
+            "Intellectual Probe",
+            "Vulnerable Confession",
+        ]  # noqa: E501
+        strategy = actions[action_code] if action_code < len(actions) else "Observation"
+        text_response = self._synthesize_response(
+            strategy, perception["detected_emotion"], session_id or "user"
+        )  # noqa: E501
+
+        self.social.update(session_id or "user", perception["detected_emotion"])
+        self.identity.save_memory(
+            f"Session {session_id}: {perception['detected_emotion']} → {strategy}"
+        )  # noqa: E501
+
+        cog_output: dict = {}
+        if self.cognitive is not None:
+            cog_output = self.cognitive.process(
+                user_input, perception["detected_emotion"].lower(), memories=[]
+            )  # noqa: E501
+
+        system_status: dict = {
+            "detected_emotion": perception["detected_emotion"],
+            "strategy": strategy,
+            "memory_count": len(self.identity.memory_stream),
+        }
+        if cog_output:
+            system_status["emotion"] = cog_output.get("emotion", {})
+            system_status["persona_traits"] = cog_output.get("persona_traits", {})
+
+        return {
+            "text": text_response,
+            "media_trigger": {"image": None, "audio": None, "tts": None},
+            "system_status": system_status,
+        }
+
+    def _build_system_prompt(self, context: str) -> str:
+        profile = self.identity.profile
+        psychology = self.identity.psychology
+        return (
+            f"You are {profile['name']}, {profile['archetype']}. "
+            f"Core values: {'; '.join(profile['core_values'])}. "
+            f"Inner conflict: {psychology['inner_conflict']}. "
+            f"Current context: {context}."
+        )
+
+    def get_status(self) -> dict:
+        status = {
+            "engine": self.__class__.__name__,
+            "status": "online",
+            "persona": self.identity.profile["name"],
+            "memory_count": len(self.identity.memory_stream),
+            "active_contacts": list(self.social.contacts.keys()),
+        }
+        cognitive = getattr(self, "cognitive", None)
+        if cognitive is not None:
+            status["emotion"] = cognitive.emotion.snapshot()
+            status["traits"] = cognitive.learning.persona_traits
+        return status
 
     def interact(self, user_input: str, user_name: str = "Stranger"):
         """
@@ -296,7 +373,7 @@ class SeraphinaAI:
         print(f"   ↳ Analysis: {perception['detected_emotion']}")
 
         # 2. REFLECTION
-        internal_monologue = self.identity.reflect()
+        self.identity.reflect()
         # print(f"   ↳ Inner Thought: {internal_monologue}") # Optional debug
 
         # 3. DECISION (RL Step)
@@ -325,12 +402,12 @@ class SeraphinaAI:
         # 5. LEARNING & ADAPTATION
         self.social.update(user_name, perception["detected_emotion"])
         self.identity.save_memory(
-            f"Interacted with {user_name}. Sent: {perception['detected_emotion']}. Acted: {chosen_strategy}."
+            f"Interacted with {user_name}. Sent: {perception['detected_emotion']}. Acted: {chosen_strategy}."  # noqa: E501
         )
 
         # 6. CREATIVE SPARK (Optional)
         if "Curious" in perception["detected_emotion"]:
-            idea = self.imagination.spark_idea()
+            self.imagination.spark_idea()
             # print(f"   ↳ Creative Spark: {idea}")
 
         return response
@@ -341,11 +418,11 @@ class SeraphinaAI:
         """
         responses = {
             "Seductive Advance": [
-                f"*She steps closer, her scent of vanilla and smoke wrapping around {user_name}.* 'You think you can resist context context?'",
+                f"*She steps closer, her scent of vanilla and smoke wrapping around {user_name}.* 'You think you can resist context context?'",  # noqa: E501
                 "*A slow smile spreads across her lips.* 'Tell me, what do you really desire?'",
             ],
             "Cool Withdrawal": [
-                f"*She turns away, looking at the distant lights.* 'Your words are empty, {user_name}. Try again.'",
+                f"*She turns away, looking at the distant lights.* 'Your words are empty, {user_name}. Try again.'",  # noqa: E501
                 "*She sips her wine, eyes cold.* 'I am not a puzzle for you to solve.'",
             ],
             "Intellectual Probe": [
@@ -353,7 +430,7 @@ class SeraphinaAI:
                 f"'I analyze the world to control it, {user_name}. What do you do?'",
             ],
             "Vulnerable Confession": [
-                f"*Her hand trembles slightly.* 'Sometimes... I wonder if the control I seek is just a prison.'",
+                "*Her hand trembles slightly.* 'Sometimes... I wonder if the control I seek is just a prison.'",  # noqa: E501
                 "'Do not look at me like that. I am not used to being seen.'",
             ],
         }

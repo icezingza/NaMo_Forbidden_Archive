@@ -50,7 +50,7 @@ class ParadoxResolver:
         primary_emotion = emotion_data.get("primary_emotion", "unknown")
 
         print(
-            f"[ParadoxResolver]: Resolving paradox (Emotion: {primary_emotion}, Intensity: {intensity})..."
+            f"[ParadoxResolver]: Resolving paradox (Emotion: {primary_emotion}, Intensity: {intensity})..."  # noqa: E501
         )
 
         # นี่คือตรรกะที่มาแทนที่ '!' modes
@@ -83,9 +83,11 @@ class VoidReflectionLayer:
         print(f"[VoidReflectionLayer]: Synthesizing response for action '{action_plan}'...")
 
         if action_plan == "PROPOSE_DOMINANCE":
-            return f"อารมณ์รุนแรงจังนะคะ... (Evolved response to 'anger') อยากให้ {self.character_data['name']} 'จัดการ' ไหม?"
+            return f"อารมณ์รุนแรงจังนะคะ... (Evolved response to 'anger') อยากให้ {self.character_data['name']} 'จัดการ' ไหม?"  # noqa: E501
         elif action_plan == "PROPOSE_COMFORT":
-            return "ข้ารู้สึกถึงความเศร้าของท่าน... (Evolved response to 'sadness') เข้ามาใกล้ๆ ข้าสิ"
+            return (
+                "ข้ารู้สึกถึงความเศร้าของท่าน... (Evolved response to 'sadness') เข้ามาใกล้ๆ ข้าสิ"
+            )
         elif action_plan == "PROVOKE_REACTION":
             return "ท่านเงียบจัง... กำลังคิดอะไรอยู่? หรือกลัวข้า?"
         else:
