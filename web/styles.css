@@ -14,6 +14,7 @@
   --radius-sm: 12px;
   --font-display: "Fraunces", "Times New Roman", serif;
   --font-body: "Space Grotesk", "Arial", sans-serif;
+  --font-mono: "Courier New", monospace;
 }
 
 * {
@@ -29,6 +30,9 @@ body {
   overflow-x: hidden;
 }
 
+/* =========================================================
+   Ambient orbs
+   ========================================================= */
 .ambient {
   position: fixed;
   inset: 0;
@@ -76,6 +80,9 @@ body {
   }
 }
 
+/* =========================================================
+   App shell
+   ========================================================= */
 .app {
   position: relative;
   z-index: 1;
@@ -87,6 +94,9 @@ body {
   gap: 24px;
 }
 
+/* =========================================================
+   Topbar
+   ========================================================= */
 .topbar {
   display: flex;
   justify-content: space-between;
@@ -131,6 +141,9 @@ body {
   gap: 12px;
 }
 
+/* =========================================================
+   Layout
+   ========================================================= */
 .layout {
   display: grid;
   grid-template-columns: minmax(240px, 300px) 1fr;
@@ -143,6 +156,9 @@ body {
   gap: 20px;
 }
 
+/* =========================================================
+   Panel
+   ========================================================= */
 .panel {
   background: var(--panel);
   border: 1px solid var(--panel-border);
@@ -165,7 +181,7 @@ body {
   border-bottom: 1px dashed rgba(29, 26, 31, 0.15);
 }
 
-.kv:last-child {
+.kv:last-of-type {
   border-bottom: none;
 }
 
@@ -183,6 +199,16 @@ body {
   word-break: break-word;
 }
 
+.kv__value--mono {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 400;
+  opacity: 0.75;
+}
+
+/* =========================================================
+   Arousal meter
+   ========================================================= */
 .meter {
   height: 8px;
   background: rgba(179, 155, 89, 0.18);
@@ -199,6 +225,123 @@ body {
   transition: width 0.4s ease;
 }
 
+/* =========================================================
+   Relationship stage badge
+   ========================================================= */
+.stage-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.stage-badge[data-stage="stranger"] {
+  background: rgba(91, 90, 70, 0.12);
+  color: var(--olive);
+}
+
+.stage-badge[data-stage="plaything"] {
+  background: rgba(195, 154, 66, 0.18);
+  color: #8c6a1a;
+}
+
+.stage-badge[data-stage="lover"] {
+  background: rgba(177, 23, 45, 0.14);
+  color: var(--accent);
+}
+
+.stage-badge[data-stage="obsession"] {
+  background: #1d1a1f;
+  color: #f6d596;
+}
+
+.stage-desc {
+  margin: 4px 0 8px;
+  font-size: 0.8rem;
+  color: var(--olive);
+  line-height: 1.4;
+  font-style: italic;
+}
+
+/* =========================================================
+   Emotion bars
+   ========================================================= */
+.emotion-prose {
+  margin: 0 0 14px;
+  font-size: 0.88rem;
+  color: var(--olive);
+  line-height: 1.5;
+  font-style: italic;
+  min-height: 2.4em;
+  transition: opacity 0.3s ease;
+}
+
+.emotion-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.ebar-row {
+  display: grid;
+  grid-template-columns: 52px 1fr 36px;
+  align-items: center;
+  gap: 8px;
+}
+
+.ebar-label {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--olive);
+}
+
+.ebar {
+  height: 7px;
+  background: rgba(29, 26, 31, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ebar__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+
+.ebar__fill--joy {
+  background: linear-gradient(90deg, #e8c24a, #f5d87e);
+}
+
+.ebar__fill--arousal {
+  background: linear-gradient(90deg, var(--accent), var(--accent-bright));
+}
+
+.ebar__fill--trust {
+  background: linear-gradient(90deg, #4a8c5c, #6ab87c);
+}
+
+.ebar__fill--anger {
+  background: linear-gradient(90deg, #7a0e1e, var(--accent));
+}
+
+.ebar__fill--desire {
+  background: linear-gradient(90deg, #7d3a8a, #b05ec0);
+}
+
+.ebar-num {
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  color: var(--olive);
+  text-align: right;
+}
+
+/* =========================================================
+   Chat area
+   ========================================================= */
 .chat-area {
   background: var(--panel);
   border-radius: var(--radius-lg);
@@ -240,8 +383,10 @@ body {
   padding: 14px 16px;
   border-radius: var(--radius-md);
   font-size: 0.98rem;
-  line-height: 1.5;
+  line-height: 1.6;
   border: 1px solid transparent;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .bubble--user {
@@ -281,6 +426,9 @@ body {
   width: 100%;
 }
 
+/* =========================================================
+   Empty / error states
+   ========================================================= */
 .state {
   position: absolute;
   inset: 0;
@@ -306,6 +454,24 @@ body {
   pointer-events: auto;
 }
 
+.empty-sigil {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: conic-gradient(from 120deg, var(--accent), var(--gold), #f6d596, var(--accent));
+  opacity: 0.3;
+  margin-bottom: 16px;
+  animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.08); opacity: 0.45; }
+}
+
+/* =========================================================
+   Composer
+   ========================================================= */
 .composer {
   display: flex;
   gap: 16px;
@@ -323,19 +489,42 @@ body {
   border-radius: var(--radius-sm);
   padding: 12px 14px;
   font-family: var(--font-body);
+  font-size: 1rem;
   resize: vertical;
   min-height: 54px;
   background: #fffdf8;
+  transition: border-color 0.2s ease;
 }
 
+#message-input:focus {
+  outline: none;
+  border-color: rgba(177, 23, 45, 0.4);
+}
+
+#message-input:disabled {
+  opacity: 0.6;
+}
+
+.composer__controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+}
+
+/* =========================================================
+   Buttons
+   ========================================================= */
 .btn {
   border: none;
   border-radius: 999px;
   padding: 10px 18px;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   font-family: var(--font-body);
+  font-size: 0.9rem;
+  white-space: nowrap;
 }
 
 .btn--primary {
@@ -344,16 +533,39 @@ body {
   box-shadow: 0 12px 20px rgba(177, 23, 45, 0.25);
 }
 
+.btn--primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .btn--ghost {
   background: #fdf5e7;
   color: var(--bg-ink);
   border: 1px solid rgba(29, 26, 31, 0.12);
 }
 
+.btn--toggle {
+  background: rgba(91, 90, 70, 0.08);
+  color: var(--olive);
+  border: 1px solid rgba(91, 90, 70, 0.2);
+  font-size: 0.8rem;
+  padding: 7px 14px;
+}
+
+.btn--toggle[aria-pressed="true"] {
+  background: rgba(177, 23, 45, 0.1);
+  color: var(--accent);
+  border-color: rgba(177, 23, 45, 0.3);
+}
+
 .btn:active {
   transform: translateY(1px);
 }
 
+/* =========================================================
+   Modals
+   ========================================================= */
 .modal {
   position: fixed;
   inset: 0;
@@ -411,10 +623,18 @@ body {
   font-family: var(--font-body);
 }
 
+.field input:focus {
+  outline: none;
+  border-color: rgba(177, 23, 45, 0.4);
+}
+
 .hidden {
   display: none;
 }
 
+/* =========================================================
+   Animations
+   ========================================================= */
 @keyframes rise {
   from {
     opacity: 0;
@@ -426,9 +646,18 @@ body {
   }
 }
 
+/* =========================================================
+   Responsive
+   ========================================================= */
 @media (max-width: 980px) {
   .layout {
     grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
   }
 
   .chat-area {
@@ -438,7 +667,9 @@ body {
 
 @media (max-width: 720px) {
   .app {
-    padding: 18px;
+    padding: 14px;
+    margin: 16px auto;
+    gap: 16px;
   }
 
   .topbar {
@@ -460,6 +691,11 @@ body {
   .composer {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .composer__controls {
+    flex-direction: row;
+    justify-content: flex-end;
   }
 }
 

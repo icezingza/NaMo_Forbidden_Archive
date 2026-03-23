@@ -14,5 +14,5 @@ RUN python -m pip install --no-cache-dir --upgrade pip && \
 # Copy the rest of the application's code
 COPY . .
 
-# Command to run the application
-CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]
+# Command to run the application (Cloud Run sets the PORT env var)
+CMD ["sh", "-c", "uvicorn server:app --host 0.0.0.0 --port ${PORT:-8080}"]

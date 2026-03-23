@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="th">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -29,6 +29,7 @@
           </div>
         </div>
         <div class="topbar__actions">
+          <button class="btn btn--ghost" id="new-session-btn" type="button" title="Start a new conversation">New Session</button>
           <button class="btn btn--ghost" id="ping-button" type="button">Ping</button>
           <button class="btn btn--ghost" id="settings-button" type="button">Settings</button>
         </div>
@@ -57,6 +58,43 @@
               <span class="kv__label">Personas</span>
               <span class="kv__value" id="status-personas">NaMo</span>
             </div>
+            <div class="kv">
+              <span class="kv__label">Relationship</span>
+              <span class="kv__value stage-badge" id="status-stage" data-stage="stranger">Stranger</span>
+            </div>
+            <p class="stage-desc" id="status-stage-desc">Just met. Guarded but polite.</p>
+          </section>
+
+          <section class="panel" id="emotion-panel">
+            <h2>Emotional State</h2>
+            <p class="emotion-prose" id="emotion-prose">รู้สึกเป็นกลาง สงบเงียบ</p>
+            <div class="emotion-bars">
+              <div class="ebar-row">
+                <span class="ebar-label">Joy</span>
+                <div class="ebar"><span class="ebar__fill ebar__fill--joy" id="ebar-joy" style="width:50%"></span></div>
+                <span class="ebar-num" id="ebar-joy-num">0.50</span>
+              </div>
+              <div class="ebar-row">
+                <span class="ebar-label">Arousal</span>
+                <div class="ebar"><span class="ebar__fill ebar__fill--arousal" id="ebar-arousal" style="width:30%"></span></div>
+                <span class="ebar-num" id="ebar-arousal-num">0.30</span>
+              </div>
+              <div class="ebar-row">
+                <span class="ebar-label">Trust</span>
+                <div class="ebar"><span class="ebar__fill ebar__fill--trust" id="ebar-trust" style="width:50%"></span></div>
+                <span class="ebar-num" id="ebar-trust-num">0.50</span>
+              </div>
+              <div class="ebar-row">
+                <span class="ebar-label">Anger</span>
+                <div class="ebar"><span class="ebar__fill ebar__fill--anger" id="ebar-anger" style="width:0%"></span></div>
+                <span class="ebar-num" id="ebar-anger-num">0.00</span>
+              </div>
+              <div class="ebar-row">
+                <span class="ebar-label">Desire</span>
+                <div class="ebar"><span class="ebar__fill ebar__fill--desire" id="ebar-desire" style="width:0%"></span></div>
+                <span class="ebar-num" id="ebar-desire-num">0.00</span>
+              </div>
+            </div>
           </section>
 
           <section class="panel">
@@ -67,7 +105,7 @@
             </div>
             <div class="kv">
               <span class="kv__label">Session ID</span>
-              <span class="kv__value" id="session-id-label">-</span>
+              <span class="kv__value kv__value--mono" id="session-id-label">-</span>
             </div>
           </section>
         </aside>
@@ -75,6 +113,7 @@
         <main class="chat-area">
           <div class="chat" id="chat"></div>
           <div class="state state--empty" id="empty-state">
+            <div class="empty-sigil"></div>
             <h3>Archive is quiet</h3>
             <p>Send a message to awaken the Omega engine.</p>
           </div>
@@ -92,7 +131,16 @@
           placeholder="Type your message..."
           autocomplete="off"
         ></textarea>
-        <button class="btn btn--primary" id="send-button" type="submit">Send</button>
+        <div class="composer__controls">
+          <button
+            class="btn btn--toggle"
+            id="stream-toggle"
+            type="button"
+            aria-pressed="true"
+            title="Toggle streaming mode"
+          >Stream</button>
+          <button class="btn btn--primary" id="send-button" type="submit">Send</button>
+        </div>
       </form>
     </div>
 
@@ -108,6 +156,18 @@
         <div class="modal__actions">
           <button class="btn btn--ghost" data-close="true" type="button">Cancel</button>
           <button class="btn btn--primary" id="save-settings" type="button">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal hidden" id="confirm-modal" aria-hidden="true">
+      <div class="modal__backdrop" data-close-confirm="true"></div>
+      <div class="modal__card">
+        <h2>New Session</h2>
+        <p>This will clear all chat history and start fresh. Continue?</p>
+        <div class="modal__actions">
+          <button class="btn btn--ghost" data-close-confirm="true" type="button">Cancel</button>
+          <button class="btn btn--primary" id="confirm-new-session" type="button">Start Fresh</button>
         </div>
       </div>
     </div>

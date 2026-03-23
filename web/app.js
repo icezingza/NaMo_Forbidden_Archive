@@ -10,6 +10,7 @@ const STORAGE_KEYS = {
   baseUrl: "namo_base_url",
   sessionId: "namo_session_id",
   messages: "namo_messages",
+  streamMode: "namo_stream_mode",
 };
 
 const state = {
@@ -17,6 +18,7 @@ const state = {
   sessionId: "",
   messages: [],
   loading: false,
+  streamMode: true,
 };
 
 const dom = {
@@ -29,7 +31,10 @@ const dom = {
   sendButton: document.getElementById("send-button"),
   settingsButton: document.getElementById("settings-button"),
   pingButton: document.getElementById("ping-button"),
+  newSessionBtn: document.getElementById("new-session-btn"),
   settingsModal: document.getElementById("settings-modal"),
+  confirmModal: document.getElementById("confirm-modal"),
+  confirmNewSession: document.getElementById("confirm-new-session"),
   baseUrlInput: document.getElementById("base-url-input"),
   saveSettings: document.getElementById("save-settings"),
   baseUrlLabel: document.getElementById("base-url-label"),
@@ -39,8 +44,35 @@ const dom = {
   statusArousal: document.getElementById("status-arousal"),
   statusPersonas: document.getElementById("status-personas"),
   arousalBar: document.getElementById("arousal-bar"),
+  statusStage: document.getElementById("status-stage"),
+  statusStageDesc: document.getElementById("status-stage-desc"),
+  emotionProse: document.getElementById("emotion-prose"),
+  streamToggle: document.getElementById("stream-toggle"),
+  ebarJoy: document.getElementById("ebar-joy"),
+  ebarArousal: document.getElementById("ebar-arousal"),
+  ebarTrust: document.getElementById("ebar-trust"),
+  ebarAnger: document.getElementById("ebar-anger"),
+  ebarDesire: document.getElementById("ebar-desire"),
+  ebarJoyNum: document.getElementById("ebar-joy-num"),
+  ebarArousalNum: document.getElementById("ebar-arousal-num"),
+  ebarTrustNum: document.getElementById("ebar-trust-num"),
+  ebarAngerNum: document.getElementById("ebar-anger-num"),
+  ebarDesireNum: document.getElementById("ebar-desire-num"),
 };
 
+// ---------------------------------------------------------------------------
+// Stage metadata
+// ---------------------------------------------------------------------------
+const STAGE_META = {
+  Stranger: { key: "stranger", desc: "Just met. Guarded but polite." },
+  Plaything: { key: "plaything", desc: "User is testing boundaries." },
+  Lover: { key: "lover", desc: "Deeply intimate." },
+  "Dark Obsession": { key: "obsession", desc: "Completely unhinged and possessive." },
+};
+
+// ---------------------------------------------------------------------------
+// Persistence helpers
+// ---------------------------------------------------------------------------
 function normalizeBaseUrl(value) {
   return value.trim().replace(/\/+$/, "");
 }
@@ -64,10 +96,13 @@ function loadState() {
   if (storedMessages) {
     try {
       state.messages = JSON.parse(storedMessages);
-    } catch (error) {
+    } catch {
       state.messages = [];
     }
   }
+
+  const storedStream = localStorage.getItem(STORAGE_KEYS.streamMode);
+  state.streamMode = storedStream === null ? true : storedStream === "1";
 }
 
 function saveMessages() {
@@ -80,9 +115,18 @@ function setBaseUrl(value) {
   updateSessionUI();
 }
 
+// ---------------------------------------------------------------------------
+// UI updates
+// ---------------------------------------------------------------------------
 function updateSessionUI() {
   dom.baseUrlLabel.textContent = state.baseUrl;
-  dom.sessionIdLabel.textContent = state.sessionId;
+  const sid = state.sessionId;
+  dom.sessionIdLabel.textContent = sid.length > 20 ? `${sid.slice(0, 8)}…${sid.slice(-6)}` : sid;
+}
+
+function updateStreamToggleUI() {
+  dom.streamToggle.setAttribute("aria-pressed", state.streamMode ? "true" : "false");
+  dom.streamToggle.textContent = state.streamMode ? "Stream ◈" : "Stream ○";
 }
 
 function setStatusFromRoot(payload) {
@@ -98,6 +142,7 @@ function setStatusFromRoot(payload) {
 function setStatusFromChat(payload) {
   if (!payload || !payload.status) return;
   const status = payload.status;
+
   if (status.sin_status) {
     dom.statusSin.textContent = status.sin_status;
   }
@@ -109,6 +154,61 @@ function setStatusFromChat(payload) {
   }
   if (Array.isArray(status.active_personas)) {
     dom.statusPersonas.textContent = status.active_personas.join(", ") || "NaMo";
+  }
+  if (status.relationship) {
+    updateRelationshipStage(status.relationship);
+  }
+  if (status.emotion) {
+    updateEmotionBars(status.emotion);
+  }
+  if (payload.engine) {
+    dom.statusEngine.textContent = payload.engine;
+  }
+}
+
+function updateRelationshipStage(rel) {
+  if (!rel || !rel.stage) return;
+  const stageName = rel.stage;
+  const meta = STAGE_META[stageName] || { key: "stranger", desc: rel.description || "" };
+  dom.statusStage.textContent = stageName;
+  dom.statusStage.dataset.stage = meta.key;
+  dom.statusStageDesc.textContent = meta.desc || rel.description || "";
+}
+
+function updateEmotionBars(emotion) {
+  if (!emotion) return;
+  const bars = [
+    { key: "joy", el: dom.ebarJoy, num: dom.ebarJoyNum },
+    { key: "arousal", el: dom.ebarArousal, num: dom.ebarArousalNum },
+    { key: "trust", el: dom.ebarTrust, num: dom.ebarTrustNum },
+    { key: "anger", el: dom.ebarAnger, num: dom.ebarAngerNum },
+    { key: "desire", el: dom.ebarDesire, num: dom.ebarDesireNum },
+  ];
+  for (const bar of bars) {
+    const raw = emotion[bar.key];
+    if (typeof raw !== "number") continue;
+    const pct = Math.round(Math.min(1, Math.max(0, raw)) * 100);
+    bar.el.style.width = `${pct}%`;
+    bar.num.textContent = raw.toFixed(2);
+  }
+  if (emotion.prose) {
+    dom.emotionProse.textContent = emotion.prose;
+  }
+}
+
+// Called after a stream completes — refreshes emotion from the global status endpoint.
+async function fetchAndApplyStatus() {
+  try {
+    const res = await fetch(`${state.baseUrl}/v1/status`);
+    if (!res.ok) return;
+    const payload = await res.json();
+    // payload shape: { EngineName: { emotion, traits, ... } }
+    const engineData = Object.values(payload)[0];
+    if (!engineData) return;
+    if (engineData.emotion) updateEmotionBars(engineData.emotion);
+    if (engineData.engine) dom.statusEngine.textContent = engineData.engine;
+  } catch {
+    // silent
   }
 }
 
@@ -122,7 +222,8 @@ function resolveMediaUrl(path) {
 function setLoading(isLoading) {
   state.loading = isLoading;
   dom.sendButton.disabled = isLoading;
-  dom.sendButton.textContent = isLoading ? "Sending..." : "Send";
+  dom.sendButton.textContent = isLoading ? "…" : "Send";
+  dom.messageInput.disabled = isLoading;
 }
 
 function setError(message) {
@@ -142,6 +243,9 @@ function updateEmptyState() {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Message rendering
+// ---------------------------------------------------------------------------
 function renderMessages() {
   dom.chat.innerHTML = "";
   state.messages.forEach((message) => {
@@ -189,9 +293,7 @@ function renderMedia(media) {
     entries.push({ type: "audio", url: resolveMediaUrl(media.tts), label: "TTS" });
   }
 
-  if (entries.length === 0) {
-    return null;
-  }
+  if (entries.length === 0) return null;
 
   const container = document.createElement("div");
   container.className = "message__media";
@@ -229,7 +331,10 @@ function addMessage(message) {
   dom.chat.scrollTop = dom.chat.scrollHeight;
 }
 
-async function sendMessage(text) {
+// ---------------------------------------------------------------------------
+// Non-streaming send (uses /chat, returns full status)
+// ---------------------------------------------------------------------------
+async function sendMessagePlain(text) {
   if (!text || state.loading) return;
   setError("");
   addMessage({ role: "user", text, timestamp: Date.now() });
@@ -243,9 +348,7 @@ async function sendMessage(text) {
       body: JSON.stringify({ text, session_id: state.sessionId }),
     });
 
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
 
     const payload = await response.json();
     if (payload.session_id) {
@@ -264,16 +367,110 @@ async function sendMessage(text) {
     setError(error.message || "Request failed.");
   } finally {
     setLoading(false);
+    updateSessionUI();
   }
 }
 
+// ---------------------------------------------------------------------------
+// Streaming send (uses /v1/chat/stream SSE, updates emotion after)
+// ---------------------------------------------------------------------------
+async function sendMessageStream(text) {
+  if (!text || state.loading) return;
+  setError("");
+  addMessage({ role: "user", text, timestamp: Date.now() });
+  dom.messageInput.value = "";
+  setLoading(true);
+
+  // Create assistant message placeholder
+  const assistantMsg = { role: "assistant", text: "", timestamp: Date.now() };
+  state.messages.push(assistantMsg);
+  if (state.messages.length > 120) state.messages = state.messages.slice(-120);
+  const wrapper = renderMessage(assistantMsg);
+  dom.chat.appendChild(wrapper);
+  updateEmptyState();
+  dom.chat.scrollTop = dom.chat.scrollHeight;
+  const bubble = wrapper.querySelector(".bubble--assistant");
+
+  try {
+    const response = await fetch(`${state.baseUrl}/v1/chat/stream`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, session_id: state.sessionId }),
+    });
+
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const lines = buffer.split("\n");
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const raw = line.slice(6).trim();
+        if (!raw) continue;
+        let event;
+        try {
+          event = JSON.parse(raw);
+        } catch {
+          continue;
+        }
+
+        if (event.error) {
+          throw new Error(event.error);
+        }
+        if (event.chunk) {
+          assistantMsg.text += event.chunk;
+          bubble.textContent = assistantMsg.text;
+          dom.chat.scrollTop = dom.chat.scrollHeight;
+        }
+        if (event.session_id) {
+          state.sessionId = event.session_id;
+          localStorage.setItem(STORAGE_KEYS.sessionId, state.sessionId);
+        }
+        if (event.engine) {
+          dom.statusEngine.textContent = event.engine;
+        }
+      }
+    }
+
+    saveMessages();
+    await fetchAndApplyStatus();
+  } catch (error) {
+    if (assistantMsg.text === "") {
+      // Stream failed before any content — remove placeholder and fall back
+      dom.chat.removeChild(wrapper);
+      state.messages.pop();
+      setError(error.message || "Stream failed.");
+    }
+  } finally {
+    setLoading(false);
+    updateSessionUI();
+  }
+}
+
+function sendMessage(text) {
+  if (state.streamMode) {
+    return sendMessageStream(text);
+  }
+  return sendMessagePlain(text);
+}
+
+// ---------------------------------------------------------------------------
+// Ping / status
+// ---------------------------------------------------------------------------
 async function pingServer() {
   setError("");
   try {
     const response = await fetch(`${state.baseUrl}/`, { method: "GET" });
-    if (!response.ok) {
-      throw new Error(`Ping failed: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`Ping failed: ${response.status}`);
     const payload = await response.json();
     setStatusFromRoot(payload);
   } catch (error) {
@@ -281,6 +478,21 @@ async function pingServer() {
   }
 }
 
+// ---------------------------------------------------------------------------
+// New session
+// ---------------------------------------------------------------------------
+function startNewSession() {
+  state.sessionId = generateSessionId();
+  localStorage.setItem(STORAGE_KEYS.sessionId, state.sessionId);
+  state.messages = [];
+  localStorage.removeItem(STORAGE_KEYS.messages);
+  renderMessages();
+  updateSessionUI();
+}
+
+// ---------------------------------------------------------------------------
+// Settings modal
+// ---------------------------------------------------------------------------
 function openSettings() {
   dom.baseUrlInput.value = state.baseUrl;
   dom.settingsModal.classList.remove("hidden");
@@ -292,6 +504,19 @@ function closeSettings() {
   dom.settingsModal.setAttribute("aria-hidden", "true");
 }
 
+function openConfirmModal() {
+  dom.confirmModal.classList.remove("hidden");
+  dom.confirmModal.setAttribute("aria-hidden", "false");
+}
+
+function closeConfirmModal() {
+  dom.confirmModal.classList.add("hidden");
+  dom.confirmModal.setAttribute("aria-hidden", "true");
+}
+
+// ---------------------------------------------------------------------------
+// Event binding
+// ---------------------------------------------------------------------------
 function bindEvents() {
   dom.chatForm.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -307,6 +532,22 @@ function bindEvents() {
 
   dom.settingsButton.addEventListener("click", openSettings);
   dom.pingButton.addEventListener("click", pingServer);
+
+  dom.newSessionBtn.addEventListener("click", openConfirmModal);
+  dom.confirmNewSession.addEventListener("click", () => {
+    closeConfirmModal();
+    startNewSession();
+  });
+  dom.confirmModal.addEventListener("click", (event) => {
+    if (event.target.dataset.closeConfirm === "true") closeConfirmModal();
+  });
+
+  dom.streamToggle.addEventListener("click", () => {
+    state.streamMode = !state.streamMode;
+    localStorage.setItem(STORAGE_KEYS.streamMode, state.streamMode ? "1" : "0");
+    updateStreamToggleUI();
+  });
+
   dom.saveSettings.addEventListener("click", () => {
     const value = dom.baseUrlInput.value.trim();
     if (value) {
@@ -317,15 +558,17 @@ function bindEvents() {
   });
 
   dom.settingsModal.addEventListener("click", (event) => {
-    if (event.target.dataset.close === "true") {
-      closeSettings();
-    }
+    if (event.target.dataset.close === "true") closeSettings();
   });
 }
 
+// ---------------------------------------------------------------------------
+// Boot
+// ---------------------------------------------------------------------------
 function init() {
   loadState();
   updateSessionUI();
+  updateStreamToggleUI();
   renderMessages();
   bindEvents();
   pingServer();
