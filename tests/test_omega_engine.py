@@ -413,3 +413,151 @@ class TestNaMoOmegaEngineLLMPath:
 
         assert result["text"] == "LLM replied!"
         assert mock_process.call_count == 1
+
+
+# ===========================================================================
+# Tone modulation — _build_tone_directive
+# ===========================================================================
+
+
+class TestBuildToneDirective:
+    def setup_method(self):
+        self.engine = _make_engine()
+
+    def test_high_joy_returns_warm_tone(self):
+        directive = self.engine._build_tone_directive({"joy": 0.85, "desire": 0.1, "arousal": 0.3, "anger": 0.0, "trust": 0.5})
+        assert "อบอุ่น" in directive
+
+    def test_low_joy_returns_sad_tone(self):
+        directive = self.engine._build_tone_directive({"joy": 0.15, "desire": 0.1, "arousal": 0.3, "anger": 0.0, "trust": 0.5})
+        assert "เศร้า" in directive or "เหนื่อย" in directive
+
+    def test_high_desire_returns_seductive_tone(self):
+        directive = self.engine._build_tone_directive({"joy": 0.5, "desire": 0.75, "arousal": 0.3, "anger": 0.0, "trust": 0.5})
+        assert "เย้ายวน" in directive
+
+    def test_high_anger_returns_cold_tone(self):
+        directive = self.engine._build_tone_directive({"joy": 0.5, "desire": 0.1, "arousal": 0.3, "anger": 0.65, "trust": 0.5})
+        assert "กัดคำ" in directive or "กระชับ" in directive
+
+    def test_low_trust_returns_guarded_tone(self):
+        directive = self.engine._build_tone_directive({"joy": 0.5, "desire": 0.1, "arousal": 0.3, "anger": 0.0, "trust": 0.15})
+        assert "ระวัง" in directive
+
+    def test_neutral_emotion_returns_fallback(self):
+        directive = self.engine._build_tone_directive({"joy": 0.5, "desire": 0.0, "arousal": 0.3, "anger": 0.0, "trust": 0.5})
+        assert "กลาง" in directive or "ปรับ" in directive
+
+    def test_tone_directive_prefixed_correctly(self):
+        directive = self.engine._build_tone_directive({"joy": 0.5, "desire": 0.1, "arousal": 0.3, "anger": 0.0, "trust": 0.5})
+        assert directive.startswith("[Tone Directive]:")
+
+
+# ===========================================================================
+# Tone modulation wired into _build_dynamic_prompt
+# ===========================================================================
+
+
+class TestBuildDynamicPromptWithEmotion:
+    def setup_method(self):
+        self.engine = _make_engine()
+
+    def test_prompt_without_emotion_snapshot_still_works(self):
+        state = self.engine._get_session_state("p-test")
+        prompt = self.engine._build_dynamic_prompt(state)
+        assert isinstance(prompt, str)
+        assert len(prompt) > 0
+
+    def test_prompt_with_emotion_snapshot_injects_tone(self):
+        state = self.engine._get_session_state("p-tone")
+        emo = {"joy": 0.9, "desire": 0.8, "arousal": 0.5, "anger": 0.0, "trust": 0.5}
+        prompt = self.engine._build_dynamic_prompt(state, emotion_snapshot=emo)
+        assert "[Tone Directive]:" in prompt
+
+    def test_prompt_includes_attachment_style(self):
+        state = self.engine._get_session_state("p-attach")
+        prompt = self.engine._build_dynamic_prompt(state)
+        assert "Attachment Style" in prompt
+
+
+# ===========================================================================
+# relationship.get_status includes attachment_style in system_status
+# ===========================================================================
+
+
+class TestProcessInputSystemStatusAttachment:
+    def setup_method(self):
+        self.engine = _make_engine()
+
+    def test_system_status_relationship_has_attachment_style(self):
+        result = self.engine.process_input("สวัสดี", session_id="attach-test")
+        rel = result["system_status"]["relationship"]
+        assert "attachment_style" in rel
+
+    def test_attachment_style_is_string(self):
+        result = self.engine.process_input("สวัสดี", session_id="attach-str")
+        assert isinstance(result["system_status"]["relationship"]["attachment_style"], str)
+
+
+# ===========================================================================
+# Intent-aware RAG — only triggers on memory-relevant intents
+# ===========================================================================
+
+
+def _make_engine_with_mock_llm():
+    """Engine with mocked LLM client (returns fixed reply) for RAG/prompt tests."""
+    engine = _make_engine()
+    mock_client = MagicMock()
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock(message=MagicMock(content="reply"))]
+    mock_client.chat.completions.create.return_value = mock_response
+    engine.llm_client = mock_client
+    return engine
+
+
+class TestIntentAwareRAG:
+    def setup_method(self):
+        self.engine = _make_engine_with_mock_llm()
+
+    def test_rag_called_for_comfort_intent(self):
+        mock_rag = MagicMock()
+        mock_rag.retrieve_context.return_value = "ความทรงจำเก่า..."
+        self.engine.rag_memory = mock_rag
+
+        state = self.engine._get_session_state("rag-comfort")
+        self.engine._generate_llm_response(
+            "กอดฉันหน่อยนะ", "rag-comfort", state, intent="comfort"
+        )
+        mock_rag.retrieve_context.assert_called_once()
+
+    def test_rag_called_for_nostalgia_intent(self):
+        mock_rag = MagicMock()
+        mock_rag.retrieve_context.return_value = "วันนั้น..."
+        self.engine.rag_memory = mock_rag
+
+        state = self.engine._get_session_state("rag-nostalgia")
+        self.engine._generate_llm_response(
+            "จำได้ไหม ตอนแรกที่เจอกัน", "rag-nostalgia", state, intent="nostalgia"
+        )
+        mock_rag.retrieve_context.assert_called_once()
+
+    def test_rag_skipped_for_lust_intent(self):
+        mock_rag = MagicMock()
+        mock_rag.retrieve_context.return_value = "some memory"
+        self.engine.rag_memory = mock_rag
+
+        state = self.engine._get_session_state("rag-lust")
+        self.engine._generate_llm_response(
+            "เงี่ยนมาก", "rag-lust", state, intent="lust"
+        )
+        mock_rag.retrieve_context.assert_not_called()
+
+    def test_rag_skipped_for_neutral_intent(self):
+        mock_rag = MagicMock()
+        self.engine.rag_memory = mock_rag
+
+        state = self.engine._get_session_state("rag-neutral")
+        self.engine._generate_llm_response(
+            "สวัสดี", "rag-neutral", state, intent="neutral"
+        )
+        mock_rag.retrieve_context.assert_not_called()

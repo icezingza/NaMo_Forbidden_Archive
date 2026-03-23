@@ -13,7 +13,10 @@
       "Bash(python -m pytest tests/test_intent_analyzer.py tests/test_omega_engine.py tests/test_cognitive_stack.py -v)",
       "Bash(python -m pytest)",
       "Bash(python -m ruff check adapters/tts.py)",
-      "Bash(python -m black --check adapters/tts.py)"
+      "Bash(python -m black --check adapters/tts.py)",
+      "Bash(python -m pytest tests/ -q)",
+      "Bash(python -m pytest tests/)",
+      "Bash(python -m pytest tests/test_mood_drift.py tests/test_attachment_style.py tests/test_intent_analyzer.py tests/test_omega_engine.py -v)"
     ]
   }
 }

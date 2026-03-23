@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
+from datetime import datetime
 
 
 @dataclass
@@ -87,8 +88,12 @@ class EmotionEngine:
         "comfort": {"joy": 0.15, "trust": 0.20, "arousal": -0.10},
         "tease": {"arousal": 0.15, "joy": 0.10, "desire": 0.10},
         "anger": {"anger": 0.25, "joy": -0.10, "arousal": 0.10},
+        "nostalgia": {"joy": -0.05, "trust": 0.10, "arousal": -0.05, "desire": 0.05},
         "neutral": {},
     }
+
+    # Idle seconds before the engine drifts toward a "lonely/withdrawn" state
+    INACTIVITY_THRESHOLD_SECS: float = 1800.0  # 30 minutes
 
     def __init__(self) -> None:
         self.current = EmotionVector()
@@ -115,11 +120,65 @@ class EmotionEngine:
         self._last_update = time.time()
         return self.current
 
+    def _current_baseline(self) -> EmotionVector:
+        """Return the effective decay target, shifted by time-of-day and inactivity.
+
+        Time-of-day shifts:
+          00–05  กลางดึก  — joy↓, arousal↑, desire↑  (หงอยเหงา/ตื่นตัว)
+          06–11  เช้า     — joy↑, arousal↓            (สดใสสบาย)
+          12–17  บ่าย     — no shift                  (neutral)
+          18–23  เย็น/ค่ำ — desire↑, arousal↑         (ปรารถนาเพิ่ม)
+
+        Inactivity shift (>30 min idle): joy↓, arousal↓, desire↓ (เหนื่อย/คิดถึง)
+        """
+        hour = datetime.now().hour
+        joy = self.BASELINE.joy
+        arousal = self.BASELINE.arousal
+        trust = self.BASELINE.trust
+        anger = self.BASELINE.anger
+        desire = self.BASELINE.desire
+
+        if 0 <= hour < 6:
+            joy -= 0.10
+            arousal += 0.10
+            desire += 0.10
+        elif 6 <= hour < 12:
+            joy += 0.10
+            arousal -= 0.05
+        elif 18 <= hour < 24:
+            desire += 0.08
+            arousal += 0.05
+
+        elapsed = time.time() - self._last_update
+        if elapsed >= self.INACTIVITY_THRESHOLD_SECS:
+            # Scale up to 0.15 max drift over the first 2 extra hours of inactivity
+            longing = min(0.15, (elapsed - self.INACTIVITY_THRESHOLD_SECS) / 7200.0 * 0.15)
+            joy -= longing
+            arousal -= longing * 0.5
+            desire -= longing * 0.3
+
+        return EmotionVector(
+            joy=max(0.0, min(1.0, joy)),
+            arousal=max(0.0, min(1.0, arousal)),
+            trust=max(0.0, min(1.0, trust)),
+            anger=max(0.0, min(1.0, anger)),
+            desire=max(0.0, min(1.0, desire)),
+        )
+
+    def mood_label(self) -> str:
+        """Return a human-readable mood tag that reflects idle state."""
+        elapsed = time.time() - self._last_update
+        if elapsed >= self.INACTIVITY_THRESHOLD_SECS:
+            return f"คิดถึง (ว่าง {int(elapsed / 60)} นาที)"
+        dominant_name, _ = self.current.dominant()
+        return dominant_name
+
     def decay(self) -> None:
-        """Pull all emotion values gradually toward the baseline."""
+        """Pull all emotion values gradually toward the time-adjusted baseline."""
+        target = self._current_baseline()
         for attr in ("joy", "arousal", "trust", "anger", "desire"):
             current_val = getattr(self.current, attr)
-            baseline_val = getattr(self.BASELINE, attr)
+            baseline_val = getattr(target, attr)
             setattr(
                 self.current,
                 attr,

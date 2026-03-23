@@ -37,3 +37,24 @@ def test_comfort_phrase_beats_generic_negation(analyzer: IntentAnalyzer) -> None
 
 def test_unknown_text_returns_neutral(analyzer: IntentAnalyzer) -> None:
     assert analyzer.analyze("weather report for today") == "neutral"
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "จำได้ไหม ตอนนั้นเราเจอกันครั้งแรก",
+        "เมื่อก่อนนะ สมัยก่อนเราไม่เคยทะเลาะกัน",
+        "remember when we used to talk every night",
+        "ย้อนหลังไปวันนั้น ฉันยังจำได้เลย",
+    ],
+)
+def test_nostalgia_intent_detected(analyzer: IntentAnalyzer, text: str) -> None:
+    assert analyzer.analyze(text) == "nostalgia"
+
+
+def test_nostalgia_in_priority_list(analyzer: IntentAnalyzer) -> None:
+    assert "nostalgia" in analyzer._PRIORITY
+
+
+def test_nostalgia_keywords_registered(analyzer: IntentAnalyzer) -> None:
+    assert "nostalgia" in analyzer.themes
