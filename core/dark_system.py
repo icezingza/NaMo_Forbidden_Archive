@@ -93,9 +93,16 @@ class DarkNaMoSystem(BasePersonaEngine):
         # 4. สร้าง "เครื่องวิเคราะห์" (Analyzer)
         self.analyzer = CosmicDesireAnalyzer(self.emotion_adapter)
 
-        self.intensity = self.character.get("default_intensity", 5)
+        self._default_intensity = self.character.get("default_intensity", 5)
+        self._session_intensity: dict[str, int] = {}  # per-session intensity
         self.init_cognition()
         print("[DarkNaMoSystem]: Metaphysical Core Online. Protocol Active.")
+
+    def _get_intensity(self, session_id: str) -> int:
+        return self._session_intensity.get(session_id, self._default_intensity)
+
+    def _set_intensity(self, session_id: str, value: int) -> None:
+        self._session_intensity[session_id] = max(1, min(10, value))
 
     def process_input(self, user_input: str, session_id: str | None = None) -> dict[str, Any]:
         """
@@ -103,21 +110,25 @@ class DarkNaMoSystem(BasePersonaEngine):
         Input -> Safe Word Check -> Analyze Desire -> Generate Response (via Brain) -> Log Memory
         """
         effective_session = session_id or "default"
+        intensity = self._get_intensity(effective_session)
 
         # 1. ตรวจสอบ Safe Word
         if SAFE_WORD in user_input:
             text = self.activate_aftercare(effective_session, user_input)
+            self._set_intensity(effective_session, 1)
+            intensity = 1
             desire_map: dict[str, Any] = {"primary_desire": "safe_word"}
         else:
             # 2. วิเคราะห์ความปรารถนา (ผ่าน Emotion Adapter)
             desire_map = self.analyzer.map_desire_patterns(user_input)
 
-            # 3. ปรับความเข้มข้น
+            # 3. ปรับความเข้มข้น per-session
             if desire_map.get("emotion_analysis", {}).get("intensity", 0) > 0.8:
-                self.intensity = min(10, self.intensity + 1)
+                self._set_intensity(effective_session, intensity + 1)
+                intensity = self._get_intensity(effective_session)
 
             # 4. สร้างการตอบสนอง (ผ่าน Metaphysical Brain)
-            text = self.dialogue_engine.generate_response(desire_map, self.intensity)
+            text = self.dialogue_engine.generate_response(desire_map, intensity)
 
             # 5. บันทึกความทรงจำ (ผ่าน Memory Adapter)
             self.log_to_memory(user_input, text, desire_map, effective_session)
@@ -129,7 +140,7 @@ class DarkNaMoSystem(BasePersonaEngine):
             cog_output = self.cognitive.process(user_input, emotion_hint, memories=[])
 
         system_status: dict[str, Any] = {
-            "intensity": self.intensity,
+            "intensity": intensity,
             "sin_status": desire_map.get("primary_desire", "dialogue"),
             "active_personas": ["DarkNaMo"],
         }
@@ -150,16 +161,21 @@ class DarkNaMoSystem(BasePersonaEngine):
         )
 
     def get_status(self) -> dict[str, Any]:
+        avg_intensity = (
+            sum(self._session_intensity.values()) // len(self._session_intensity)
+            if self._session_intensity
+            else self._default_intensity
+        )
         return {
             "engine": self.__class__.__name__,
             "status": "online",
-            "intensity": self.intensity,
+            "active_sessions": len(self._session_intensity),
+            "avg_intensity": avg_intensity,
             "character": self.character.get("name"),
         }
 
     def activate_aftercare(self, session_id: str, user_input: str) -> str:
         print(f"[DarkNaMoSystem]: SAFE WORD DETECTED ({SAFE_WORD}). Activating Aftercare.")
-        self.intensity = 1
         self.log_to_memory(
             user_input=user_input,
             response="Aftercare activated",

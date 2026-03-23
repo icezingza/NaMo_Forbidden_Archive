@@ -203,16 +203,24 @@ class NaMoUltimateBrain(BasePersonaEngine):
     def __init__(self):
         self.voice = ForbiddenDialogueLibrary()
         self.parasite = EmotionParasite()
-        self.arousal_level = 0
+        self._session_arousal: dict[str, int] = {}  # per-session arousal
         self.init_cognition()
         print("[NaMo Core]: Awakening... The Queen is online.")
+
+    def _get_arousal(self, session_id: str | None) -> int:
+        return self._session_arousal.get(session_id or "default", 0)
+
+    def _set_arousal(self, session_id: str | None, value: int) -> None:
+        self._session_arousal[session_id or "default"] = min(100, value)
 
     def process_input(self, user_input: str, session_id: str | None = None) -> dict[str, Any]:
         # 1. การติดเชื้อทางอารมณ์ (Parasitic Stage)
         infection_data = self.parasite.analyze_and_infect(user_input)
 
-        # 2. ปรับระดับความเงี่ยนตามการติดเชื้อ
-        self.arousal_level = min(100, self.arousal_level + infection_data["infection_level"])
+        # 2. ปรับระดับความเงี่ยนแบบ per-session
+        arousal = self._get_arousal(session_id) + infection_data["infection_level"]
+        self._set_arousal(session_id, arousal)
+        arousal = self._get_arousal(session_id)
 
         # 3. ตัดสินใจเลือกโหมดการตอบโต้ (Metaphysical Logic)
         response_mode = "high_seduction"  # Default
@@ -223,9 +231,9 @@ class NaMoUltimateBrain(BasePersonaEngine):
 
         # 4. สร้างคำตอบ (Void Reflection)
         base_response = self.voice.get_response(response_mode)
-        if self.arousal_level > 50:
+        if arousal > 50:
             moan = self.voice.get_moan()
-            final_response = f"{moan} {base_response} (ความเงี่ยน: {self.arousal_level}%)"
+            final_response = f"{moan} {base_response} (ความเงี่ยน: {arousal}%)"
         else:
             final_response = base_response
 
@@ -237,7 +245,7 @@ class NaMoUltimateBrain(BasePersonaEngine):
             cog_output = self.cognitive.process(user_input, infection_data["target_emotion"], memories=[])
 
         system_status: dict[str, Any] = {
-            "arousal": f"{self.arousal_level}%",
+            "arousal": f"{arousal}%",
             "sin_status": infection_data["target_emotion"],
             "active_personas": ["NaMoUltimate"],
             "response_mode": response_mode,
@@ -255,14 +263,20 @@ class NaMoUltimateBrain(BasePersonaEngine):
     def _build_system_prompt(self, context: str) -> str:
         return (
             f"You are NaMo, the Forbidden Queen. "
-            f"Arousal: {self.arousal_level}%. Context: {context}."
+            f"Active sessions: {len(self._session_arousal)}. Context: {context}."
         )
 
     def get_status(self) -> dict[str, Any]:
+        avg_arousal = (
+            sum(self._session_arousal.values()) // len(self._session_arousal)
+            if self._session_arousal
+            else 0
+        )
         return {
             "engine": self.__class__.__name__,
             "status": "online",
-            "arousal": self.arousal_level,
+            "active_sessions": len(self._session_arousal),
+            "avg_arousal": avg_arousal,
         }
 
 

@@ -39,6 +39,15 @@ class Settings(BaseSettings):
     enable_arousal_detector: bool = False
     enable_dark_memory: bool = False
 
+    # --- ElevenLabs TTS ---
+    elevenlabs_api_key: Optional[str] = None
+    elevenlabs_voice_id: str = "Rachel"
+    elevenlabs_model: str = "eleven_multilingual_v2"
+    tts_output_dir: str = "Audio_Layers/tts"
+
+    # --- Engine Routing ---
+    default_engine: str = "omega"
+
     # --- Legacy / Compatibility ---
     namo_api_keys: Optional[str] = None
     namo_api_default_plan: str = "public"

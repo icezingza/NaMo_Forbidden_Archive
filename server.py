@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from config import settings
+from core.base_persona import BasePersonaEngine
 from core.namo_omega_engine import NaMoOmegaEngine
 
 app = FastAPI(title="NaMo Forbidden Archive v9.0 (Omega Sensory)")
@@ -29,14 +30,58 @@ app.mount("/media/visual", StaticFiles(directory="Visual_Scenes", check_dir=Fals
 app.mount("/media/audio", StaticFiles(directory="Audio_Layers", check_dir=False), name="audio")
 app.mount("/ui", StaticFiles(directory="web", html=True, check_dir=False), name="ui")
 
-# --- Initialize Engine ---
+
+# ---------------------------------------------------------------------------
+# Engine Registry — lazy-loads persona engines on first request
+# ---------------------------------------------------------------------------
+class _EngineRegistry:
+    """Lazy singleton registry for all persona engines."""
+
+    _constructors: dict[str, type] = {}
+    _instances: dict[str, BasePersonaEngine] = {}
+
+    @classmethod
+    def register(cls, name: str, engine_cls: type) -> None:
+        cls._constructors[name] = engine_cls
+
+    @classmethod
+    def get(cls, name: str) -> BasePersonaEngine:
+        if name not in cls._constructors:
+            raise HTTPException(
+                status_code=400,
+                detail=f"unknown_engine '{name}'. available: {cls.available()}",
+            )
+        if name not in cls._instances:
+            print(f"[EngineRegistry]: loading '{name}'...")
+            cls._instances[name] = cls._constructors[name]()
+        return cls._instances[name]
+
+    @classmethod
+    def available(cls) -> list[str]:
+        return list(cls._constructors.keys())
+
+
+# Register engines — omega loads immediately; others are lazy
+from core.dark_system import DarkNaMoSystem
+from core.namo_ultimate_engine import NaMoUltimateBrain
+from rinlada_fusion import RinladaAI
+from seraphina_ai_complete import SeraphinaAI
+
+_EngineRegistry.register("omega", NaMoOmegaEngine)
+_EngineRegistry.register("rinlada", RinladaAI)
+_EngineRegistry.register("seraphina", SeraphinaAI)
+_EngineRegistry.register("dark", DarkNaMoSystem)
+_EngineRegistry.register("ultimate", NaMoUltimateBrain)
+
+# Pre-load default engine at startup
 print("[System]: Awakening NaMo Omega...")
-engine = NaMoOmegaEngine()
+engine = _EngineRegistry.get(settings.default_engine)
 
 
 class ChatInput(BaseModel):
     text: str
     session_id: str | None = None
+    engine: str | None = None  # override engine per request; default from settings
 
 
 def _normalize_base_url(value: str) -> str:
@@ -128,25 +173,31 @@ def _log_usage(event: dict) -> None:
         print(f"[UsageLog]: Failed to write usage event: {exc}")
 
 
+def _get_base_url(request: Request) -> str:
+    base_url = settings.public_base_url
+    return _normalize_base_url(base_url if base_url else str(request.base_url))
+
+
+def _resolve_engine_from_payload(payload: ChatInput) -> BasePersonaEngine:
+    name = payload.engine or settings.default_engine
+    return _EngineRegistry.get(name)
+
+
 @app.post("/chat")
 async def chat_with_namo(payload: ChatInput, request: Request):
+    active_engine = _resolve_engine_from_payload(payload)
     session_id = payload.session_id or str(uuid.uuid4())
-    result = engine.process_input(payload.text, session_id=session_id)
+    result = active_engine.process_input(payload.text, session_id=session_id)
 
-    base_url = settings.public_base_url
-    if base_url:  # Use configured public URL if available
-        base_url = _normalize_base_url(base_url)
-    else:
-        base_url = _normalize_base_url(str(request.base_url))
-    media = _normalize_media(result["media_trigger"], base_url)
+    media = _normalize_media(result["media_trigger"], _get_base_url(request))
     _store_memory_if_enabled(session_id, payload.text, result["text"], result["system_status"])
 
-    # ส่ง Path ไฟล์ภาพ/เสียง กลับไปให้ Frontend แสดงผล
     return {
         "response": result["text"],
         "session_id": session_id,
         "media": media,
         "status": result["system_status"],
+        "engine": active_engine.__class__.__name__,
     }
 
 
@@ -159,21 +210,19 @@ async def chat_with_namo_v1(
     plan, allowed = _resolve_plan(x_api_key)
     if not allowed and settings.namo_api_keys:
         raise HTTPException(status_code=401, detail="invalid_api_key")
-    session_id = payload.session_id or str(uuid.uuid4())
-    result = engine.process_input(payload.text, session_id=session_id)
 
-    base_url = settings.public_base_url
-    if base_url:  # Use configured public URL if available
-        base_url = _normalize_base_url(base_url)
-    else:
-        base_url = _normalize_base_url(str(request.base_url))
-    media = _normalize_media(result["media_trigger"], base_url)
+    active_engine = _resolve_engine_from_payload(payload)
+    session_id = payload.session_id or str(uuid.uuid4())
+    result = active_engine.process_input(payload.text, session_id=session_id)
+
+    media = _normalize_media(result["media_trigger"], _get_base_url(request))
     _store_memory_if_enabled(session_id, payload.text, result["text"], result["system_status"])
     _log_usage(
         {
             "endpoint": "/v1/chat",
             "session_id": session_id,
             "plan": plan,
+            "engine": active_engine.__class__.__name__,
             "text_length": len(payload.text),
         }
     )
@@ -184,6 +233,7 @@ async def chat_with_namo_v1(
         "media": media,
         "status": result["system_status"],
         "plan": plan,
+        "engine": active_engine.__class__.__name__,
     }
 
 
@@ -197,12 +247,9 @@ async def chat_stream(
     if not allowed and settings.namo_api_keys:
         raise HTTPException(status_code=401, detail="invalid_api_key")
 
+    active_engine = _resolve_engine_from_payload(payload)
     session_id = payload.session_id or str(uuid.uuid4())
-    base_url = settings.public_base_url
-    if base_url:
-        base_url = _normalize_base_url(base_url)
-    else:
-        base_url = _normalize_base_url(str(request.base_url))
+    engine_name = active_engine.__class__.__name__
 
     queue: asyncio.Queue[str | None] = asyncio.Queue()
     loop = asyncio.get_event_loop()
@@ -210,9 +257,12 @@ async def chat_stream(
     def _produce() -> None:
         full_text: list[str] = []
         try:
-            for chunk in engine.stream_input(payload.text, session_id=session_id):
+            for chunk in active_engine.stream_input(payload.text, session_id=session_id):
                 full_text.append(chunk)
-                data = json.dumps({"chunk": chunk, "session_id": session_id, "plan": plan}, ensure_ascii=False)
+                data = json.dumps(
+                    {"chunk": chunk, "session_id": session_id, "plan": plan, "engine": engine_name},
+                    ensure_ascii=False,
+                )
                 loop.call_soon_threadsafe(queue.put_nowait, f"data: {data}\n\n")
         except Exception as exc:
             err = json.dumps({"error": str(exc)}, ensure_ascii=False)
@@ -220,7 +270,15 @@ async def chat_stream(
         finally:
             assembled = "".join(full_text)
             _store_memory_if_enabled(session_id, payload.text, assembled)
-            _log_usage({"endpoint": "/v1/chat/stream", "session_id": session_id, "plan": plan, "text_length": len(payload.text)})
+            _log_usage(
+                {
+                    "endpoint": "/v1/chat/stream",
+                    "session_id": session_id,
+                    "plan": plan,
+                    "engine": engine_name,
+                    "text_length": len(payload.text),
+                }
+            )
             loop.call_soon_threadsafe(queue.put_nowait, None)  # sentinel
 
     async def _event_stream():
@@ -228,24 +286,37 @@ async def chat_stream(
         while True:
             item = await queue.get()
             if item is None:
-                yield f"data: {json.dumps({'done': True, 'session_id': session_id})}\n\n"
+                yield f"data: {json.dumps({'done': True, 'session_id': session_id, 'engine': engine_name})}\n\n"
                 break
             yield item
 
     return StreamingResponse(_event_stream(), media_type="text/event-stream")
 
 
+@app.get("/v1/engines")
+def list_engines():
+    """List all registered persona engines."""
+    return {"engines": _EngineRegistry.available(), "default": settings.default_engine}
+
+
 @app.get("/v1/health")
 def health_check():
-    return {"status": "ok", "engine": "Omega"}
+    return {"status": "ok", "engine": settings.default_engine}
 
 
 @app.get("/v1/status")
 def engine_status():
-    """Full engine status including live emotion snapshot and evolved persona traits."""
-    return engine.get_status()
+    """Status of all loaded engines."""
+    return {
+        name: _EngineRegistry._instances[name].get_status()
+        for name in _EngineRegistry._instances
+    }
 
 
 @app.get("/")
 def root():
-    return {"status": "NaMo is Horny & Online", "engine": "Omega", "sin": engine.sin_system.get_status()}
+    return {
+        "status": "NaMo is Online",
+        "default_engine": settings.default_engine,
+        "available_engines": _EngineRegistry.available(),
+    }

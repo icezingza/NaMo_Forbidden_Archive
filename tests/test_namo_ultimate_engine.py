@@ -45,12 +45,12 @@ def test_process_input_system_status_has_required_keys(engine):
 
 def test_arousal_increases_with_input(engine):
     engine.process_input("ทดสอบ 1", session_id="s1")
-    arousal_after = engine.arousal_level
+    arousal_after = engine._get_arousal("s1")
     assert arousal_after >= 0
 
 
 def test_moan_appended_when_arousal_high(engine):
-    engine.arousal_level = 60
+    engine._set_arousal("s2", 60)
     result = engine.process_input("ทดสอบ", session_id="s2")
     assert "ความเงี่ยน:" in result["text"]
 
@@ -59,7 +59,8 @@ def test_get_status_returns_engine_info(engine):
     status = engine.get_status()
     assert status["engine"] == "NaMoUltimateBrain"
     assert status["status"] == "online"
-    assert "arousal" in status
+    assert "active_sessions" in status
+    assert "avg_arousal" in status
 
 
 def test_build_system_prompt_contains_context(engine):

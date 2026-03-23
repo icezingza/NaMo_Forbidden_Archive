@@ -14,23 +14,35 @@ from server import _normalize_base_url, _normalize_media, _parse_api_key_map, _r
 client = TestClient(app)
 
 
-@patch.object(engine.sin_system, "get_status", return_value={"level": 1, "trend": "stable"})
-def test_root_endpoint(mock_get_status):
+def test_root_endpoint():
     """Tests the root (/) endpoint."""
     response = client.get("/")
     assert response.status_code == 200
     data = response.json()
-    assert data["status"] == "NaMo is Horny & Online"
-    assert data["engine"] == "Omega"
-    assert data["sin"] == {"level": 1, "trend": "stable"}
-    mock_get_status.assert_called_once()
+    assert data["status"] == "NaMo is Online"
+    assert "default_engine" in data
+    assert "available_engines" in data
 
 
 def test_health_check_endpoint():
     """Tests the health check (/v1/health) endpoint."""
     response = client.get("/v1/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "engine": "Omega"}
+    assert response.json()["status"] == "ok"
+    assert "engine" in response.json()
+
+
+def test_list_engines_endpoint():
+    """Tests the /v1/engines endpoint lists all registered engines."""
+    response = client.get("/v1/engines")
+    assert response.status_code == 200
+    data = response.json()
+    assert "engines" in data
+    assert "omega" in data["engines"]
+    assert "rinlada" in data["engines"]
+    assert "seraphina" in data["engines"]
+    assert "dark" in data["engines"]
+    assert "ultimate" in data["engines"]
 
 
 def test_parse_api_key_map():
@@ -132,7 +144,9 @@ def test_chat_v1_endpoint_success_with_key(mock_settings, mock_log_usage, mock_s
     """Tests a successful call to the /v1/chat endpoint with a valid API key."""
     # Arrange
     mock_settings.namo_api_keys = "my-secret-key:premium"
-    mock_settings.public_base_url = None  # Test dynamic base URL generation
+    mock_settings.namo_api_default_plan = "public"
+    mock_settings.public_base_url = None
+    mock_settings.default_engine = "omega"  # ensure engine routing works
 
     mock_process_input.return_value = {
         "text": "This is the response.",
@@ -156,11 +170,11 @@ def test_chat_v1_endpoint_success_with_key(mock_settings, mock_log_usage, mock_s
     assert data["media"]["visual"].endswith("/media/visual/test.jpg")
     assert data["status"] == {"sin_level": 2}
 
-    # Check that mocks were called correctly
     mock_process_input.assert_called_once_with("Hello", session_id="test-session-123")
-    mock_store_memory.assert_called_once_with("test-session-123", "Hello", "This is the response.", {"sin_level": 2})
+    mock_store_memory.assert_called_once_with(
+        "test-session-123", "Hello", "This is the response.", {"sin_level": 2}
+    )
     mock_log_usage.assert_called_once()
-    # Check the log usage payload
     log_call_args = mock_log_usage.call_args[0][0]
     assert log_call_args["endpoint"] == "/v1/chat"
     assert log_call_args["session_id"] == "test-session-123"
@@ -173,7 +187,8 @@ def test_chat_v1_endpoint_success_with_key(mock_settings, mock_log_usage, mock_s
 def test_legacy_chat_endpoint_success(mock_settings, mock_store_memory, mock_process_input):
     """Tests a successful call to the legacy /chat endpoint."""
     # Arrange
-    mock_settings.public_base_url = "http://test.public.url"  # Use a fixed public URL
+    mock_settings.public_base_url = "http://test.public.url"
+    mock_settings.default_engine = "omega"  # ensure engine routing works
 
     mock_process_input.return_value = {
         "text": "Legacy response.",
@@ -192,10 +207,11 @@ def test_legacy_chat_endpoint_success(mock_settings, mock_store_memory, mock_pro
 
     assert data["response"] == "Legacy response."
     assert data["session_id"] == "legacy-session-456"
-    assert "plan" not in data  # Legacy endpoint has no plan
+    assert "plan" not in data
     assert data["media"]["audio"] == "http://test.public.url/media/audio/legacy.mp3"
     assert data["status"] == {"sin_level": 0}
 
-    # Check that mocks were called correctly
     mock_process_input.assert_called_once_with("Legacy Hello", session_id="legacy-session-456")
-    mock_store_memory.assert_called_once_with("legacy-session-456", "Legacy Hello", "Legacy response.", {"sin_level": 0})
+    mock_store_memory.assert_called_once_with(
+        "legacy-session-456", "Legacy Hello", "Legacy response.", {"sin_level": 0}
+    )

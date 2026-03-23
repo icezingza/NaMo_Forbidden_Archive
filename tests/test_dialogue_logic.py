@@ -46,7 +46,7 @@ def test_high_intensity_anger_input_triggers_dominance_response(monkeypatch, moc
         lambda *args, **kwargs: {"primary_emotion": "anger", "intensity": 0.9},
     )
     engine = DarkNaMoSystem()
-    engine.intensity = 8  # Manually set intensity for testing
+    engine._set_intensity("test-session-anger", 8)  # Manually set per-session intensity
     user_input = "ฉันโกรธมาก!"
     session_id = "test-session-anger"
 
