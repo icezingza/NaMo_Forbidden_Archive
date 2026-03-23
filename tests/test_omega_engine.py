@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 # Ensure LLM is disabled for all tests in this module
 os.environ.setdefault("NAMO_LLM_ENABLED", "0")
+os.environ["DEBUG"] = "0"
 
 
 # ---------------------------------------------------------------------------
@@ -193,6 +194,14 @@ class TestNaMoOmegaEngineProcessInput:
         state = self.engine._get_session_state(None)
         assert state["arousal"] >= 20  # 10 + 10
 
+    def test_process_input_updates_cognitive_state_without_llm(self):
+        baseline_trust = self.engine.get_status()["emotion"]["trust"]
+        result = self.engine.process_input("รักนะ คิดถึงมาก", session_id="cognitive-test")
+
+        assert "emotion" in result["system_status"]
+        assert result["system_status"]["emotion"]["trust"] > baseline_trust
+        assert "persona_traits" in result["system_status"]
+
 
 # ===========================================================================
 # NaMoOmegaEngine — history management
@@ -373,3 +382,17 @@ class TestNaMoOmegaEngineLLMPath:
         chunks = list(engine.stream_input("hello", session_id="stream-exc"))
         combined = "".join(chunks)
         assert len(combined) > 0
+
+    def test_process_input_with_llm_only_runs_cognitive_once(self):
+        engine = _make_engine()
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock(message=MagicMock(content="LLM replied!"))]
+        mock_client.chat.completions.create.return_value = mock_response
+        engine.llm_client = mock_client
+
+        with patch.object(engine.cognitive, "process", wraps=engine.cognitive.process) as mock_process:
+            result = engine.process_input("รักนะ", session_id="llm-cognitive")
+
+        assert result["text"] == "LLM replied!"
+        assert mock_process.call_count == 1
