@@ -70,7 +70,9 @@ class RelationshipEngine:
             return self.STYLE_ANXIOUS
         return self.STYLE_SECURE
 
-    def check_progression(self, sin_points: int, arousal: float, trust: float = 0.5) -> RelationshipStage:
+    def check_progression(
+        self, sin_points: int, arousal: float, trust: float = 0.5
+    ) -> RelationshipStage:
         """Update and return the relationship stage based on current metrics."""
         # Progression logic mapping sin and arousal to stages
         if sin_points >= 2000 and arousal >= 80:
@@ -85,7 +87,7 @@ class RelationshipEngine:
         return self.current_stage
 
     def get_prompt_modifier(self, trust: float = 0.5) -> str:
-        """Return the directive block for the system prompt based on current stage and attachment."""
+        """Return directive block for the system prompt based on current stage and attachment."""
         style = self.get_attachment_style(trust)
         return (
             f"[Relationship Stage]: {self.current_stage.name}\n"
