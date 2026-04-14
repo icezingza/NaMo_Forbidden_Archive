@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_engine(tmp_path):
     """Return a RinladaAI instance that writes soul state to tmp_path."""
     import rinlada_fusion as rf
@@ -26,6 +27,7 @@ def _make_engine(tmp_path):
 # ===========================================================================
 # process_input contract
 # ===========================================================================
+
 
 class TestRinladaProcessInput:
     def test_returns_required_keys(self, tmp_path):
@@ -64,6 +66,7 @@ class TestRinladaProcessInput:
 # Per-session arousal isolation
 # ===========================================================================
 
+
 class TestRinladaSessionIsolation:
     def test_two_sessions_independent(self, tmp_path):
         engine = _make_engine(tmp_path)
@@ -95,6 +98,7 @@ class TestRinladaSessionIsolation:
 # get_status
 # ===========================================================================
 
+
 class TestRinladaGetStatus:
     def test_get_status_returns_engine_name(self, tmp_path):
         engine = _make_engine(tmp_path)
@@ -116,6 +120,7 @@ class TestRinladaGetStatus:
 # ===========================================================================
 # interact() — covers lines 214-239
 # ===========================================================================
+
 
 class TestRinladaInteract:
     def test_interact_command_intent(self, tmp_path, capsys):
@@ -155,6 +160,7 @@ class TestRinladaInteract:
 # _generate_response — all strategy branches
 # ===========================================================================
 
+
 class TestRinladaGenerateResponse:
     def test_submit_strategy(self, tmp_path):
         engine = _make_engine(tmp_path)
@@ -184,6 +190,7 @@ class TestRinladaGenerateResponse:
 # ===========================================================================
 # SoulMemory — update_experience evolution path
 # ===========================================================================
+
 
 class TestSoulMemoryEvolution:
     def test_evolution_resets_consciousness(self, tmp_path):

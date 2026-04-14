@@ -1,16 +1,22 @@
-import os
 from typing import Any
 
 import requests
 
+from config import settings
+
+_FALLBACK_URL = "http://localhost:8082/analyze"
+
 
 class EmotionAdapter:
-    """
-    Adapter for interacting with the external Emotion Analysis Service.
+    """Adapter for the external Emotion Analysis Service.
+
+    Reads the endpoint from ``settings.emotion_api_url``.  Falls back to
+    ``{"primary_emotion": "unknown", "intensity": 0}`` when the service is
+    unreachable so callers always receive a valid dict.
     """
 
     def __init__(self):
-        self.api_url = os.environ.get("EMOTION_API_URL", "http://localhost:8082/analyze")
+        self.api_url = settings.emotion_api_url or _FALLBACK_URL
         print(f"[EmotionAdapter]: Initialized. API URL: {self.api_url}")
 
     def analyze_emotion(self, text: str) -> dict[str, Any]:

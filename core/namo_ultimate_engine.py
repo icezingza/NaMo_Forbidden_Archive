@@ -226,6 +226,22 @@ class NaMoUltimateBrain(BasePersonaEngine):
         self._session_arousal[session_id or "default"] = min(100, value)
 
     def process_input(self, user_input: str, session_id: str | None = None) -> dict[str, Any]:
+        """Process one turn through the Ultimate Brain pipeline.
+
+        Pipeline stages:
+        1. **Parasitic infection** — ``EmotionParasite`` classifies the
+           emotional target (obsessed / masochist / lust_slave / neutral).
+        2. **Arousal accumulation** — per-session arousal is incremented by
+           the infection level (capped at 100).
+        3. **Mode selection** — maps target emotion to a dialogue mode
+           (high_seduction / high_dominance / emotional_manipulation).
+        4. **Response generation** — picks a line from
+           ``ForbiddenDialogueLibrary``; appends a moan when arousal > 50.
+        5. **Cognitive cycle** — runs ``CognitiveCore.process()`` and
+           appends emotion + trait data to ``system_status``.
+
+        Returns the standard ``process_input`` dict shape.
+        """
         # 1. การติดเชื้อทางอารมณ์ (Parasitic Stage)
         infection_data = self.parasite.analyze_and_infect(user_input)
 

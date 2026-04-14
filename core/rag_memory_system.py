@@ -24,6 +24,11 @@ class NaMoInfiniteMemory:
         self.client = OpenAI()
         self.memories = []
         self.is_loaded = False
+        # Eagerly load a pre-built vector index if one already exists on disk.
+        # This avoids a cold-start penalty on the first retrieve_context() call.
+        self._load_vector_index()
+        if self._faiss_index is not None:
+            self.is_loaded = True
 
     def ingest_data(self):
         """อ่านไฟล์ .txt และ .htm ทั้งหมดในโฟลเดอร์"""
@@ -65,7 +70,8 @@ class NaMoInfiniteMemory:
         """โหลด FAISS index และ metadata ถ้ามี เพื่อใช้ semantic search"""
         if self.meta_path.exists() and self.index_path.exists():
             try:
-                self._faiss_meta = json.load(open(self.meta_path, encoding="utf-8"))
+                with open(self.meta_path, encoding="utf-8") as f:
+                    self._faiss_meta = json.load(f)
                 self._faiss_index = faiss.read_index(str(self.index_path))
                 print(f"[Memory System]: โหลด vector_db สำเร็จ ({len(self._faiss_meta)} chunks)")
             except Exception as e:

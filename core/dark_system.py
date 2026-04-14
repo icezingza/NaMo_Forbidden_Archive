@@ -110,6 +110,9 @@ class DarkNaMoSystem(BasePersonaEngine):
         Input -> Safe Word Check -> Analyze Desire -> Generate Response (via Brain) -> Log Memory
         """
         effective_session = session_id or "default"
+        # Always register the session so cleanup can find and evict it
+        if effective_session not in self._session_intensity:
+            self._session_intensity[effective_session] = self._default_intensity
         intensity = self._get_intensity(effective_session)
 
         # 1. ตรวจสอบ Safe Word
@@ -175,6 +178,12 @@ class DarkNaMoSystem(BasePersonaEngine):
         }
 
     def activate_aftercare(self, session_id: str, user_input: str) -> str:
+        """Trigger aftercare mode when the safe word **"อภัย"** is detected.
+
+        Resets session intensity to 1, logs the event to memory, and returns
+        a grounding response in Thai.  This method is the single exit point
+        from dark roleplay — it must never raise.
+        """
         print(f"[DarkNaMoSystem]: SAFE WORD DETECTED ({SAFE_WORD}). Activating Aftercare.")
         self.log_to_memory(
             user_input=user_input,

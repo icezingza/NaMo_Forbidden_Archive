@@ -337,6 +337,7 @@ def test_store_memory_exception_silent(mock_settings):
 # _log_usage
 # ---------------------------------------------------------------------------
 
+
 def test_log_usage_writes_to_file(tmp_path):
     log_path = str(tmp_path / "usage.jsonl")
     with patch("server.settings") as mock_settings:
@@ -366,6 +367,7 @@ def test_log_usage_oserror_is_silenced(tmp_path):
 # ---------------------------------------------------------------------------
 # Session TTL — cleanup_expired_sessions
 # ---------------------------------------------------------------------------
+
 
 def test_cleanup_expired_sessions_removes_stale(monkeypatch):
     import server
@@ -443,6 +445,7 @@ def test_rate_limiter_different_keys_independent():
 # /v1/chat/stream endpoint
 # ---------------------------------------------------------------------------
 
+
 @patch("server.settings")
 def test_stream_endpoint_returns_sse(mock_settings):
     mock_settings.namo_api_keys = None
@@ -471,6 +474,7 @@ def test_stream_endpoint_returns_sse(mock_settings):
 # /v1/status endpoint
 # ---------------------------------------------------------------------------
 
+
 def test_engine_status_endpoint():
     response = client.get("/v1/status")
     assert response.status_code == 200
@@ -481,6 +485,7 @@ def test_engine_status_endpoint():
 # ---------------------------------------------------------------------------
 # Per-request engine override
 # ---------------------------------------------------------------------------
+
 
 @patch("server.settings")
 def test_chat_with_engine_override(mock_settings):

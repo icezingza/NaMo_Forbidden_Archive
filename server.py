@@ -1,5 +1,6 @@
 import asyncio
 import json
+import re
 import time
 import uuid
 from collections import defaultdict
@@ -11,7 +12,7 @@ from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from config import settings
 from core.base_persona import BasePersonaEngine
@@ -61,10 +62,7 @@ def cleanup_expired_sessions(ttl_seconds: float | None = None) -> int:
     for sid in expired:
         _session_timestamps.pop(sid, None)
         for inst in _EngineRegistry._instances.values():
-            for attr in _STATE_ATTRS:
-                store = getattr(inst, attr, None)
-                if isinstance(store, dict):
-                    store.pop(sid, None)
+            inst._evict_session(sid)
     return len(expired)
 
 
@@ -143,6 +141,14 @@ _EngineRegistry.register("ultimate", NaMoUltimateBrain)
 print("[System]: Awakening NaMo Omega...")
 engine = _EngineRegistry.get(settings.default_engine)
 
+# Security: warn loudly if admin endpoints are unprotected
+if not settings.admin_secret:
+    print(
+        "[Security]: WARNING — ADMIN_SECRET is not set. "
+        "/v1/admin/* endpoints are unprotected. "
+        "Set ADMIN_SECRET in your .env before deploying to production."
+    )
+
 # Rate limiter instance — initialized from settings
 _rate_limiter = _RateLimiter(
     max_calls=settings.rate_limit_calls,
@@ -150,10 +156,32 @@ _rate_limiter = _RateLimiter(
 )
 
 
+# session_id: alphanumeric + hyphens + underscores, max 128 chars
+_SESSION_ID_RE = re.compile(r"^[a-zA-Z0-9_-]{1,128}$")
+_MAX_TEXT_LEN = 4000
+
+
 class ChatInput(BaseModel):
     text: str
     session_id: str | None = None
     engine: str | None = None  # override engine per request; default from settings
+
+    @field_validator("text")
+    @classmethod
+    def _validate_text(cls, v: str) -> str:
+        if len(v) > _MAX_TEXT_LEN:
+            raise ValueError(f"text must be at most {_MAX_TEXT_LEN} characters")
+        return v
+
+    @field_validator("session_id")
+    @classmethod
+    def _validate_session_id(cls, v: str | None) -> str | None:
+        if v is not None and not _SESSION_ID_RE.match(v):
+            raise ValueError(
+                "session_id must contain only alphanumeric characters, "
+                "hyphens, or underscores (max 128 chars)"
+            )
+        return v
 
 
 def _normalize_base_url(value: str) -> str:
@@ -390,7 +418,19 @@ def list_engines():
 
 @app.get("/v1/health")
 def health_check():
-    return {"status": "ok", "engine": settings.default_engine}
+    """Health check including optional emotion service availability."""
+    result: dict = {"status": "ok", "engine": settings.default_engine}
+    emotion_url = settings.emotion_api_url
+    if emotion_url:
+        # Derive the /health path from the configured emotion API URL
+        base = emotion_url.rstrip("/").rsplit("/", 1)[0]
+        health_url = f"{base}/health"
+        try:
+            resp = requests.get(health_url, timeout=1)
+            result["emotion_service"] = "ok" if resp.status_code == 200 else "degraded"
+        except requests.RequestException:
+            result["emotion_service"] = "offline"
+    return result
 
 
 @app.get("/v1/status")
@@ -407,17 +447,9 @@ def _assert_admin(secret: str | None) -> None:
         raise HTTPException(status_code=403, detail="forbidden")
 
 
-_STATE_ATTRS = ("_session_states", "_session_arousal", "_session_intensity", "session_history")
-
-
 def _collect_session_keys(eng_instance: BasePersonaEngine) -> list[str]:
     """Return all known session IDs tracked by an engine instance."""
-    keys: set[str] = set()
-    for attr in _STATE_ATTRS:
-        store = getattr(eng_instance, attr, None)
-        if isinstance(store, dict):
-            keys.update(store.keys())
-    return sorted(keys)
+    return eng_instance._collect_session_keys()
 
 
 @app.get("/v1/admin/sessions")
@@ -449,13 +481,10 @@ def clear_session(
     _assert_admin(x_admin_secret)
     cleared: dict[str, bool] = {}
     for name, inst in _EngineRegistry._instances.items():
-        removed = False
-        for attr in _STATE_ATTRS:
-            store = getattr(inst, attr, None)
-            if isinstance(store, dict) and session_id in store:
-                del store[session_id]
-                removed = True
-        cleared[name] = removed
+        had_session = session_id in inst._collect_session_keys()
+        inst._evict_session(session_id)
+        cleared[name] = had_session
+    _session_timestamps.pop(session_id, None)
     return {"session_id": session_id, "cleared_from": cleared}
 
 

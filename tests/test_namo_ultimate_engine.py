@@ -83,6 +83,7 @@ def test_process_input_no_session_id(engine):
 # EmotionParasite — all infection branches
 # ===========================================================================
 
+
 def test_parasite_masochist_trigger(engine):
     result = engine.process_input("ด่าฉันสิ", session_id="masochist-test")
     assert result["system_status"]["sin_status"] == "masochist"
@@ -107,6 +108,7 @@ def test_parasite_obsessed_trigger(engine):
 # Moan path — arousal > 50
 # ===========================================================================
 
+
 def test_moan_path_response_mode_dominance(engine):
     engine._set_arousal("dom-session", 60)
     result = engine.process_input("ด่าฉันสิ", session_id="dom-session")
@@ -125,6 +127,7 @@ def test_moan_path_response_mode_manipulation(engine):
 # get_status — with sessions populated
 # ===========================================================================
 
+
 def test_get_status_avg_arousal_with_sessions(engine):
     engine._set_arousal("g1", 40)
     engine._set_arousal("g2", 60)
@@ -136,6 +139,7 @@ def test_get_status_avg_arousal_with_sessions(engine):
 # ===========================================================================
 # ForbiddenDialogueLibrary — loading from tmp files
 # ===========================================================================
+
 
 def test_forbidden_library_loads_from_txt(tmp_path):
     txt = tmp_path / "learn.txt"

@@ -157,6 +157,33 @@ class BasePersonaEngine(ABC):
         """
         return f"[{self.__class__.__name__}] context: {context}"
 
+    # ------------------------------------------------------------------
+    # Session management helpers — used by server.py cleanup loop.
+    # Override in subclasses that use non-standard attribute names.
+    # ------------------------------------------------------------------
+    _SESSION_ATTRS: tuple[str, ...] = (
+        "_session_states",
+        "_session_arousal",
+        "_session_intensity",
+        "session_history",
+    )
+
+    def _collect_session_keys(self) -> list[str]:
+        """Return all session IDs currently tracked by this engine."""
+        keys: set[str] = set()
+        for attr in self._SESSION_ATTRS:
+            store = getattr(self, attr, None)
+            if isinstance(store, dict):
+                keys.update(store.keys())
+        return sorted(keys)
+
+    def _evict_session(self, session_id: str) -> None:
+        """Remove *session_id* from every per-session state store."""
+        for attr in self._SESSION_ATTRS:
+            store = getattr(self, attr, None)
+            if isinstance(store, dict):
+                store.pop(session_id, None)
+
     def get_status(self) -> dict[str, Any]:
         """Return current engine status for health / diagnostics endpoints."""
         status: dict[str, Any] = {
