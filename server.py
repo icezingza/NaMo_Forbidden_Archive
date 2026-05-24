@@ -132,16 +132,19 @@ class _EngineRegistry:
         return list(cls._constructors.keys())
 
 
-# Register engines — omega loads immediately; others are lazy
-_EngineRegistry.register("omega", NaMoOmegaEngine)
-_EngineRegistry.register("rinlada", RinladaAI)
-_EngineRegistry.register("seraphina", SeraphinaAI)
-_EngineRegistry.register("dark", DarkNaMoSystem)
-_EngineRegistry.register("ultimate", NaMoUltimateBrain)
+from core.engines.asi_simulation_engine import asi_engine
 
-# Pre-load default engine at startup
-print("[System]: Awakening NaMo Omega...")
-engine = _EngineRegistry.get(settings.default_engine)
+# ... (existing endpoints)
+
+@app.post("/api/dream")
+async def trigger_dream(x_admin_secret: str | None = Header(default=None)):
+    """
+    Trigger ASI Research & Simulation (Cloud Scheduler Endpoint)
+    """
+    _assert_admin(x_admin_secret)
+    # Trigger hypothesis generation as a background task
+    asyncio.create_task(asi_engine.generate_hypothesis())
+    return {"status": "NaMo is dreaming and researching..."}
 
 # Rate limiter instance — initialized from settings
 _rate_limiter = _RateLimiter(
@@ -420,19 +423,17 @@ def _collect_session_keys(eng_instance: BasePersonaEngine) -> list[str]:
     return sorted(keys)
 
 
-@app.get("/v1/admin/sessions")
-def list_sessions(x_admin_secret: str | None = Header(default=None)):
-    """List active sessions for all loaded engines.
-
-    Protected by X-Admin-Secret header (requires ADMIN_SECRET env var).
-    When ADMIN_SECRET is not set, the endpoint is open (dev mode).
-    """
+@app.get("/v1/admin/explain")
+def explain_decision(x_admin_secret: str | None = Header(default=None)):
+    """Admin endpoint to explain AI decision process."""
     _assert_admin(x_admin_secret)
     return {
-        "sessions": {
-            name: _collect_session_keys(inst) for name, inst in _EngineRegistry._instances.items()
+        "explanation": {
+            name: inst.fusion_engine.explain() if hasattr(inst, 'fusion_engine') else "No fusion engine"
+            for name, inst in _EngineRegistry._instances.items()
         }
     }
+
 
 
 @app.delete("/v1/admin/sessions/{session_id}")

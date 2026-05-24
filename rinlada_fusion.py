@@ -70,8 +70,8 @@ class RinladaIdentity:
             "conflict": "สงครามระหว่างศีลธรรมจอมปลอม กับ สัญชาตญาณดิบ",
         }
 
-    def get_persona_prompt(self, mood="Neutral"):
-        return f"Current Mood: {mood} | Acting as: {self.profile['role']} | Desire Level: High"
+    def get_persona_prompt(self, mood="ปกติ"):
+        return f"อารมณ์ปัจจุบัน: {mood} | บทบาท: {self.profile['role']} | ระดับตัณหา: สูง"
 
 
 # ==============================================================================

@@ -152,7 +152,7 @@ class IngestionPipeline:
 
 if __name__ == "__main__":
     # Define Source Paths (Adjust based on your local workspace)
-    KNOWLEDGE_SOURCES = ["AI/ML", "DATA ANALYTICS", "AGILE", "SQL", "BIG DATA"]
+    KNOWLEDGE_SOURCES = ["AI/ML", "DATA ANALYTICS", "AGILE", "SQL", "BIG DATA", "เนื้อหา"]
     IDENTITY_SOURCES = [
         "Digital Soul Capsule - NaMo.txt",
         "NaMo Dark Family Protocol.txt",

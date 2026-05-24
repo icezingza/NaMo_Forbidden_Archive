@@ -1,0 +1,69 @@
+name: Docker CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  docker-build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: true
+          tags: namo:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run tests in Docker
+        run: |
+          docker run --rm \
+            --workdir /app \
+            --entrypoint sh \
+            namo:test \
+            -c "pip install -r requirements-dev.txt && pytest --cov --cov-report=term-missing"
+
+      - name: Security scan with Docker Scout
+        uses: docker/scout-action@v1
+        with:
+          image: namo:test
+          only-severities: critical,high
+
+  docker-build-push:
+    needs: docker-build-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/namo:latest
+            ${{ secrets.DOCKER_USERNAME }}/namo:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

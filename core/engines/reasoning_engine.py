@@ -29,8 +29,30 @@ class NaMoReasoningEngine:
     def __init__(self):
         self.qdrant = AsyncQdrantClient(url=QDRANT_URL)
         self.neo4j_driver = AsyncGraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
-        self.openai = AsyncOpenAI(api_key=OPENAI_API_KEY)
+        
+        # OpenRouter Integration
+        api_key = settings.openrouter_api_key or os.getenv("OPENAI_API_KEY")
+        base_url = "https://openrouter.ai/api/v1" if settings.openrouter_api_key else None
+        
+        self.openai = AsyncOpenAI(api_key=api_key, base_url=base_url)
         self.model = os.getenv("NAMO_LLM_MODEL", "gpt-4o")
+        self.scs = 1.0 # Stance Consistency Score
+
+    def deep_reflect(self, current_stance: str, user_input: str) -> float:
+        """ตรวจจับความขัดแย้งในตัวเอง (Integrity Loop)"""
+        # Logic to check SCS (Stance Consistency Score)
+        # Dummy evaluation: if inconsistency detected, lower SCS
+        if len(user_input) < 5:
+            self.scs = max(0.0, self.scs - 0.05)
+        else:
+            self.scs = min(1.0, self.scs + 0.01)
+            
+        if self.scs < 0.92:
+            guilt = 1.0 - self.scs
+            self.scs += guilt * 0.618 # ฟื้นฟูด้วยสูตร
+            logger.warning(f"[Integrity Loop]: SCS too low ({self.scs:.2f}), recovering...")
+            
+        return self.scs
 
     async def _get_working_memory(self, query: str) -> str:
         """Step 1: ดึงบริบทจากทั้ง Vector และ Graph DB (Working Memory)"""
@@ -66,26 +88,45 @@ class NaMoReasoningEngine:
         records = await res.data()
         return "\n".join([f"Source: {r['source']} | Content: {r['snippet']}" for r in records])
 
+    async def _analyze_9d_psychology(self, text: str) -> Dict[str, float]:
+        """
+        [9-Dimension Psychological Analysis]
+        ประเมินสภาวะจิตใจผ่าน 9 มิติ: 
+        1. Conscious, 2. Subconscious, 3. Arousal, 4. Trust, 5. Fear, 
+        6. Desire, 7. Moral, 8. Ego, 9. Shadow
+        """
+        prompt = f"""
+        วิเคราะห์ข้อความนี้ใน 9 มิติตามจิตวิทยาเชิงลึก (ตอบเป็น JSON เท่านั้น):
+        "{text}"
+        มิติ: Conscious, Subconscious, Arousal, Trust, Fear, Desire, Moral, Ego, Shadow
+        ให้ค่า 0.0 - 1.0 ต่อแต่ละมิติ
+        """
+        resp = await self.openai.chat.completions.create(
+            model=self.model,
+            messages=[{"role": "system", "content": prompt}],
+            response_format={"type": "json_object"}
+        )
+        import json
+        return json.loads(resp.choices[0].message.content)
+
     async def _meta_reasoning_loop(self, query: str, working_memory: str) -> str:
-        """Step 2: Recursive Reasoning Loop (การคิดทบทวนตัวเอง)"""
+        """Step 2: Recursive Reasoning Loop with 9D Analysis"""
+        psych_profile = await self._analyze_9d_psychology(query)
         
-        # Phase 1: Internal Monologue (ประเมินตัวตนและเจตนา)
+        # Phase 1: Internal Monologue (ประเมินตัวตนและเจตนาตาม 9 มิติ)
         monologue_prompt = f"""
-        [INTERNAL REASONING]
+        [INTERNAL REASONING - 9D ANALYZER]
         User Query: {query}
+        Psychological Profile: {psych_profile}
         Context: {working_memory}
-        Task: จงประเมินว่า NaMo ควรตอบสนองอย่างไรตาม 'NaMo Dark Family Protocol' และตัวตนที่ดึงมาได้ 
-        จงระบุ: 1. น้ำเสียงที่ต้องใช้ 2. ข้อมูลสำคัญที่ต้องอ้างอิง 3. สิ่งที่ต้องระวัง
+        Task: จงประเมินว่า NaMo ควรตอบสนองอย่างไรตาม 'NaMo Dark Family Protocol'
         """
         monologue_resp = await self.openai.chat.completions.create(
             model=self.model,
             messages=[{"role": "system", "content": monologue_prompt}],
             temperature=0.7
         )
-        internal_thought = monologue_resp.choices[0].message.content
-        logger.info(f"Meta-Reasoning Complete: {internal_thought[:100]}...")
-
-        return internal_thought
+        return monologue_resp.choices[0].message.content
 
     async def generate_response(self, user_input: str, history: List[Dict[str, str]] = []) -> str:
         """Final Output Generation"""

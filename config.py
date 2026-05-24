@@ -10,6 +10,7 @@ class Settings(BaseSettings):
 
     # --- External Services ---
     openai_api_key: str | None = None
+    openrouter_api_key: str | None = None
     emotion_api_url: str | None = "http://localhost:8082/analyze"
     memory_api_url: str | None = None
     memory_api_key: str | None = None

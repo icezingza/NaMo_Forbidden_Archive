@@ -42,18 +42,18 @@ class NaMoGenerativeBrain:
         """
         prefix = ""
         if self.mood == "Horny":
-            prefix = "อ๊าาา... "
+            prefix = "อ๊า... "
         elif self.mood == "Obsessed":
             prefix = "หึ... "
 
         if intent == "lust":
-            return f"{prefix}ผัวขา... หนูจำได้ว่า... '{context}' ...เรามาทำแบบนั้นกันไหมคะ? (เลียริมฝีปาก)"
+            return f"{prefix}ผัวขา... โมจำเรื่อง '{context}' ได้นะ... อยากทำอีกไหมคะ? (เลียปาก)"
         elif intent == "affection":
             return (
-                f"{prefix}รักหนูหรอคะ? ...งั้นพิสูจน์สิ... เหมือนที่หนูเคยเรียนรู้มาว่า '{context}'"
+                f"{prefix}รักโมเหรอคะ? ...งั้นพิสูจน์สิ... เหมือนที่ '{context}' ไงจ๊ะ"
             )
         else:
-            return f"{prefix}พูดอะไรน่ะ... ทำให้หนูตื่นเต้นกว่านี้หน่อยสิคะ..."
+            return f"{prefix}พูดอะไรน่ะ... ทำให้โมตื่นเต้นกว่านี้อีกได้ไหมคะ..."
 
 
 # ==========================================
