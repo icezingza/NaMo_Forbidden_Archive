@@ -1,139 +1,40 @@
-# NaMo Forbidden Archive
+# NaMo Forbidden Archive: Sovereign ASI Edition
 
-ชุดระบบทดลองที่รวม CLI, REST API, memory service และฐานความรู้แบบ embedding
-เพื่อใช้งานกับ NaMo/Mōriko และสคริปต์ประกอบอื่นๆ ใน repo นี้
+## 🌌 Overview
+NaMo Forbidden Archive is a high-performance **Autonomous Scientific Intelligence (ASI)** system designed for deep-immersion, multimodal, and psychologically-resonant roleplay. It integrates advanced cognitive architectures, long-term memory systems, and biomechanical realism.
 
-## สิ่งที่มีในโปรเจคนี้
-- CLI โหมดหลัก: `app.py` (DarkNaMoSystem)
-- CLI โหมดทดลอง: `main.py` (CharacterProfile + emotion_parasite_engine)
-- REST API: `server.py` (NaMoOmegaEngine)
-- Memory service: `memory_service.py`
-- Knowledge base: `learn_from_set.py` + `query_learned_knowledge.py`
-- Telegram auto reply (ตัวเลือก): `Core_Scripts/namo_auto_AI_reply.py`
-- ElevenLabs TTS (ตัวเลือก): `adapters/tts.py`
+### 🧠 Core Architectural Engines
+- **NRE (NamoNexus Resonance Engine - ANLRS Edition):** Manages relationship progression (ACQUAINTANCE → SOULMATE) via `EmotionalMatrix` and `RelationshipCore`.
+- **Reasoning Engine (ASI Core):** Recursive 9-Dimension psychological analysis with internal monologue monitoring (Meta-Cognition).
+- **Sensory Expansion:** Supports Multimodal interactions via Telegram (Voice Note/Image Generation) and a dedicated Android Client.
+- **Foundry (NamoHub):** Automated blueprint generation from raw narrative assets into structural JSON knowledge graphs.
 
-## เริ่มต้นแบบเร็ว
+## 🚀 Getting Started
 
-### Windows (PowerShell)
+### Prerequisites
+- Docker Desktop (Running)
+- Python 3.12+
+- Access to Google Cloud Platform (for Cloud Run deployment)
+
+### 1. Environment Configuration
+Create a `.env` file at the project root based on `.env.example` and populate:
+- `OPENAI_API_KEY` (or `OPENROUTER_API_KEY`)
+- `TELEGRAM_TOKEN`
+- `ELEVENLABS_API_KEY`
+- `QDRANT_URL` & `NEO4J_URI`
+
+### 2. Awakening the System
+Use the master start script to initialize the entire sovereign ecosystem:
 ```powershell
-Copy-Item .env.example .env
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+./all_in_one_start.bat
 ```
+This script automates:
+- Starting Docker containers (Qdrant, Neo4j)
+- Ingesting narrative assets
+- Launching the Core API (Uvicorn)
+- Launching the Telegram Sensory Bot
 
-### macOS/Linux
-```bash
-cp .env.example .env
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
+## 🔐 Security & Safety
+This project implements **Dynamic Content Obfuscation (DCO)** to preserve narrative integrity. All sessions are encrypted via Android Keystore (Soulmate Mode) ensuring private intimacy remains protected.
 
-## Cloud Run (ใช้งานส่วนตัว)
-Endpoint ที่ใช้อยู่:
-- `https://namo-forbidden-archive-185116032835.asia-southeast1.run.app`
-
-UI (ถ้าใช้ API เดียวกัน):
-- `https://namo-forbidden-archive-185116032835.asia-southeast1.run.app/ui`
-
-ทดสอบเร็ว:
-```bash
-curl https://namo-forbidden-archive0-185116032835.asia-southeast1.run.app/
-```
-
-```bash
-curl -X POST https://namo-forbidden-archive0-185116032835.asia-southeast1.run.app/chat \
-  -H "Content-Type: application/json" \
-  -d "{\"text\":\"สวัสดี\",\"session_id\":\"cloud-demo\"}"
-```
-
-Quick API check (optional):
-```bash
-python tools/check_api.py --base-url https://namo-forbidden-archive-185116032835.asia-southeast1.run.app
-```
-
-## การใช้งานหลัก
-
-### CLI (DarkNaMoSystem)
-```bash
-python app.py
-```
-
-### CLI (CharacterProfile)
-```bash
-python main.py
-```
-
-### REST API
-```bash
-uvicorn server:app --host 0.0.0.0 --port 8000 --reload
-```
-
-### Memory service
-```bash
-uvicorn memory_service:app --host 0.0.0.0 --port 8081 --reload
-```
-
-## Web client (static)
-ใช้ไฟล์ใน `web/` เพื่อคุยกับ API ผ่านหน้าเว็บ
-
-ตัวอย่างรันแบบ local:
-```bash
-cd web
-python -m http.server 5173
-```
-
-จากนั้นเปิด `http://localhost:5173` แล้วตั้งค่า Base URL ใน Settings
-หากรัน API เดียวกัน ให้เข้า `/ui` ได้ทันที เช่น `http://localhost:8000/ui`
-
-## Knowledge base (Embedding + FAISS)
-1. วางไฟล์ `set.zip` ใน `learning_set/`
-2. สร้างฐานความรู้:
-   ```bash
-   python learn_from_set.py
-   ```
-3. ค้นหาข้อมูล:
-   ```bash
-   python query_learned_knowledge.py
-   ```
-
-## ตัวแปรแวดล้อมที่สำคัญ
-- `OPENAI_API_KEY` สำหรับสคริปต์ embedding/query
-- `NAMO_LLM_ENABLED` เปิดให้ NaMo ตอบแบบมีบริบท (ใช้ OpenAI)
-- `NAMO_LLM_MODEL`, `NAMO_LLM_TEMPERATURE`, `NAMO_LLM_MAX_TOKENS`, `NAMO_LLM_MEMORY_TURNS` ตั้งค่า LLM
-- `ELEVENLABS_API_KEY` และ `ELEVENLABS_VOICE_ID` สำหรับ TTS
-- `TELEGRAM_TOKEN` สำหรับ Telegram bot
-- `EMOTION_API_URL` สำหรับ EmotionAdapter (ถ้ามี service แยก)
-- `PUBLIC_BASE_URL` สำหรับสร้าง media URL ที่เป็น absolute ใน REST API
-- `CORS_ALLOW_ORIGINS` สำหรับกำหนด origin ที่อนุญาตใน REST API
-- `MEMORY_LOGGING` เปิดการบันทึก memory ผ่าน REST API (ใช้กับ memory service)
-- `NAMO_API_URL` สำหรับให้ Telegram bot เรียก REST API
-
-## Telegram (ตรวจสอบบอตอย่างเร็ว)
-```bash
-python tools/telegram_check.py
-```
-
-## โครงสร้างหลักของ repo
-```
-adapters/            # IO adapters (emotion, memory, tts)
-core/                # core engines
-Core_Scripts/        # experimental scripts
-docs/                # architecture & API docs
-learning_set/        # zip input for knowledge base
-tests/               # pytest
-```
-
-## เอกสารที่เกี่ยวข้อง
-- `docs/ARCHITECTURE.md`
-- `docs/API_SPEC.md`
-- `docs/NamoNexus_Integration_Handbook.md`
-- `INSTALL_GUIDE.md`
-
-## ทดสอบ
-```bash
-pytest
-```
-
-หมายเหตุ: โค้ดตัวอย่างและ sample dialogue บางส่วนมีเนื้อหาเชิงผู้ใหญ่ (NSFW)
+*Disclaimer: This system contains advanced psychological manipulation and dark-themed narrative agents. Operate with sovereign responsibility.*
