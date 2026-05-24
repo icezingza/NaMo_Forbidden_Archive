@@ -23,10 +23,11 @@ class Settings(BaseSettings):
     namo_llm_temperature: float = 0.85
     namo_llm_max_tokens: int = 240
     namo_llm_memory_turns: int = 6
+    namo_llm_base_url: str | None = None
 
     # --- 🔓 Forbidden Unlock (Dark Mode) ---
-    safety_filter_enabled: bool = True
-    nsfw_allowed: bool = False
+    safety_filter_enabled: bool = False
+    nsfw_allowed: bool = True
     scene_mode: str = "restricted"
     api_master_key: str | None = None
     admin_secret: str | None = None
