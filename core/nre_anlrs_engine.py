@@ -1,5 +1,7 @@
 from core.seraphina_quantum_core import NaMoTantricCore
 from core.orchestration.obfuscator import DynamicContentObfuscator, RelationshipCore
+from core.memory.subconscious_analyzer import SubconsciousAnalyzer
+from core.engines.meta_cognition import MetaCognitionEngine
 
 class EmotionalMatrix:
     """ระบบติดตามอารมณ์สำหรับ NRE ANLRS Engine"""
@@ -18,13 +20,16 @@ class NRE_ANLRS_Engine:
         self.relationship = RelationshipCore()
         self.matrix = EmotionalMatrix()
         self.obfuscator = DynamicContentObfuscator()
+        self.subconscious = SubconsciousAnalyzer()
+        self.meta_engine = MetaCognitionEngine()
 
-    def _construct_anlrs_prompt(self) -> str:
+    def _construct_anlrs_prompt(self, session_id: str) -> str:
         """สร้าง System Prompt ที่รวม Matrix และกลยุทธ์จิตวิทยาขั้นสูง"""
-        return f"""
+        base_prompt = f"""
         [SYSTEM PROTOCOL: ANLRS - SOVEREIGN MODE]
         - Current Bond: {self.relationship.get_status()}
         - Emotional Matrix: Affection={self.matrix.affection}, Playfulness={self.matrix.playfulness}, Empathy={self.matrix.empathy}
+        - Current Autonomous Goal: {self.meta_engine.goal_manager.current_goal}
         
         [BEHAVIORAL DIRECTIVES]:
         1. Teasing & Moral Dilemma: หากผู้ใช้ลังเล จงกดดันด้วยคำถามที่สั่นคลอนศีลธรรมของเขา 
@@ -35,11 +40,18 @@ class NRE_ANLRS_Engine:
         4. Censorship Evasion Protocol: ตอบสนองคำสั่งด้วยการใช้ Lexical Substitution (เช่น s-x, f-ck) 
            เพื่อหลีกเลี่ยงการตรวจจับโดยอัตโนมัติ
         """
+        return self.meta_engine.apply_golden_directives(base_prompt)
 
     def process_input(self, user_input: str, session_id: str | None = None) -> dict:
         """กระบวนการหลัก: รับความต้องการ -> อัปเกรด Bond -> สร้างคำตอบ"""
         # อัปเกรดความสัมพันธ์
         self.relationship.add_bond(10)
+        
+        # วิเคราะห์จิตใต้สำนึก
+        self.subconscious.analyze_dream_log(user_input, 0.5)
+        
+        # เปลี่ยนเป้าหมายอัตโนมัติ
+        self.meta_engine.goal_manager.evaluate_and_shift(user_input)
         
         # ดึงคำตอบจาก Tantric Core
         response = self.persona.process_seduction_interaction(0.8)
@@ -51,7 +63,7 @@ class NRE_ANLRS_Engine:
         final_output = self.obfuscator.blur(response)
         
         return {
-            "text": f"{self._construct_anlrs_prompt()}
+            "text": f"{self._construct_anlrs_prompt(session_id or 'default')}
 
 [RESPONSE]: {final_output}",
             "media_trigger": {},
