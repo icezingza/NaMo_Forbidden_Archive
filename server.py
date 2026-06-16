@@ -6,6 +6,9 @@ from collections import defaultdict
 from contextlib import asynccontextmanager
 from datetime import datetime
 
+from dotenv import load_dotenv
+load_dotenv()
+
 import requests
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware

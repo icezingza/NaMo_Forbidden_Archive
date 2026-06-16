@@ -63,7 +63,12 @@
       "PowerShell(cd \"C:\\\\Users\\\\icezi\\\\Downloads\\\\Github repo\\\\NaMo_Forbidden_Archive\"; $env:PYTHONUTF8=\"1\"; python -c \"from server import app; print\\('Import OK'\\)\" 2>&1)",
       "Bash(grep -rn \"OPENAI_API_KEY\\\\s*=\\\\s*['\\\\\"]sk-\\\\|TELEGRAM_TOKEN\\\\s*=\\\\s*['\\\\\"][0-9]\\\\|ELEVENLABS_API_KEY\\\\s*=\\\\s*['\\\\\"]\" --include=\"*.py\" --include=\"*.json\" --include=\"*.txt\" --include=\"*.env\" .)",
       "Bash(echo \"EXIT:$?\")",
-      "Bash(grep -rn \"sk-[a-zA-Z0-9]\\\\{20,\\\\}\" --include=\"*.py\" .)"
+      "Bash(grep -rn \"sk-[a-zA-Z0-9]\\\\{20,\\\\}\" --include=\"*.py\" .)",
+      "Skill(run)",
+      "Bash(echo \"\")",
+      "Bash(echo \"NAMO_LLM_ENABLED=true\")",
+      "Bash(uvicorn server:app --host 0.0.0.0 --port 8001)",
+      "PowerShell(Get-Content \"C:\\\\Users\\\\icezi\\\\AppData\\\\Local\\\\Temp\\\\namo_server.log\" | Where-Object { $_ -match \"LLM|OMEGA|OpenAI|openai|llm\" })"
     ]
   }
 }
