@@ -139,7 +139,7 @@ def test_get_status_avg_arousal_with_sessions(engine):
 
 def test_forbidden_library_loads_from_txt(tmp_path):
     txt = tmp_path / "learn.txt"
-    txt.write_text("หนูอยากให้พี่จับหนู\nพี่น่ารักมากเลยนะคะ\n" * 5)
+    txt.write_text("หนูอยากให้พี่จับหนู\nพี่น่ารักมากเลยนะคะ\n" * 5, encoding="utf-8")
 
     from core.namo_ultimate_engine import ForbiddenDialogueLibrary
 

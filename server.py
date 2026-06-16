@@ -132,9 +132,18 @@ class _EngineRegistry:
         return list(cls._constructors.keys())
 
 
-from core.engines.asi_simulation_engine import asi_engine
+# Register engines — omega loads immediately; others are lazy
+_EngineRegistry.register("omega", NaMoOmegaEngine)
+_EngineRegistry.register("rinlada", RinladaAI)
+_EngineRegistry.register("seraphina", SeraphinaAI)
+_EngineRegistry.register("dark", DarkNaMoSystem)
+_EngineRegistry.register("ultimate", NaMoUltimateBrain)
 
-# ... (existing endpoints)
+# Pre-load default engine at startup
+print("[System]: Awakening NaMo Omega...")
+engine = _EngineRegistry.get(settings.default_engine)
+
+from core.engines.asi_simulation_engine import asi_engine
 
 @app.post("/api/dream")
 async def trigger_dream(x_admin_secret: str | None = Header(default=None)):
@@ -267,6 +276,8 @@ async def chat_with_namo(payload: ChatInput, request: Request):
     session_id = payload.session_id or str(uuid.uuid4())
     _touch_session(session_id)
     result = active_engine.process_input(payload.text, session_id=session_id)
+    if asyncio.iscoroutine(result):
+        result = await result
 
     media = _normalize_media(result["media_trigger"], _get_base_url(request))
     _store_memory_if_enabled(session_id, payload.text, result["text"], result["system_status"])
@@ -298,6 +309,8 @@ async def chat_with_namo_v1(
     session_id = payload.session_id or str(uuid.uuid4())
     _touch_session(session_id)
     result = active_engine.process_input(payload.text, session_id=session_id)
+    if asyncio.iscoroutine(result):
+        result = await result
 
     media = _normalize_media(result["media_trigger"], _get_base_url(request))
     _store_memory_if_enabled(session_id, payload.text, result["text"], result["system_status"])
@@ -340,22 +353,29 @@ async def chat_stream(
     _touch_session(session_id)
     engine_name = active_engine.__class__.__name__
 
-    queue: asyncio.Queue[str | None] = asyncio.Queue()
-    loop = asyncio.get_event_loop()
-
-    def _produce() -> None:
+    async def _event_stream():
         full_text: list[str] = []
         try:
-            for chunk in active_engine.stream_input(payload.text, session_id=session_id):
-                full_text.append(chunk)
-                data = json.dumps(
-                    {"chunk": chunk, "session_id": session_id, "plan": plan, "engine": engine_name},
-                    ensure_ascii=False,
-                )
-                loop.call_soon_threadsafe(queue.put_nowait, f"data: {data}\n\n")
+            stream = active_engine.stream_input(payload.text, session_id=session_id)
+            if hasattr(stream, "__anext__"):
+                async for chunk in stream:
+                    full_text.append(chunk)
+                    data = json.dumps(
+                        {"chunk": chunk, "session_id": session_id, "plan": plan, "engine": engine_name},
+                        ensure_ascii=False,
+                    )
+                    yield f"data: {data}\n\n"
+            else:
+                for chunk in stream:
+                    full_text.append(chunk)
+                    data = json.dumps(
+                        {"chunk": chunk, "session_id": session_id, "plan": plan, "engine": engine_name},
+                        ensure_ascii=False,
+                    )
+                    yield f"data: {data}\n\n"
         except Exception as exc:
             err = json.dumps({"error": str(exc)}, ensure_ascii=False)
-            loop.call_soon_threadsafe(queue.put_nowait, f"data: {err}\n\n")
+            yield f"data: {err}\n\n"
         finally:
             assembled = "".join(full_text)
             _store_memory_if_enabled(session_id, payload.text, assembled)
@@ -368,19 +388,10 @@ async def chat_stream(
                     "text_length": len(payload.text),
                 }
             )
-            loop.call_soon_threadsafe(queue.put_nowait, None)  # sentinel
-
-    async def _event_stream():
-        loop.run_in_executor(None, _produce)
-        while True:
-            item = await queue.get()
-            if item is None:
-                done_msg = json.dumps(
-                    {"done": True, "session_id": session_id, "engine": engine_name}
-                )  # noqa: E501
-                yield f"data: {done_msg}\n\n"
-                break
-            yield item
+            done_msg = json.dumps(
+                {"done": True, "session_id": session_id, "engine": engine_name}
+            )
+            yield f"data: {done_msg}\n\n"
 
     return StreamingResponse(_event_stream(), media_type="text/event-stream")
 
@@ -423,7 +434,23 @@ def _collect_session_keys(eng_instance: BasePersonaEngine) -> list[str]:
     return sorted(keys)
 
 
+@app.get("/v1/admin/sessions")
+def list_sessions(x_admin_secret: str | None = Header(default=None)):
+    """List active sessions for all loaded engines.
+
+    Protected by X-Admin-Secret header (requires ADMIN_SECRET env var).
+    When ADMIN_SECRET is not set, the endpoint is open (dev mode).
+    """
+    _assert_admin(x_admin_secret)
+    return {
+        "sessions": {
+            name: _collect_session_keys(inst) for name, inst in _EngineRegistry._instances.items()
+        }
+    }
+
+
 @app.get("/v1/admin/explain")
+
 def explain_decision(x_admin_secret: str | None = Header(default=None)):
     """Admin endpoint to explain AI decision process."""
     _assert_admin(x_admin_secret)

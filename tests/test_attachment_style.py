@@ -24,39 +24,39 @@ class TestGetAttachmentStyle:
         eng = _engine()
         # STAGE_STRANGER, trust = 0.8
         style = eng.get_attachment_style(trust=0.8)
-        assert style.name == "Secure"
+        assert style.name == "มั่นคง"
 
     def test_stranger_low_trust_is_avoidant(self) -> None:
         eng = _engine()
         style = eng.get_attachment_style(trust=0.2)
-        assert style.name == "Avoidant"
+        assert style.name == "ปิดกั้น"
 
     def test_obsession_stage_is_possessive(self) -> None:
         eng = _engine()
         eng.check_progression(sin_points=3000, arousal=90, trust=0.9)
         assert eng.current_stage is eng.STAGE_OBSESSION
         style = eng.get_attachment_style(trust=0.9)
-        assert style.name == "Possessive"
+        assert style.name == "เป็นเจ้าของสูง"
 
     def test_lover_stage_mid_trust_is_anxious(self) -> None:
         eng = _engine()
         eng.check_progression(sin_points=200, arousal=70, trust=0.5)
         assert eng.current_stage is eng.STAGE_LOVER
         style = eng.get_attachment_style(trust=0.5)
-        assert style.name == "Anxious"
+        assert style.name == "กังวล"
 
     def test_lover_stage_high_trust_is_secure(self) -> None:
         eng = _engine()
         eng.check_progression(sin_points=200, arousal=70, trust=0.8)
         style = eng.get_attachment_style(trust=0.8)
-        assert style.name == "Secure"
+        assert style.name == "มั่นคง"
 
     def test_plaything_stage_mid_trust_is_anxious(self) -> None:
         eng = _engine()
         eng.check_progression(sin_points=600, arousal=40, trust=0.5)
         assert eng.current_stage is eng.STAGE_PLAYTHING
         style = eng.get_attachment_style(trust=0.5)
-        assert style.name == "Anxious"
+        assert style.name == "กังวล"
 
     def test_style_has_prompt_directive(self) -> None:
         eng = _engine()
@@ -94,8 +94,8 @@ class TestGetPromptModifier:
     def test_modifier_includes_attachment_style_name(self) -> None:
         eng = _engine()
         modifier = eng.get_prompt_modifier(trust=0.8)
-        assert "Attachment Style" in modifier
-        assert "Secure" in modifier
+        assert "รูปแบบการยึดติด" in modifier
+        assert "มั่นคง" in modifier
 
     def test_modifier_includes_stage_name(self) -> None:
         eng = _engine()
@@ -105,7 +105,8 @@ class TestGetPromptModifier:
     def test_modifier_includes_stage_directive(self) -> None:
         eng = _engine()
         modifier = eng.get_prompt_modifier()
-        assert "Stage Directives" in modifier
+        assert "คำแนะนำระดับ" in modifier
+
 
 
 # ---------------------------------------------------------------------------

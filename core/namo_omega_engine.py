@@ -294,6 +294,12 @@ class NaMoOmegaEngine(BasePersonaEngine):
             print(f"[OMEGA ENGINE]: LLM failure: {exc}")
             return None
 
+    def get_status(self) -> dict[str, Any]:
+        status = super().get_status()
+        status["active_sessions"] = len(self._session_states)
+        status["llm_enabled"] = self.llm_enabled
+        return status
+
     async def process_input(self, user_input: str, session_id: str | None = None) -> dict:
         state = self._get_session_state(session_id)
         
@@ -331,6 +337,8 @@ class NaMoOmegaEngine(BasePersonaEngine):
                 "arousal": f"{state['arousal']}%",
                 "sin_status": state["sin_system"].get_status(),
                 "relationship": state["relationship"].get_status(trust=trust),
-                "emotion": cog_output["emotion"] if cog_output else {}
+                "emotion": cog_output["emotion"] if cog_output else {},
+                "active_personas": state["personas"].active_personas,
+                "persona_traits": cog_output["persona_traits"] if cog_output else {}
             }
         }

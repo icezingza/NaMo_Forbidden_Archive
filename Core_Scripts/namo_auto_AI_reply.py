@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 if not TOKEN:
     logger.error("No TELEGRAM_TOKEN found!")
-    exit(1)
+    raise ValueError("No TELEGRAM_TOKEN set for Telegram bot")
 
 class NaMoSovereignBot:
     """

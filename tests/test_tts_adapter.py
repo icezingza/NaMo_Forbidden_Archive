@@ -32,7 +32,7 @@ def _make_adapter(api_key: str | None = None, elevenlabs_available: bool = True)
             return TTSAdapter()
 
 
-def test_synthesize_returns_none_when_no_api_key():
+async def test_synthesize_returns_none_when_no_api_key():
     """TTSAdapter.synthesize() returns None when no API key is configured."""
     from adapters.tts import TTSAdapter
 
@@ -47,10 +47,10 @@ def test_synthesize_returns_none_when_no_api_key():
         adapter = TTSAdapter()
 
     assert adapter._client is None
-    assert adapter.synthesize("สวัสดี") is None
+    assert await adapter.synthesize("สวัสดี") is None
 
 
-def test_synthesize_returns_none_when_package_missing():
+async def test_synthesize_returns_none_when_package_missing():
     """TTSAdapter.synthesize() returns None when elevenlabs package is absent."""
     from adapters.tts import TTSAdapter
 
@@ -65,10 +65,10 @@ def test_synthesize_returns_none_when_package_missing():
         adapter = TTSAdapter()
 
     assert adapter._client is None
-    assert adapter.synthesize("test") is None
+    assert await adapter.synthesize("test") is None
 
 
-def test_synthesize_saves_file_and_returns_relative_path(tmp_path):
+async def test_synthesize_saves_file_and_returns_relative_path(tmp_path):
     """TTSAdapter.synthesize() saves audio bytes and returns an Audio_Layers/tts/... path."""
     import importlib
 
@@ -96,7 +96,7 @@ def test_synthesize_saves_file_and_returns_relative_path(tmp_path):
     adapter._client = mock_client
     adapter._output_dir = tmp_path
 
-    result = adapter.synthesize("สวัสดี")
+    result = await adapter.synthesize("สวัสดี")
 
     assert result is not None
     assert result.startswith("Audio_Layers/tts/")
@@ -107,7 +107,7 @@ def test_synthesize_saves_file_and_returns_relative_path(tmp_path):
     assert (tmp_path / filename).read_bytes() == fake_audio
 
 
-def test_synthesize_returns_none_on_api_error():
+async def test_synthesize_returns_none_on_api_error():
     """TTSAdapter.synthesize() returns None (not raises) when the API call fails."""
 
     mock_client = MagicMock()
@@ -128,7 +128,7 @@ def test_synthesize_returns_none_on_api_error():
 
         adapter._output_dir = Path("/tmp/tts_err")
 
-    assert adapter.synthesize("error test") is None
+    assert await adapter.synthesize("error test") is None
 
 
 def test_init_success_path_sets_client(tmp_path):
@@ -172,7 +172,7 @@ def test_init_exception_sets_client_none(tmp_path):
     assert adapter._client is None
 
 
-def test_synthesize_consumes_generator(tmp_path):
+async def test_synthesize_consumes_generator(tmp_path):
     """TTSAdapter.synthesize() joins generator chunks into bytes."""
     mock_client = MagicMock()
     # Return a generator instead of bytes
@@ -192,7 +192,7 @@ def test_synthesize_consumes_generator(tmp_path):
     adapter._model = "eleven_multilingual_v2"
     adapter._output_dir = tmp_path
 
-    result = adapter.synthesize("hello")
+    result = await adapter.synthesize("hello")
 
     assert result is not None
     assert result.startswith("Audio_Layers/tts/")
