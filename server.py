@@ -6,10 +6,8 @@ from collections import defaultdict
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from dotenv import load_dotenv
-load_dotenv()
-
 import requests
+from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -23,6 +21,8 @@ from core.namo_omega_engine import NaMoOmegaEngine
 from core.namo_ultimate_engine import NaMoUltimateBrain
 from rinlada_fusion import RinladaAI
 from seraphina_ai_complete import SeraphinaAI
+
+load_dotenv()
 
 
 # ---------------------------------------------------------------------------
