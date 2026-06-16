@@ -1,6 +1,7 @@
 # Architecture Documentation — Advanced Conversational Core (ACC)
 
-> Version 1.0 | NaMo Forbidden Archive
+> Version 1.0 | NamoNexus — Advanced Conversational Core (ACC)  
+> Author: Kanin Raksaraj | contact@namonexus.com
 
 ---
 

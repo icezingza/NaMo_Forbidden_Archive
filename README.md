@@ -2,6 +2,10 @@
 
 > A high-performance, multimodal conversational AI framework featuring continuous emotional simulation, semantic memory retrieval, and adaptive cognitive feedback loops.
 
+**Brand:** NamoNexus  
+**Author:** Kanin Raksaraj  
+**Contact:** [contact@namonexus.com](mailto:contact@namonexus.com)
+
 ---
 
 ## Table of Contents
@@ -167,4 +171,5 @@ Replace `PROJECT_ID`, `SERVICE_NAME`, and `REGION` in `deploy.sh` before running
 
 This project is licensed under the **MIT License** — see [`Documentation/LICENSE.txt`](Documentation/LICENSE.txt) for details.
 
-Copyright (c) 2026 NaMo
+Copyright (c) 2026 NamoNexus — Kanin Raksaraj  
+Contact: [contact@namonexus.com](mailto:contact@namonexus.com)
