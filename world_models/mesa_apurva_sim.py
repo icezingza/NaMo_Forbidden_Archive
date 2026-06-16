@@ -1,8 +1,8 @@
 import logging
+
 from mesa import Agent, Model
-from mesa.time import RandomActivation
 from mesa.space import MultiGrid
-from typing import List
+from mesa.time import RandomActivation
 
 logger = logging.getLogger(__name__)
 

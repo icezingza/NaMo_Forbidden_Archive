@@ -1,7 +1,7 @@
-import uuid
 import asyncio
+import uuid
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from config import settings
 
@@ -29,14 +29,14 @@ class TTSAdapter:
             try:
                 self._client = _ElevenLabsClient(api_key=settings.elevenlabs_api_key)
                 self._output_dir.mkdir(parents=True, exist_ok=True)
-                print(f"[TTSAdapter]: ElevenLabs ONLINE (Async Ready)")
+                print("[TTSAdapter]: ElevenLabs ONLINE (Async Ready)")
             except Exception as exc:
                 print(f"[TTSAdapter]: ElevenLabs init failed: {exc}")
                 self._client = None
         else:
             print("[TTSAdapter]: offline (check API key or package)")
 
-    async def synthesize(self, text: str) -> Optional[str]:
+    async def synthesize(self, text: str) -> str | None:
         """Async wrapper for text-to-speech synthesis"""
         if not self._client or not text:
             return None

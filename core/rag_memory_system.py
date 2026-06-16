@@ -1,14 +1,21 @@
+import asyncio
 import glob
 import json
+import os
 import random
-import time
-import asyncio
 from pathlib import Path
-from typing import List, Dict, Any, Optional
 
-import faiss
 import numpy as np
 from openai import AsyncOpenAI
+
+# Gate faiss import behind NAMO_RAG_ENABLED to prevent Windows hangs during initialization
+faiss = None
+if os.getenv("NAMO_RAG_ENABLED") == "1":
+    try:
+        import faiss
+    except Exception as exc:
+        print(f"[Memory System]: Failed to import faiss: {exc}")
+        faiss = None
 
 
 class NaMoInfiniteMemory:
@@ -25,7 +32,7 @@ class NaMoInfiniteMemory:
         self._faiss_index = None
         self._faiss_meta: list[dict] = []
         self.client = AsyncOpenAI()  # เปลี่ยนเป็น Async ตามมาตรฐาน NRE
-        self.memories: List[str] = []
+        self.memories: list[str] = []
         self.is_loaded = False
         
         # Configuration สำหรับ Micro-chunking
@@ -70,6 +77,10 @@ class NaMoInfiniteMemory:
 
     def _load_vector_index(self):
         """โหลด FAISS index และ metadata"""
+        if faiss is None:
+            print("[Memory System]: FAISS RAG is disabled (NAMO_RAG_ENABLED != 1). Skipping index load.")
+            return
+
         if self.meta_path.exists() and self.index_path.exists():
             try:
                 self._faiss_meta = json.load(open(self.meta_path, encoding="utf-8"))
@@ -94,7 +105,7 @@ class NaMoInfiniteMemory:
                 print(f"[Memory System]: retry embed {attempt}/{attempts} failed ({e}) -> wait {wait}s")
                 await asyncio.sleep(wait)
 
-    async def _vector_search(self, user_input: str) -> Optional[str]:
+    async def _vector_search(self, user_input: str) -> str | None:
         """Async semantic search จาก vector_db"""
         if not self._faiss_index or not self._faiss_meta:
             return None

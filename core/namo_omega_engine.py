@@ -1,7 +1,6 @@
 import os
-import asyncio
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from adapters.tts import TTSAdapter
 from config import settings
@@ -120,7 +119,7 @@ class NaMoOmegaEngine(BasePersonaEngine):
         return env_value == "1"
 
     def __init__(self):
-        print("✅ Loading NaMoOmegaEngine (Async Ready)...")
+        print("[OMEGA ENGINE]: Loading NaMoOmegaEngine (Async Ready)...")
         self.sensory = SensoryOverloadManager()
         self.tts = TTSAdapter()
         self.emotions = EmotionState()
@@ -269,7 +268,7 @@ class NaMoOmegaEngine(BasePersonaEngine):
         if cognitive is None: return None
         return cognitive.process(user_input, self.intent_analyzer.analyze(user_input), memories=[])
 
-    async def _generate_llm_response(self, user_input: str, session_id: str | None, state: dict, cog_output: dict | None, intent: str) -> Optional[str]:
+    async def _generate_llm_response(self, user_input: str, session_id: str | None, state: dict, cog_output: dict | None, intent: str) -> str | None:
         if not self.llm_client: return None
         
         emo_snapshot = cog_output.get("emotion") if cog_output else None

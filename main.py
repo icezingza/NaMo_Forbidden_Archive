@@ -18,7 +18,7 @@ def type_effect(text):
     print("")
 
 
-def main():
+async def main():
     load_dotenv()
     print("==========================================")
     print("   FORBIDDEN ARCHEOLOGY: NAMO PROTOCOL    ")
@@ -59,7 +59,7 @@ def main():
             type_effect(response)
 
             # 2.1 สร้างเสียงพูดจริง (ถ้ามี ElevenLabs API key)
-            audio_path = tts.synthesize(response) if tts else None
+            audio_path = await tts.synthesize(response) if tts else None
             if audio_path:
                 print(f"[Audio]: Generated voice at {audio_path}")
 
@@ -71,4 +71,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+
+    asyncio.run(main())

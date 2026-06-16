@@ -38,6 +38,24 @@ class Settings(BaseSettings):
     enable_arousal_detector: bool = False
     enable_dark_memory: bool = False
 
+    # --- Emotion Engine Parameters ---
+    emotion_decay_rate: float = 0.06
+    emotion_inertia: float = 0.65
+
+    # --- Learning Engine Parameters ---
+    learning_boldness_base: float = 0.30
+    learning_boldness_coeff: float = 0.62
+    learning_boldness_cap: float = 0.92
+    learning_playfulness_base: float = 0.30
+    learning_playfulness_coeff: float = 0.55
+    learning_playfulness_cap: float = 0.92
+    learning_vulnerability_base: float = 0.20
+    learning_vulnerability_coeff: float = 0.55
+    learning_vulnerability_cap: float = 0.85
+    learning_expressiveness_base: float = 0.40
+    learning_expressiveness_coeff: float = 500.0
+    learning_expressiveness_cap: float = 0.90
+
     # --- ElevenLabs TTS ---
     elevenlabs_api_key: str | None = None
     elevenlabs_voice_id: str = "Rachel"

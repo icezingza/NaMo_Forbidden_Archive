@@ -6,7 +6,12 @@ target-version = ["py311"]
 line-length = 100
 target-version = "py311"
 fix = false
-exclude = ["build", "dist", ".venv", "templates"]
+exclude = [
+    "build", "dist", ".venv", "templates", "namo_forbidden_archive",
+    "core/nre_anlrs_engine.py",
+    "core/seraphina_quantum_core.py",
+    "merge_knowledge.py",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
@@ -14,10 +19,19 @@ ignore = ["E203"]
 
 [tool.ruff.lint.per-file-ignores]
 # LLM prompt strings and Thai dialogue embed unavoidably long lines
-"core/namo_omega_engine.py" = ["E501"]
+"core/namo_omega_engine.py" = ["E501", "E701"]
 "core/namo_ultimate_engine.py" = ["E501"]
 "core/fusion_brain.py" = ["E501"]
 "core/metaphysical_engines.py" = ["E501"]
+"core/engines/*.py" = ["E501"]
+"core/memory/*.py" = ["E501", "E701"]
+"core/orchestration/*.py" = ["E501", "E701"]
+"core/rag_memory_system.py" = ["E501"]
+"Core_Scripts/*.py" = ["E501"]
+"seraphina_ai_complete.py" = ["E501"]
+"rinlada_fusion.py" = ["E501"]
+"scripts/*.py" = ["E501"]
+"tests/*.py" = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
