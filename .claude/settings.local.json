@@ -67,7 +67,6 @@
       "Skill(run)",
       "Bash(echo \"\")",
       "Bash(echo \"NAMO_LLM_ENABLED=true\")",
-      "PowerShell(Stop-Process *)",
       "Bash(uvicorn server:app --host 0.0.0.0 --port 8001)",
       "PowerShell(Get-Content \"C:\\\\Users\\\\icezi\\\\AppData\\\\Local\\\\Temp\\\\namo_server.log\" | Where-Object { $_ -match \"LLM|OMEGA|OpenAI|openai|llm\" })"
     ]
