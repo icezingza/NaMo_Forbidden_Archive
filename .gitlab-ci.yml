@@ -6,7 +6,7 @@ stages:
   - deploy
 
 variables:
-  PROJECT_NAME: "NaMo_Forbidden_Archive"
+  PROJECT_NAME: "NamoNexus_ACC"
   CLOUD_RUN_REGION: "asia-southeast1"
   SERVICE_NAME: "namo-forbidden-archive0"
 
@@ -24,7 +24,11 @@ test:
 
 deploy:
   stage: deploy
+  image: google/cloud-sdk:slim
   script:
+    - echo "$GCP_SERVICE_ACCOUNT_KEY" > /tmp/gcp-key.json
+    - gcloud auth activate-service-account --key-file=/tmp/gcp-key.json
+    - gcloud config set project $GCP_PROJECT_ID
     - gcloud run deploy $SERVICE_NAME --source . --region $CLOUD_RUN_REGION --allow-unauthenticated
     - echo "🚀 Deployed $PROJECT_NAME to Cloud Run"
   only:
