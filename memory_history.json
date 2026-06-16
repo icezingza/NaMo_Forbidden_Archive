@@ -1,1 +1,29 @@
-[]
+[
+    {
+        "timestamp": "2026-06-16T12:55:40.768829Z",
+        "session_id": "cli_session_20260616125452",
+        "user": "ok",
+        "bot": "ข้ากำลังฟัง... พูดต่อสิ",
+        "desire_map": {
+            "primary_desire": "dialogue",
+            "emotion_analysis": {
+                "primary_emotion": "unknown",
+                "intensity": 0,
+                "error": "HTTPConnectionPool(host='localhost', port=8082): Max retries exceeded with url: /analyze (Caused by ConnectTimeoutError(<HTTPConnection(host='localhost', port=8082) at 0x24b2d23eba0>, 'Connection to localhost timed out. (connect timeout=2)'))"
+            },
+            "source": "EmotionAPI_v1"
+        }
+    },
+    {
+        "timestamp": "2026-06-16T13:04:18.562046Z",
+        "user": "แนะนำตัวหน่อย ",
+        "bot": "ว่าไงคะ ที่รัก?",
+        "state_snapshot": "[Mood: Neutral | Corruption: 0% | Arousal: 0%]"
+    },
+    {
+        "timestamp": "2026-06-16T13:06:17.795499Z",
+        "user": "อืม ไหนโมลองทำตามคำสั่งพี่ดูซิ",
+        "bot": "หืม... คุณคิดจะสั่ง 'ราชินี' หรอคะ? น่าสนใจดีนี่... ลองดูสิคะ 👠",
+        "state_snapshot": "[Mood: Neutral | Corruption: 0% | Arousal: 5%]"
+    }
+]

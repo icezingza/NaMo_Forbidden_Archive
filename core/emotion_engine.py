@@ -76,8 +76,16 @@ class EmotionEngine:
 
     # Resting state the engine drifts toward over time
     BASELINE = EmotionVector(joy=0.5, arousal=0.3, trust=0.5, anger=0.0, desire=0.0)
-    DECAY_RATE = 0.06  # fraction pulled toward baseline each decay() call
-    INERTIA = 0.65  # higher = more gradual emotional shifts (0–1)
+
+    @property
+    def DECAY_RATE(self) -> float:
+        from config import settings
+        return getattr(settings, "emotion_decay_rate", 0.06)
+
+    @property
+    def INERTIA(self) -> float:
+        from config import settings
+        return getattr(settings, "emotion_inertia", 0.65)
 
     # Maps trigger names → direction vector (scaled later by intensity)
     _TRIGGER_MAP: dict[str, dict[str, float]] = {

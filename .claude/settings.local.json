@@ -59,7 +59,11 @@
       "Bash(\"/c/Users/icezi/AppData/Local/Google/Cloud SDK/google-cloud-sdk/bin/gcloud.cmd\" run services delete namo-forbidden-archive-api --region=asia-southeast1 --project=namo-forbidden-archive --quiet)",
       "Bash(\"/c/Users/icezi/AppData/Local/Google/Cloud SDK/google-cloud-sdk/bin/gcloud.cmd\" artifacts repositories describe cloud-run-source-deploy --location=asia-southeast1 --project=namo-forbidden-archive)",
       "Bash(\"/c/Users/icezi/AppData/Local/Google/Cloud SDK/google-cloud-sdk/bin/gcloud.cmd\" builds list --project=namo-forbidden-archive --limit=3 --format=\"table\\(id,status,createTime,images\\)\")",
-      "Bash('/c/Users/icezi/AppData/Local/Google/Cloud SDK/google-cloud-sdk/bin/gcloud.cmd' run deploy namo-forbidden-archive-api --image=gcr.io/namo-forbidden-archive/namo-api:latest --platform=managed --region=asia-southeast1 --allow-unauthenticated --project=namo-forbidden-archive --memory=1Gi --cpu=1 --timeout=300 --quiet)"
+      "Bash('/c/Users/icezi/AppData/Local/Google/Cloud SDK/google-cloud-sdk/bin/gcloud.cmd' run deploy namo-forbidden-archive-api --image=gcr.io/namo-forbidden-archive/namo-api:latest --platform=managed --region=asia-southeast1 --allow-unauthenticated --project=namo-forbidden-archive --memory=1Gi --cpu=1 --timeout=300 --quiet)",
+      "PowerShell(cd \"C:\\\\Users\\\\icezi\\\\Downloads\\\\Github repo\\\\NaMo_Forbidden_Archive\"; $env:PYTHONUTF8=\"1\"; python -c \"from server import app; print\\('Import OK'\\)\" 2>&1)",
+      "Bash(grep -rn \"OPENAI_API_KEY\\\\s*=\\\\s*['\\\\\"]sk-\\\\|TELEGRAM_TOKEN\\\\s*=\\\\s*['\\\\\"][0-9]\\\\|ELEVENLABS_API_KEY\\\\s*=\\\\s*['\\\\\"]\" --include=\"*.py\" --include=\"*.json\" --include=\"*.txt\" --include=\"*.env\" .)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(grep -rn \"sk-[a-zA-Z0-9]\\\\{20,\\\\}\" --include=\"*.py\" .)"
     ]
   }
 }

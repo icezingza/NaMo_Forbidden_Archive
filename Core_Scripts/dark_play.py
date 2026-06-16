@@ -1,7 +1,9 @@
-def sadist_mode():
-    """Activates the sadist mode.
+# NOTE: Contains Experimental Logic - Requires Compliance Review before commercial deployment.
 
-    This function prints a message to the console to indicate that the sadist
-    mode has been activated.
+
+def sadist_mode() -> None:
     """
-    print("🖤 [Dark Play] โหมดซาดิสม์: เพิ่มความเข้มข้นและเร้าใจ")
+    Activates the sadist play mode.
+    Prints a confirmation message to the console in English indicating the mode is active.
+    """
+    print("🖤 [Dark Play] Sadist Mode: Intensifying excitement and arousal.")

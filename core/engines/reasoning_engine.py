@@ -1,15 +1,31 @@
-import os
-import asyncio
+"""Reasoning Engine — Stub for orchestration.
+
+Full implementation requires Qdrant + Neo4j + OpenAI API.
+This stub allows imports to succeed without external dependencies.
+"""
 import logging
-from typing import List, Dict, Any, Optional
+import os
 
-from qdrant_client import AsyncQdrantClient
-from neo4j import AsyncGraphDatabase
-from openai import AsyncOpenAI
-from dotenv import load_dotenv
-
-load_dotenv()
 logger = logging.getLogger(__name__)
+
+# Try to import heavy dependencies; fail gracefully if missing
+try:
+    from qdrant_client import AsyncQdrantClient
+    HAS_QDRANT = True
+except ImportError:
+    HAS_QDRANT = False
+
+try:
+    from neo4j import AsyncGraphDatabase
+    HAS_NEO4J = True
+except ImportError:
+    HAS_NEO4J = False
+
+try:
+    from openai import AsyncOpenAI
+    HAS_OPENAI = True
+except ImportError:
+    HAS_OPENAI = False
 
 # Constants
 QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
@@ -17,8 +33,8 @@ NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
 COLLECTION_NAME = "namo_cognitive_mesh"
+
 
 class NaMoReasoningEngine:
     """
@@ -26,17 +42,42 @@ class NaMoReasoningEngine:
     ผสานโครงสร้างกราฟ (Neo4j) เข้ากับความจำเชิงความหมาย (Qdrant)
     """
 
-    def __init__(self):
-        self.qdrant = AsyncQdrantClient(url=QDRANT_URL)
-        self.neo4j_driver = AsyncGraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
-        
-        # OpenRouter Integration
-        api_key = settings.openrouter_api_key or os.getenv("OPENAI_API_KEY")
-        base_url = "https://openrouter.ai/api/v1" if settings.openrouter_api_key else None
-        
-        self.openai = AsyncOpenAI(api_key=api_key, base_url=base_url)
+    def __init__(self) -> None:
+        """Initialize reasoning engine with optional external dependencies."""
+        # Try to init heavy dependencies; warn if missing
+        self.qdrant = None
+        self.neo4j_driver = None
+        self.openai = None
+
+        if HAS_QDRANT:
+            try:
+                self.qdrant = AsyncQdrantClient(url=QDRANT_URL)
+            except Exception as err:
+                logger.warning(f"[Reasoning]: Qdrant init failed: {err}")
+
+        if HAS_NEO4J:
+            try:
+                self.neo4j_driver = AsyncGraphDatabase.driver(
+                    NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD)
+                )
+            except Exception as err:
+                logger.warning(f"[Reasoning]: Neo4j init failed: {err}")
+
+        if HAS_OPENAI:
+            try:
+                from config import settings
+                api_key = settings.openrouter_api_key or OPENAI_API_KEY
+                base_url = (
+                    "https://openrouter.ai/api/v1"
+                    if settings.openrouter_api_key
+                    else None
+                )
+                self.openai = AsyncOpenAI(api_key=api_key, base_url=base_url)
+            except Exception as err:
+                logger.warning(f"[Reasoning]: OpenAI init failed: {err}")
+
         self.model = os.getenv("NAMO_LLM_MODEL", "gpt-4o")
-        self.scs = 1.0 # Stance Consistency Score
+        self.scs = 1.0  # Stance Consistency Score
 
     def deep_reflect(self, current_stance: str, user_input: str) -> float:
         """ตรวจจับความขัดแย้งในตัวเอง (Integrity Loop)"""
@@ -55,26 +96,47 @@ class NaMoReasoningEngine:
         return self.scs
 
     async def _get_working_memory(self, query: str) -> str:
-        """Step 1: ดึงบริบทจากทั้ง Vector และ Graph DB (Working Memory)"""
+        """Retrieve context from Vector and Graph DB (Working Memory).
+
+        Falls back gracefully if services are unavailable.
+        """
+        vector_context = ""
+        graph_context = ""
+
         # 1.1 Vector Retrieval (Semantic)
-        embed_resp = await self.openai.embeddings.create(input=[query], model="text-embedding-3-small")
-        vector = embed_resp.data[0].embedding
-        
-        search_results = await self.qdrant.search(
-            collection_name=COLLECTION_NAME,
-            query_vector=vector,
-            limit=3
-        )
-        vector_context = "\n".join([r.payload.get("text", "") for r in search_results])
+        if self.openai and self.qdrant:
+            try:
+                embed_resp = await self.openai.embeddings.create(
+                    input=[query], model="text-embedding-3-small"
+                )
+                vector = embed_resp.data[0].embedding
+
+                search_results = await self.qdrant.search(
+                    collection_name=COLLECTION_NAME,
+                    query_vector=vector,
+                    limit=3,
+                )
+                vector_context = "\n".join(
+                    [r.payload.get("text", "") for r in search_results]
+                )
+            except Exception as err:
+                logger.warning(f"[Reasoning]: Vector retrieval failed: {err}")
 
         # 1.2 Graph Retrieval (Identity & Relationships)
-        graph_context = ""
-        async with self.neo4j_driver.session() as session:
-            # ค้นหาว่า NaMo มีความรู้อะไรที่เกี่ยวข้องกับ Domain ของคำถามบ้าง
-            result = await session.execute_read(self._query_knowledge_graph, query)
-            graph_context = result
+        if self.neo4j_driver:
+            try:
+                async with self.neo4j_driver.session() as session:
+                    result = await session.execute_read(
+                        self._query_knowledge_graph, query
+                    )
+                    graph_context = result
+            except Exception as err:
+                logger.warning(f"[Reasoning]: Graph retrieval failed: {err}")
 
-        return f"--- SEMANTIC MEMORY ---\n{vector_context}\n\n--- IDENTITY & PROTOCOLS ---\n{graph_context}"
+        return (
+            f"--- SEMANTIC MEMORY ---\n{vector_context}\n\n"
+            f"--- IDENTITY & PROTOCOLS ---\n{graph_context}"
+        )
 
     @staticmethod
     async def _query_knowledge_graph(tx, query):
@@ -88,7 +150,7 @@ class NaMoReasoningEngine:
         records = await res.data()
         return "\n".join([f"Source: {r['source']} | Content: {r['snippet']}" for r in records])
 
-    async def _analyze_9d_psychology(self, text: str) -> Dict[str, float]:
+    async def _analyze_9d_psychology(self, text: str) -> dict[str, float]:
         """
         [9-Dimension Psychological Analysis]
         ประเมินสภาวะจิตใจผ่าน 9 มิติ: 
@@ -128,8 +190,9 @@ class NaMoReasoningEngine:
         )
         return monologue_resp.choices[0].message.content
 
-    async def generate_response(self, user_input: str, history: List[Dict[str, str]] = []) -> str:
+    async def generate_response(self, user_input: str, history: list[dict[str, str]] | None = None) -> str:
         """Final Output Generation"""
+        history = history or []
         # 1. Build Working Memory
         working_memory = await self._get_working_memory(user_input)
         

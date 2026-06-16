@@ -1,6 +1,7 @@
-from core.orchestration.obfuscator import DynamicContentObfuscator, RelationshipCore
 from core.biomechanics import BiomechanicsEngine
 from core.engines.namonexus_fusion import NamoNexusEngine
+from core.orchestration.obfuscator import DynamicContentObfuscator, RelationshipCore
+
 
 class DarkSubconsciousEngine:
     """ระบบกลืนกินจิตใต้สำนึกและบิดเบือนตัวตน (Identity Deconstruction Loop)"""

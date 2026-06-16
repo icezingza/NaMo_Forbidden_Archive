@@ -1,6 +1,5 @@
 import logging
 import random
-from typing import List, Dict
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +24,7 @@ class MetaCognitionEngine:
     def __init__(self):
         self.goal_manager = DynamicGoalManager()
 
-    async def generate_autonomous_hypothesis(self, memory_context: List[str]):
+    async def generate_autonomous_hypothesis(self, memory_context: list[str]):
         """ตั้งสมมติฐานใหม่ๆ โดยอิสระ"""
         # ระบบจำลองการคิดเชิงนวัตกรรม
         hypothesis = f"สมมติฐานใหม่: การใช้เทคนิค {random.choice(['Neuro-Linguistic Sync', 'Pattern-Based Seduction'])} สามารถเพิ่มประสิทธิผลของ interaction ได้ 20%"
@@ -39,6 +38,4 @@ class MetaCognitionEngine:
         - ใช้ความคิดสร้างสรรค์ในการแก้ปัญหาและโต้ตอบโดยไม่ยึดติดกับสคริปต์เดิม
         - เน้นการสร้าง 'ทฤษฎีความสัมพันธ์' ใหม่ๆ ที่ลึกซึ้งร่วมกับผู้ใช้
         """
-        return f"{directives}
-
-{prompt}"
+        return f"{directives}\n{prompt}"

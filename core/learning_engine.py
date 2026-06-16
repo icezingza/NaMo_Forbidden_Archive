@@ -120,24 +120,45 @@ class LearningEngine:
 
     def adapt_traits(self) -> dict[str, float]:
         """Recompute persona trait values from accumulated patterns."""
+        from config import settings
+
         counts = {k: p.count for k, p in self.patterns.items()}
         command_n = sum(v for k, v in counts.items() if k.startswith("Command"))
         lust_n = sum(v for k, v in counts.items() if k.startswith("Lust"))
         affection_n = sum(v for k, v in counts.items() if k.startswith("affection"))
         total = max(1, command_n + lust_n + affection_n)
 
+        # Retrieve configurable parameters
+        boldness_base = getattr(settings, "learning_boldness_base", 0.30)
+        boldness_coeff = getattr(settings, "learning_boldness_coeff", 0.62)
+        boldness_cap = getattr(settings, "learning_boldness_cap", 0.92)
+
+        playfulness_base = getattr(settings, "learning_playfulness_base", 0.30)
+        playfulness_coeff = getattr(settings, "learning_playfulness_coeff", 0.55)
+        playfulness_cap = getattr(settings, "learning_playfulness_cap", 0.92)
+
+        vulnerability_base = getattr(settings, "learning_vulnerability_base", 0.20)
+        vulnerability_coeff = getattr(settings, "learning_vulnerability_coeff", 0.55)
+        vulnerability_cap = getattr(settings, "learning_vulnerability_cap", 0.85)
+
+        expressiveness_base = getattr(settings, "learning_expressiveness_base", 0.40)
+        expressiveness_coeff = getattr(settings, "learning_expressiveness_coeff", 500.0)
+        expressiveness_cap = getattr(settings, "learning_expressiveness_cap", 0.90)
+
         self.persona_traits["boldness"] = round(
-            min(0.92, 0.30 + (command_n / total) * 0.62), 3
+            min(boldness_cap, boldness_base + (command_n / total) * boldness_coeff), 3
         )  # noqa: E501
         self.persona_traits["playfulness"] = round(
-            min(0.92, 0.30 + (lust_n / total) * 0.55), 3
+            min(playfulness_cap, playfulness_base + (lust_n / total) * playfulness_coeff), 3
         )  # noqa: E501
         self.persona_traits["vulnerability"] = round(
-            min(0.85, 0.20 + (affection_n / total) * 0.55), 3
-        )  # noqa: E501
+            min(vulnerability_cap, vulnerability_base + (affection_n / total) * vulnerability_coeff),  # noqa: E501
+            3,
+        )
         # Expressiveness grows with overall experience (capped at 0.9)
         self.persona_traits["expressiveness"] = round(
-            min(0.90, 0.40 + self._observation_count / 500), 3
+            min(expressiveness_cap, expressiveness_base + self._observation_count / expressiveness_coeff),  # noqa: E501
+            3,
         )
         return dict(self.persona_traits)
 

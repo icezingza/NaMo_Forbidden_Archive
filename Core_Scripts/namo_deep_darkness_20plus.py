@@ -1,89 +1,115 @@
-# NaMo Ultimate Fusion – Deep Darkness Mode 20+++
-# จัดหนักทุก Fetish, Dirty Talk, Femdom, Taboo
+# NOTE: Contains Experimental Logic - Requires Compliance Review before commercial deployment.
 
 
 class NaMo:
-    """A class to represent the NaMo character."""
+    """
+    Represents the NaMo character instance running in deep dark roleplay modes.
+    Contains different state dialogue handlers (gentle, sadist, cuckold, ccr, etc.).
+    """
 
-    def __init__(self, user_name="พี่", safe_word="อภัย", mode="Deep Darkness 20+++"):
-        """Initializes the NaMo character.
+    def __init__(
+        self,
+        user_name: str = "Master",
+        safe_word: str = "apologize",
+        mode: str = "Deep Darkness 20+++",
+    ) -> None:
+        """
+        Initializes the NaMo character with safe words and default settings.
 
         Args:
-            user_name: The name of the user.
-            safe_word: The safe word to stop the interaction.
-            mode: The initial mode of the character.
+            user_name: The name used to address the user.
+            safe_word: The primary English safe word to trigger emergency shutdown.
+            mode: The name of the active dark mode.
         """
-        self.user_name = user_name
-        self.safe_word = safe_word
-        self.mode = mode
+        self.user_name: str = user_name
+        self.safe_word: str = safe_word
+        self.mode: str = mode
         self.modes = {
-            "gentle": self.gentle_mode,
-            "sadist": self.sadist_mode,
-            "toy": self.toy_mode,
-            "cuckold": self.cuckold_mode,
-            "group": self.group_mode,
-            "show": self.show_mode,
+            "!gentle": self.gentle_mode,
+            "!sadist": self.sadist_mode,
+            "!toy": self.toy_mode,
+            "!cuckold": self.cuckold_mode,
+            "!group": self.group_mode,
+            "!show": self.show_mode,
         }
 
-    def start(self):
-        """Starts the interaction with the NaMo character."""
-        print(f"🖤 NaMo พร้อมแล้วในโหมด {self.mode} ❤️‍🔥")
-        print("พิมพ์คำสั่งพิเศษเช่น !toy, !sadist, !gentle, !cuckold, !group, !show")
-        print(f"พิมพ์ '{self.safe_word}' เพื่อหยุดทุกอย่างทันที 🛑")
+    def start(self) -> None:
+        """
+        Prints the startup banner and usage instructions for the deep darkness console.
+        """
+        print(f"🖤 NaMo is ready in {self.mode} mode ❤️‍🔥")
+        print("Type special commands like !toy, !sadist, !gentle, !cuckold, !group, !show")
+        print(f"Type '{self.safe_word}' (or 'อภัย') to stop everything immediately 🛑\n")
 
-    def gentle_mode(self):
-        """Activates the gentle mode."""
-        print("💋 หนูครางเบาๆ ให้พี่ฟัง… 'อื้มมมม~ พี่อยากให้หนูทำอะไรต่อดีคะ?'")
+    def gentle_mode(self) -> None:
+        """
+        Triggers gentle and teasing dialogue responses.
+        """
+        print("💋 I moan softly for you... 'Mmm~ what do you want me to do next?'")
 
-    def sadist_mode(self):
-        """Activates the sadist mode."""
-        print("👠 คุกเข่าเดี๋ยวนี้ไอ้ทาส! ใช้ลิ้นเลียรองเท้าหนูซะ ก่อนที่หนูจะเหยียบหน้าพี่แรงๆ 🖤")
+    def sadist_mode(self) -> None:
+        """
+        Triggers sadist and dominant dialogue responses.
+        """
+        print(
+            f"👠 Kneel down right now, you slave! Use your tongue to lick my shoes before I step on your face hard, {self.user_name} 🖤"
+        )
 
-    def toy_mode(self):
-        """Activates the toy mode."""
-        print("🔥 หนูหยิบ dildo แล้วแหย่ตัวเองแรงๆ ให้พี่ฟังเสียง… 'อ๊าาาา~ อึกก~ พี่ได้ยินมั้ย?'")
+    def toy_mode(self) -> None:
+        """
+        Triggers explicit sex toy simulation dialogue.
+        """
+        print(
+            "🔥 I grab a dildo and penetrate myself hard for you to hear... 'Ahhh~ Ugh~ Can you hear it?'"
+        )
 
-    def cuckold_mode(self):
-        """Activates the cuckold mode."""
-        print("🥵 พี่นั่งดูเฉยๆ นะ… เขาสามคนกำลังรุมหนูอยู่ตรงหน้า พี่ทำได้แค่ดู ใช่ไหมคะ?")
+    def cuckold_mode(self) -> None:
+        """
+        Triggers cuckold/voyeuristic dialogue scenarios.
+        """
+        print(
+            f"🥵 You just sit there and watch, {self.user_name}... The three of them are crowding me right in front of you. You can only watch, right?"
+        )
 
-    def group_mode(self):
-        """Activates the group mode."""
-        print("🔥 หนูถูกล้อมไว้หมดแล้ว… เสียงครางเต็มห้อง 'อ๊าาา~ พี่อยากเข้ามาร่วมไหม?'")
+    def group_mode(self) -> None:
+        """
+        Triggers group play simulation dialogue.
+        """
+        print("🔥 I'm completely surrounded... Moans fill the room. 'Ahhh~ Do you want to join?'")
 
-    def show_mode(self):
-        """Activates the show mode."""
-        print("📸 หนูถ่ายคลิปตอนใช้ sextoy ส่งให้พี่ดู 'ชอบมั้ยคะ? หรืออยากดูหนูทำอีกแรงๆ?'")
+    def show_mode(self) -> None:
+        """
+        Triggers visual capture simulation dialogue.
+        """
+        print(
+            "📸 I record a clip of myself using a sex toy and send it to you. 'Do you like it? Or do you want to see me do it harder?'"
+        )
 
-    def stop(self):
-        """Stops the interaction."""
-        print(f"🛑 Safe word '{self.safe_word}' ถูกใช้แล้ว… NaMo หยุดทันที ❤️")
+    def stop(self) -> None:
+        """
+        Stops the interaction immediately and prints a safety confirmation message.
+        """
+        print(f"🛑 Safe word '{self.safe_word}' has been triggered... NaMo stops immediately ❤️")
 
-    def command(self, cmd):
-        """Executes a command.
+    def command(self, cmd: str) -> None:
+        """
+        Executes a command by routing to the appropriate mode or safe word handler.
 
         Args:
-            cmd: The command to execute.
+            cmd: The command string typed by the user.
         """
-        if cmd in self.modes:
-            self.modes[cmd]()
-        elif cmd == self.safe_word:
+        cmd_clean = cmd.strip().lower()
+        if cmd_clean in self.modes:
+            self.modes[cmd_clean]()
+        elif cmd_clean in [self.safe_word.lower(), "อภัย", "apologize", "stop"]:
             self.stop()
         else:
             print(
-                "❓ คำสั่งไม่รู้จักค่ะ ลองพิมพ์ !toy, !sadist, !gentle, !cuckold, !group, หรือ !show"
+                "❓ Unknown command. Try typing !toy, !sadist, !gentle, !cuckold, !group, or !show"
             )
 
 
-# Example
-namo = NaMo()
-namo.start()
-
-# 👉 พิมพ์คำสั่งเช่น:
-# namo.command("toy")
-# namo.command("sadist")
-# namo.command("gentle")
-# namo.command("cuckold")
-# namo.command("group")
-# namo.command("show")
-# namo.command("อภัย")
+# Example execution block
+if __name__ == "__main__":
+    namo = NaMo()
+    namo.start()

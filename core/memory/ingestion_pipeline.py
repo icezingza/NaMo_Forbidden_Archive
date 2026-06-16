@@ -1,15 +1,14 @@
-import os
 import asyncio
 import logging
+import os
 import uuid
 from pathlib import Path
-from typing import List, Dict, Any
 
 from dotenv import load_dotenv
-from qdrant_client import AsyncQdrantClient
-from qdrant_client.http import models
 from neo4j import AsyncGraphDatabase
 from openai import AsyncOpenAI
+from qdrant_client import AsyncQdrantClient
+from qdrant_client.http import models
 
 # --- Configuration & Logging ---
 load_dotenv()
@@ -54,11 +53,11 @@ class IngestionPipeline:
             )
             logger.info(f"Created Qdrant collection: {COLLECTION_NAME}")
 
-    async def get_embedding(self, text: str) -> List[float]:
+    async def get_embedding(self, text: str) -> list[float]:
         response = await self.openai.embeddings.create(input=[text], model=EMBEDDING_MODEL)
         return response.data[0].embedding
 
-    def chunk_text(self, text: str, size: int = 500, overlap: int = 50) -> List[str]:
+    def chunk_text(self, text: str, size: int = 500, overlap: int = 50) -> list[str]:
         chunks = []
         for i in range(0, len(text), size - overlap):
             chunks.append(text[i:i + size])
@@ -67,7 +66,7 @@ class IngestionPipeline:
     async def process_file(self, file_path: Path, domain: str, identity_node_id: str = "NaMo"):
         """Ingest a single file into both Qdrant and Neo4j"""
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(file_path, encoding='utf-8', errors='ignore') as f:
                 content = f.read()
             
             chunks = self.chunk_text(content)
@@ -119,7 +118,7 @@ class IngestionPipeline:
         )
         await tx.run(query, identity_id=identity_id, chunk_id=chunk_id, filename=filename, domain=domain, snippet=snippet)
 
-    async def run(self, knowledge_dirs: List[str], identity_files: List[str]):
+    async def run(self, knowledge_dirs: list[str], identity_files: list[str]):
         await self.initialize_dbs()
 
         # Step 1: Ingest Identity/Soul Files (Core Identity Nodes)

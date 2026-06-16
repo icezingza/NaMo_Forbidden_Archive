@@ -143,17 +143,29 @@ _EngineRegistry.register("ultimate", NaMoUltimateBrain)
 print("[System]: Awakening NaMo Omega...")
 engine = _EngineRegistry.get(settings.default_engine)
 
-from core.engines.asi_simulation_engine import asi_engine
+# Optional: ASI Simulation Engine (graceful fallback if dependencies missing)
+asi_engine = None
+try:
+    from core.engines.asi_simulation_engine import asi_engine
+except ImportError as err:
+    print(f"[Warning]: ASI Simulation Engine not available ({err})")
+
 
 @app.post("/api/dream")
 async def trigger_dream(x_admin_secret: str | None = Header(default=None)):
-    """
-    Trigger ASI Research & Simulation (Cloud Scheduler Endpoint)
+    """Trigger ASI Research & Simulation (Cloud Scheduler Endpoint).
+
+    Requires ASI engine to be loaded and ADMIN_SECRET to be configured.
     """
     _assert_admin(x_admin_secret)
-    # Trigger hypothesis generation as a background task
-    asyncio.create_task(asi_engine.generate_hypothesis())
-    return {"status": "NaMo is dreaming and researching..."}
+    if not asi_engine:
+        return {"status": "ASI engine not initialized", "error": "dependencies_missing"}
+    try:
+        asyncio.create_task(asi_engine.generate_hypothesis())
+        return {"status": "NaMo is dreaming and researching..."}
+    except Exception as exc:
+        print(f"[Dream]: Error: {exc}")
+        return {"status": "error", "detail": str(exc)}
 
 # Rate limiter instance — initialized from settings
 _rate_limiter = _RateLimiter(
@@ -361,7 +373,8 @@ async def chat_stream(
                 async for chunk in stream:
                     full_text.append(chunk)
                     data = json.dumps(
-                        {"chunk": chunk, "session_id": session_id, "plan": plan, "engine": engine_name},
+                        {"chunk": chunk, "session_id": session_id,
+                         "plan": plan, "engine": engine_name},
                         ensure_ascii=False,
                     )
                     yield f"data: {data}\n\n"
@@ -369,7 +382,8 @@ async def chat_stream(
                 for chunk in stream:
                     full_text.append(chunk)
                     data = json.dumps(
-                        {"chunk": chunk, "session_id": session_id, "plan": plan, "engine": engine_name},
+                        {"chunk": chunk, "session_id": session_id,
+                         "plan": plan, "engine": engine_name},
                         ensure_ascii=False,
                     )
                     yield f"data: {data}\n\n"
@@ -456,7 +470,7 @@ def explain_decision(x_admin_secret: str | None = Header(default=None)):
     _assert_admin(x_admin_secret)
     return {
         "explanation": {
-            name: inst.fusion_engine.explain() if hasattr(inst, 'fusion_engine') else "No fusion engine"
+            name: inst.fusion_engine.explain() if hasattr(inst, "fusion_engine") else "No fusion engine"  # noqa: E501
             for name, inst in _EngineRegistry._instances.items()
         }
     }

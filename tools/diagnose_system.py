@@ -1,8 +1,9 @@
-import os
 import logging
+import os
+
+import requests
 from dotenv import load_dotenv
 from qdrant_client import QdrantClient
-import requests
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

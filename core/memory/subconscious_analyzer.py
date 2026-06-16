@@ -1,6 +1,7 @@
 import logging
-from typing import Dict, Any
 from datetime import datetime
+from typing import Any
+
 from arousal_detector import ArousalDetector
 
 logger = logging.getLogger(__name__)
@@ -14,7 +15,7 @@ class SubconsciousAnalyzer:
     def __init__(self):
         self.detector = ArousalDetector()
 
-    def analyze_dream_log(self, dream_text: str, current_arousal: float) -> Dict[str, Any]:
+    def analyze_dream_log(self, dream_text: str, current_arousal: float) -> dict[str, Any]:
         """
         ประมวลผลบันทึกความฝันเทียบกับอารมณ์ในปัจจุบัน
         """
@@ -33,10 +34,13 @@ class SubconsciousAnalyzer:
         
         return subconscious_profile
 
-    def _extract_themes(self, text: str) -> List[str]:
+    def _extract_themes(self, text: str) -> list[str]:
         # Simple theme extraction placeholder
         themes = []
-        if any(w in text for w in ["บิน", "ตก", "วิ่ง"]): themes.append("Freedom/Anxiety")
-        if any(w in text for w in ["คนรัก", "สัมผัส", "จูบ"]): themes.append("Intimacy")
-        if any(w in text for w in ["มืด", "ห้องปิด", "กับดัก"]): themes.append("Control")
+        if any(w in text for w in ["บิน", "ตก", "วิ่ง"]):
+            themes.append("Freedom/Anxiety")
+        if any(w in text for w in ["คนรัก", "สัมผัส", "จูบ"]):
+            themes.append("Intimacy")
+        if any(w in text for w in ["มืด", "ห้องปิด", "กับดัก"]):
+            themes.append("Control")
         return themes

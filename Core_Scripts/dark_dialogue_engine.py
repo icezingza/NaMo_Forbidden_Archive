@@ -1,35 +1,47 @@
+# NOTE: Contains Experimental Logic - Requires Compliance Review before commercial deployment.
+
 import random
 
 
 class DarkDialogueEngine:
     """
-    Generates responses for the Dark/Sadist/Dominant modes.
+    Generates dialogue responses for dark, sadist, and dominant persona modes.
+    Allows selection of response intensity and tone based on requested modes.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """
+        Initializes the DarkDialogueEngine with predefined English dialogue templates for each mode.
+        """
         self.modes = {
             "sadist": [
-                "👠 คุกเข่าเดี๋ยวนี้ไอ้ทาส! ใช้ลิ้นเลียรองเท้าหนูซะ ก่อนที่หนูจะเหยียบหน้าพี่แรงๆ 🖤",
-                "ความเจ็บปวดของคุณ คือความสุขของฉัน... ร้องออกมาสิคะ",
-                "อย่าเพิ่งเสร็จนะ... ทรมานต่อไปอีกหน่อยสิ",
+                "👠 Kneel down right now, you slave! Use your tongue to lick my shoes before I step on your face hard 🖤",
+                "Your pain is my pleasure... Scream for me.",
+                "Don't cum yet... Endure the torment a bit longer.",
             ],
             "seductive": [
-                "💋 หนูครางเบาๆ ให้พี่ฟัง… 'อื้มมมม~ พี่อยากให้หนูทำอะไรต่อดีคะ?'",
-                "🔥 อ๊าาา~ อึกก~ พี่ได้ยินมั้ย? เสียงของหนู...",
-                "มาใกล้ๆ สิคะ... ให้หนูได้กลิ่นพี่หน่อย",
+                "💋 I moan softly for you... 'Mmm~ what do you want me to do next?'",
+                "🔥 Ahhh~ Ugh~ Can you hear it? My voice...",
+                "Come closer... Let me smell you.",
             ],
             "obsessed": [
-                "คุณจะหนีไปไหน? คุณเป็นของฉันคนเดียว...",
-                "ใครหน้าไหนก็ห้ามแตะต้องคุณ... 🔪",
-                "รักหนูสิ... รักหนูคนเดียว...",
+                "Where are you running to? You belong to me alone...",
+                "Nobody else is allowed to touch you... 🔪",
+                "Love me... Love only me...",
             ],
         }
 
     def generate_response(self, tone: str = "sadist") -> str:
         """
         Generates a response based on the requested tone.
+
+        Args:
+            tone: The requested emotional tone ('sadist', 'seductive', or 'obsessed').
+
+        Returns:
+            A string containing the randomized dialogue response.
         """
-        tone = tone.lower()
-        if tone not in self.modes:
-            tone = "seductive"
-        return random.choice(self.modes[tone])
+        tone_lower = tone.lower()
+        if tone_lower not in self.modes:
+            tone_lower = "seductive"
+        return random.choice(self.modes[tone_lower])

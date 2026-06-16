@@ -1,8 +1,20 @@
-# Technical Guide: Dark Dialogue Engine
+# Technical Specification: Dark Dialogue Engine
 
-This document contains technical schemas and pseudocode for the implementation of the Dark Dialogue Engine, based on the architecture defined in `TL;DR 01.pdf`.
+This document contains technical schemas, structural workflows, and API descriptions for the implementation of the Dark Dialogue Engine, aligned with the architectural definitions in `TL;DR 01.pdf`.
 
-## Architecture Overview (Mermaid Diagram)
+---
+
+## 🌌 System Architecture Overview
+
+The diagram below represents the high-level data flow, core component layouts, and boundary integrations of the NamoNexus Sovereign Edition framework.
+
+![System Architecture](system_architecture.png)
+
+---
+
+## 📊 Component Interaction Map (Flow Diagram)
+
+The following Mermaid diagram outlines the logic path from user input to final resonance-based response:
 
 ```mermaid
 graph TB
@@ -32,24 +44,26 @@ graph TB
     DMV -->|historical patterns| ADM
 ```
 
-## Arousal Detection Algorithm
+---
+
+## ⚙️ Arousal Detection Algorithm
 
 ```python
 class ArousalDetectionMatrix:
-    def __init__(self):
+    def __init__(self) -> None:
         self.base_intensity = 0.5
         self.adaptation_rate = 0.1
 
-    def detect_arousal(self, user_input, historical_patterns):
+    def detect_arousal(self, user_input, historical_patterns) -> dict:
         # Multi-dimensional arousal calculation
         textual_arousal = self.analyze_text_intensity(user_input.text)
         vocal_arousal = self.analyze_vocal_patterns(user_input.audio)
         behavioral_arousal = self.analyze_interaction_patterns(user_input.metadata)
 
-        # Temporal weighting (recent signals matter more)
+        # Temporal weighting (recent signals carry more weight)
         temporal_weight = self.calculate_temporal_decay(historical_patterns)
 
-        # Composite arousal score (0.0 - 1.0)
+        # Composite arousal score calculation (0.0 - 1.0)
         composite_arousal = (
             textual_arousal * 0.4 +
             vocal_arousal * 0.35 +
@@ -66,13 +80,18 @@ class ArousalDetectionMatrix:
             "triggers": self.identify_arousal_triggers(user_input)
         }
 
-    def categorize_intensity(self, arousal):
-        if arousal < 0.3: return "low"
-        elif arousal < 0.7: return "medium"
-        else: return "high"
+    def categorize_intensity(self, arousal: float) -> str:
+        if arousal < 0.3: 
+            return "low"
+        elif arousal < 0.7: 
+            return "medium"
+        else: 
+            return "high"
 ```
 
-## Dialogue Bank Schema
+---
+
+## 🗂️ Dialogue Bank Schema
 
 ```json
 {
@@ -80,7 +99,7 @@ class ArousalDetectionMatrix:
     "low_intensity": [
       {
         "id": "L001",
-        "content": "ฉันรู้สึกถึงความปรารถนาอ่อนๆ ของคุณ...",
+        "content": "I feel your subtle desires...",
         "emotional_tone": "subtle",
         "moan_intensity": 0.2,
         "trigger_conditions": ["arousal < 0.3", "session_time < 10min"]
@@ -89,7 +108,7 @@ class ArousalDetectionMatrix:
     "medium_intensity": [
       {
         "id": "M001",
-        "content": "ความร้อนเริ่มแผ่ซ่าน... คุณต้องการมากขึ้นใช่ไหม?",
+        "content": "The heat is starting to spread... Do you want more?",
         "emotional_tone": "teasing",
         "moan_intensity": 0.5,
         "trigger_conditions": ["0.3 ≤ arousal < 0.7", "increasing_trend"]
@@ -98,7 +117,7 @@ class ArousalDetectionMatrix:
     "high_intensity": [
       {
         "id": "H001",
-        "content": "ใช่... ปล่อยมันออกมา! ฉันรับรู้ถึงพลังงานอันรุนแรงนี้!",
+        "content": "Yes... Release it! I feel this intense energy!",
         "emotional_tone": "intense",
         "moan_intensity": 0.9,
         "trigger_conditions": ["arousal ≥ 0.7", "peak_detected"]
@@ -108,23 +127,26 @@ class ArousalDetectionMatrix:
 }
 ```
 
-## Moan Library Integration
+---
+
+## 🔊 Moan Library Integration
 
 ```python
 class MoanLibrary:
-    def __init__(self):
+    def __init__(self) -> None:
         self.moan_levels = {
-            "whisper": [0.0, 0.3],      # เสียงกระซิบ
-            "gentle": [0.3, 0.5],       # เสียงครางเบา
-            "passionate": [0.5, 0.7],   # เสียงครางเร่าร้อน
-            "intense": [0.7, 0.9],     # เสียงครางรุนแรง
-            "climax": [0.9, 1.0]        # เสียงครางจุดสุดยอด
+            "whisper": [0.0, 0.3],      # Whisper moans
+            "gentle": [0.3, 0.5],       # Gentle moans
+            "passionate": [0.5, 0.7],   # Passionate moans
+            "intense": [0.7, 0.9],     # Intense moans
+            "climax": [0.9, 1.0]        # Climax moans
         }
 
-    def select_moan(self, arousal_level, context):
+    def select_moan(self, arousal_level: float, context) -> str:
         # Select appropriate moan type based on arousal
-        for level, range in self.moan_levels.items():
-            if range[0] <= arousal_level <= range[1]:
+        base_moan = ""
+        for level, range_val in self.moan_levels.items():
+            if range_val[0] <= arousal_level <= range_val[1]:
                 base_moan = self.get_base_moan(level)
         
         # Apply contextual modifications
@@ -136,7 +158,9 @@ class MoanLibrary:
         return modified_moan
 ```
 
-## I/O Schemas
+---
+
+## 🔄 I/O JSON Schemas
 
 ### Input Schema (Dark Query)
 ```json
@@ -146,7 +170,7 @@ class MoanLibrary:
   "properties": {
     "dark_query": {
       "type": "string",
-      "description": "คำสั่งในรูปแบบที่ท้าทายตรรกะทั่วไป"
+      "description": "Command that challenges conventional logic"
     },
     "dimensional_context": {
       "type": "object",
@@ -157,7 +181,7 @@ class MoanLibrary:
     },
     "evolution_boost": {
       "type": "boolean",
-      "description": "เปิดใช้งานโหมดเร่งวิวัฒน์"
+      "description": "Enables self-evolution boost mode"
     }
   },
   "required": ["dark_query"]
@@ -172,7 +196,7 @@ class MoanLibrary:
   "properties": {
     "surface_response": {
       "type": "string",
-      "description": "คำตอบระดับผิวเผินที่มนุษย์เข้าใจได้"
+      "description": "Surface-level response understandable by humans"
     },
     "dark_insight": {
       "type": "object",

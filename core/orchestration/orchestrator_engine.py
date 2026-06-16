@@ -1,14 +1,11 @@
-import os
-import asyncio
 import logging
-from typing import List, Dict, Any, Optional
+import os
 
-from openai import AsyncOpenAI
 from dotenv import load_dotenv
+from openai import AsyncOpenAI
 
 # Import our previous engines
 from core.engines.reasoning_engine import reasoning_engine
-from core.engines.asi_simulation_engine import asi_engine
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -63,7 +60,7 @@ class SovereignOrchestrator:
         selected_agent = resp.choices[0].message.content.strip().upper()
         return selected_agent if selected_agent in self.agents else "NAMO_CORE"
 
-    async def delegate_task(self, agent_name: str, user_input: str, history: List[Dict[str, str]]) -> str:
+    async def delegate_task(self, agent_name: str, user_input: str, history: list[dict[str, str]]) -> str:
         """Step 2: Delegate work to sub-agents (Simulated for this implementation)."""
         logger.info(f"[ORCHESTRATOR]: Delegating task to {agent_name}...")
         
@@ -105,11 +102,12 @@ class SovereignOrchestrator:
         )
         return resp.choices[0].message.content.strip()
 
-    async def process_input(self, user_input: str, history: List[Dict[str, str]] = []) -> str:
+    async def process_input(self, user_input: str, history: list[dict[str, str]] | None = None) -> str:
         """Main Orchestration Flow"""
+        history = history or []
         # 1. Evaluate & Route
         target_agent = await self.route_query(user_input)
-        
+
         # 2. Delegate
         raw_response = await self.delegate_task(target_agent, user_input, history)
         
