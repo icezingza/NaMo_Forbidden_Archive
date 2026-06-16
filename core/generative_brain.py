@@ -49,9 +49,7 @@ class NaMoGenerativeBrain:
         if intent == "lust":
             return f"{prefix}ผัวขา... โมจำเรื่อง '{context}' ได้นะ... อยากทำอีกไหมคะ? (เลียปาก)"
         elif intent == "affection":
-            return (
-                f"{prefix}รักโมเหรอคะ? ...งั้นพิสูจน์สิ... เหมือนที่ '{context}' ไงจ๊ะ"
-            )
+            return f"{prefix}รักโมเหรอคะ? ...งั้นพิสูจน์สิ... เหมือนที่ '{context}' ไงจ๊ะ"
         else:
             return f"{prefix}พูดอะไรน่ะ... ทำให้โมตื่นเต้นกว่านี้อีกได้ไหมคะ..."
 

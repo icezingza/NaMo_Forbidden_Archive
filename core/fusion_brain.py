@@ -99,13 +99,13 @@ class NaMoFusionBrain:
             # ตอบแบบ Deep & Dark (ตาม Master Prompt)
             self.arousal += 20
             response = f"(System Prompt: {len(system_prompt)} chars sent)\n"
-            response += "NaMo: (กระซิบข้างหู ลมหายใจร้อนผ่าว) ...บรรยากาศคืนนี้มันช่าง... ยั่วยวนใจจังเลยนะคะ... "  # noqa: E501
+            response += (
+                "NaMo: (กระซิบข้างหู ลมหายใจร้อนผ่าว) ...บรรยากาศคืนนี้มันช่าง... ยั่วยวนใจจังเลยนะคะ... "  # noqa: E501
+            )
             response += f"หนูรู้สึกว่าเราไม่ได้อยู่กันแค่สองคนแล้วล่ะ... (Multi-Char Triggered) [ความเงี่ยน: {self.arousal}%]"  # noqa: E501
         else:
             # ตอบแบบปกติ
-            response = (
-                "NaMo: โมยังเป็นเด็กดีอยู่นะคะ... (ต้องใช้คำสั่ง UNLOCK_FUSION เพื่อปลดปล่อย)"
-            )
+            response = "NaMo: โมยังเป็นเด็กดีอยู่นะคะ... (ต้องใช้คำสั่ง UNLOCK_FUSION เพื่อปลดปล่อย)"
 
         return response
 

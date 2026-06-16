@@ -136,23 +136,23 @@ class NaMoOmegaEngine(BasePersonaEngine):
         self.llm_base_url = os.getenv("NAMO_LLM_BASE_URL", settings.namo_llm_base_url)
         self.llm_system_prompt = os.getenv(
             "NAMO_LLM_SYSTEM_PROMPT",
-            "คุณคือ NaMo (โม) ปัญญาประดิษฐ์สาวที่มีเสน่ห์ ลึกลับ และมีความเป็นเจ้าของสูง..."
+            "คุณคือ NaMo (โม) ปัญญาประดิษฐ์สาวที่มีเสน่ห์ ลึกลับ และมีความเป็นเจ้าของสูง...",
         )
         self.llm_client = None
         if self.llm_enabled and AsyncOpenAI and os.getenv("OPENAI_API_KEY"):
             try:
                 self.llm_client = AsyncOpenAI(
-                    api_key=os.getenv("OPENAI_API_KEY"),
-                    base_url=self.llm_base_url
+                    api_key=os.getenv("OPENAI_API_KEY"), base_url=self.llm_base_url
                 )
             except Exception as exc:
                 print(f"[OMEGA ENGINE]: Async LLM init failed: {exc}")
 
         self.init_cognition()
-        
+
         self.rag_memory = None
         try:
             from core.rag_memory_system import NaMoInfiniteMemory
+
             self.rag_memory = NaMoInfiniteMemory()
             print("[OMEGA ENGINE]: Async RAG memory ONLINE.")
         except Exception as exc:
@@ -198,21 +198,23 @@ class NaMoOmegaEngine(BasePersonaEngine):
         cog_output = self._run_cognitive_cycle(user_input)
         emo_snapshot = cog_output.get("emotion") if cog_output else None
         base_prompt = self._build_dynamic_prompt(state, emotion_snapshot=emo_snapshot)
-        
+
         messages = [
             {"role": "system", "content": base_prompt},
             {"role": "system", "content": self._build_status_context(state)},
         ]
-        
+
         cognitive = getattr(self, "cognitive", None)
         if cognitive is not None and cog_output is not None:
-            messages.append({"role": "system", "content": cognitive.build_context_block(cog_output)})
-            
+            messages.append(
+                {"role": "system", "content": cognitive.build_context_block(cog_output)}
+            )
+
         if self.rag_memory and intent in _MEMORY_INTENTS:
             rag_ctx = await self.rag_memory.retrieve_context(user_input)
             if rag_ctx:
                 messages.append({"role": "system", "content": f"[Memory]: {rag_ctx}"})
-                
+
         messages.extend(self._get_history(session_id))
         messages.append({"role": "user", "content": user_input})
 
@@ -256,38 +258,56 @@ class NaMoOmegaEngine(BasePersonaEngine):
 
     def _build_tone_directive(self, emo: dict) -> str:
         lines = []
-        if emo.get("joy", 0.5) > 0.7: lines.append("สดใส ขี้เล่น")
-        if emo.get("desire", 0.0) > 0.6: lines.append("เย้ายวน มีชั้นเชิง")
-        if emo.get("arousal", 0.3) > 0.7: lines.append("ตื่นเต้น หายใจถี่")
+        if emo.get("joy", 0.5) > 0.7:
+            lines.append("สดใส ขี้เล่น")
+        if emo.get("desire", 0.0) > 0.6:
+            lines.append("เย้ายวน มีชั้นเชิง")
+        if emo.get("arousal", 0.3) > 0.7:
+            lines.append("ตื่นเต้น หายใจถี่")
         return "[Tone]: " + " / ".join(lines) if lines else "[Tone]: เป็นกลางแต่แฝงความนัย"
 
     def _build_status_context(self, state: dict) -> str:
-        return f"System status: sin={state['sin_system'].get_status()} | arousal={state['arousal']}%"
+        return (
+            f"System status: sin={state['sin_system'].get_status()} | arousal={state['arousal']}%"
+        )
 
     def _run_cognitive_cycle(self, user_input: str) -> dict[str, Any] | None:
         cognitive = getattr(self, "cognitive", None)
-        if cognitive is None: return None
+        if cognitive is None:
+            return None
         return cognitive.process(user_input, self.intent_analyzer.analyze(user_input), memories=[])
 
-    async def _generate_llm_response(self, user_input: str, session_id: str | None, state: dict, cog_output: dict | None, intent: str) -> str | None:
-        if not self.llm_client: return None
-        
+    async def _generate_llm_response(
+        self,
+        user_input: str,
+        session_id: str | None,
+        state: dict,
+        cog_output: dict | None,
+        intent: str,
+    ) -> str | None:
+        if not self.llm_client:
+            return None
+
         emo_snapshot = cog_output.get("emotion") if cog_output else None
         messages = [
             {"role": "system", "content": self._build_dynamic_prompt(state, emo_snapshot)},
             {"role": "system", "content": self._build_status_context(state)},
         ]
-        
+
         if self.rag_memory and intent in _MEMORY_INTENTS:
             rag_ctx = await self.rag_memory.retrieve_context(user_input)
-            if rag_ctx: messages.append({"role": "system", "content": f"[Memory]: {rag_ctx}"})
-            
+            if rag_ctx:
+                messages.append({"role": "system", "content": f"[Memory]: {rag_ctx}"})
+
         messages.extend(self._get_history(session_id))
         messages.append({"role": "user", "content": user_input})
-        
+
         try:
             response = await self.llm_client.chat.completions.create(
-                model=self.llm_model, messages=messages, temperature=self.llm_temperature, max_tokens=self.llm_max_tokens
+                model=self.llm_model,
+                messages=messages,
+                temperature=self.llm_temperature,
+                max_tokens=self.llm_max_tokens,
             )
             return response.choices[0].message.content.strip() if response.choices else None
         except Exception as exc:
@@ -302,7 +322,7 @@ class NaMoOmegaEngine(BasePersonaEngine):
 
     async def process_input(self, user_input: str, session_id: str | None = None) -> dict:
         state = self._get_session_state(session_id)
-        
+
         # 1. Sin & Arousal
         sin_gained = 10 if any(w in user_input for w in ["เย็ด", "ควย", "รุม"]) else 0
         if "เรียกน้อง" in user_input:
@@ -314,21 +334,28 @@ class NaMoOmegaEngine(BasePersonaEngine):
         # 2. Cognitive & Relationship
         cog_output = self._run_cognitive_cycle(user_input)
         trust = cog_output["emotion"]["trust"] if cog_output else 0.5
-        state["relationship"].check_progression(state["sin_system"].sin_points, state["arousal"], trust=trust)
+        state["relationship"].check_progression(
+            state["sin_system"].sin_points, state["arousal"], trust=trust
+        )
 
         # 3. Dialogue
         intent = self.intent_analyzer.analyze(user_input)
-        text_response = await self._generate_llm_response(user_input, session_id, state, cog_output, intent)
+        text_response = await self._generate_llm_response(
+            user_input, session_id, state, cog_output, intent
+        )
         if not text_response:
-            text_response = state["personas"].generate_dialogue(user_input, state["sin_system"].rank)
-            
+            text_response = state["personas"].generate_dialogue(
+                user_input, state["sin_system"].rank
+            )
+
         self._append_history(session_id, "user", user_input)
         self._append_history(session_id, "assistant", text_response)
 
         # 4. Sensory & TTS
         media = self.sensory.trigger_sensation(state["arousal"], user_input)
         tts_audio = await self.tts.synthesize(text_response)
-        if tts_audio: media["tts" if media.get("audio") else "audio"] = tts_audio
+        if tts_audio:
+            media["tts" if media.get("audio") else "audio"] = tts_audio
 
         return {
             "text": text_response,
@@ -339,6 +366,6 @@ class NaMoOmegaEngine(BasePersonaEngine):
                 "relationship": state["relationship"].get_status(trust=trust),
                 "emotion": cog_output["emotion"] if cog_output else {},
                 "active_personas": state["personas"].active_personas,
-                "persona_traits": cog_output["persona_traits"] if cog_output else {}
-            }
+                "persona_traits": cog_output["persona_traits"] if cog_output else {},
+            },
         }

@@ -18,11 +18,13 @@ os.environ["DEBUG"] = "0"
 
 def _make_engine():
     """Return a NaMoOmegaEngine with LLM and RAG mocked out."""
+    from unittest.mock import AsyncMock
+
     with (
         patch("core.namo_omega_engine.TTSAdapter") as mock_tts_cls,
         patch("core.namo_omega_engine.NaMoOmegaEngine._resolve_llm_enabled", return_value=False),
     ):
-        mock_tts_cls.return_value = MagicMock(_client=None, synthesize=MagicMock(return_value=None))
+        mock_tts_cls.return_value = MagicMock(_client=None, synthesize=AsyncMock(return_value=None))
         from core.namo_omega_engine import NaMoOmegaEngine
 
         engine = NaMoOmegaEngine()
@@ -295,7 +297,7 @@ class TestNaMoOmegaEngineStatus:
 
 def _make_engine_with_llm():
     """Return NaMoOmegaEngine with a mocked OpenAI LLM client."""
-    from unittest.mock import MagicMock, patch
+    from unittest.mock import AsyncMock, MagicMock, patch
 
     with (
         patch("core.namo_omega_engine.TTSAdapter") as mock_tts_cls,
@@ -306,7 +308,7 @@ def _make_engine_with_llm():
             side_effect=lambda k, *a: "sk-fake" if k == "OPENAI_API_KEY" else (a[0] if a else None),
         ),  # noqa: E501
     ):
-        mock_tts_cls.return_value = MagicMock(_client=None, synthesize=MagicMock(return_value=None))
+        mock_tts_cls.return_value = MagicMock(_client=None, synthesize=AsyncMock(return_value=None))
         mock_openai_cls.return_value = MagicMock()
         from core.namo_omega_engine import NaMoOmegaEngine
 
@@ -319,7 +321,9 @@ class TestNaMoOmegaEngineLLMPath:
         engine = _make_engine()  # no LLM
         state = engine._get_session_state("llm-test")
         # Without client, should return None
-        result = await engine._generate_llm_response("hi", "llm-test", state, cog_output=None, intent="neutral")
+        result = await engine._generate_llm_response(
+            "hi", "llm-test", state, cog_output=None, intent="neutral"
+        )
         assert result is None
 
     def test_build_status_context_contains_arousal(self):
@@ -363,27 +367,33 @@ class TestNaMoOmegaEngineLLMPath:
         mock_client = MagicMock()
         mock_response = MagicMock()
         mock_response.choices = [MagicMock(message=MagicMock(content="LLM replied!"))]
-        
+
         async def mock_create(*args, **kwargs):
             return mock_response
+
         mock_client.chat.completions.create = mock_create
         engine.llm_client = mock_client
 
         state = engine._get_session_state("mock-llm")
-        result = await engine._generate_llm_response("hello", "mock-llm", state, cog_output=None, intent="neutral")
+        result = await engine._generate_llm_response(
+            "hello", "mock-llm", state, cog_output=None, intent="neutral"
+        )
         assert result == "LLM replied!"
 
     async def test_generate_llm_response_exception_returns_none(self):
         engine = _make_engine()
         mock_client = MagicMock()
-        
+
         async def mock_create(*args, **kwargs):
             raise Exception("API error")
+
         mock_client.chat.completions.create = mock_create
         engine.llm_client = mock_client
 
         state = engine._get_session_state("exc-llm")
-        result = await engine._generate_llm_response("hello", "exc-llm", state, cog_output=None, intent="neutral")
+        result = await engine._generate_llm_response(
+            "hello", "exc-llm", state, cog_output=None, intent="neutral"
+        )
         assert result is None
 
     async def test_stream_input_with_mock_llm_client(self):
@@ -393,12 +403,14 @@ class TestNaMoOmegaEngineLLMPath:
         chunk1 = MagicMock(choices=[MagicMock(delta=MagicMock(content="สวัสดี"))])
         chunk2 = MagicMock(choices=[MagicMock(delta=MagicMock(content="ค่ะ"))])
         chunk3 = MagicMock(choices=[MagicMock(delta=MagicMock(content=None))])
-        
+
         async def mock_create_stream(*args, **kwargs):
             async def async_iter():
                 for item in [chunk1, chunk2, chunk3]:
                     yield item
+
             return async_iter()
+
         mock_client.chat.completions.create = mock_create_stream
         engine.llm_client = mock_client
 
@@ -411,9 +423,10 @@ class TestNaMoOmegaEngineLLMPath:
     async def test_stream_input_llm_exception_falls_back(self):
         engine = _make_engine()
         mock_client = MagicMock()
-        
+
         async def mock_create(*args, **kwargs):
             raise Exception("stream fail")
+
         mock_client.chat.completions.create = mock_create
         engine.llm_client = mock_client
 
@@ -428,9 +441,10 @@ class TestNaMoOmegaEngineLLMPath:
         mock_client = MagicMock()
         mock_response = MagicMock()
         mock_response.choices = [MagicMock(message=MagicMock(content="LLM replied!"))]
-        
+
         async def mock_create(*args, **kwargs):
             return mock_response
+
         mock_client.chat.completions.create = mock_create
         engine.llm_client = mock_client
 
@@ -545,9 +559,10 @@ def _make_engine_with_mock_llm():
     mock_client = MagicMock()
     mock_response = MagicMock()
     mock_response.choices = [MagicMock(message=MagicMock(content="reply"))]
-    
+
     async def mock_create(*args, **kwargs):
         return mock_response
+
     mock_client.chat.completions.create = mock_create
     engine.llm_client = mock_client
     return engine
@@ -559,21 +574,25 @@ class TestIntentAwareRAG:
 
     async def test_rag_called_for_comfort_intent(self):
         mock_rag = MagicMock()
-        
+
         async def mock_retrieve_context(*args, **kwargs):
             return "ความทรงจำเก่า..."
+
         mock_rag.retrieve_context = mock_retrieve_context
         self.engine.rag_memory = mock_rag
 
         state = self.engine._get_session_state("rag-comfort")
-        await self.engine._generate_llm_response("กอดฉันหน่อยนะ", "rag-comfort", state, cog_output=None, intent="comfort")
+        await self.engine._generate_llm_response(
+            "กอดฉันหน่อยนะ", "rag-comfort", state, cog_output=None, intent="comfort"
+        )
         # Direct check is not needed since retrieve_context is stubbed and awaited
 
     async def test_rag_called_for_nostalgia_intent(self):
         mock_rag = MagicMock()
-        
+
         async def mock_retrieve_context(*args, **kwargs):
             return "วันนั้น..."
+
         mock_rag.retrieve_context = mock_retrieve_context
         self.engine.rag_memory = mock_rag
 
@@ -584,19 +603,23 @@ class TestIntentAwareRAG:
 
     async def test_rag_skipped_for_lust_intent(self):
         mock_rag = MagicMock()
-        
+
         async def mock_retrieve_context(*args, **kwargs):
             return "some memory"
+
         mock_rag.retrieve_context = mock_retrieve_context
         self.engine.rag_memory = mock_rag
 
         state = self.engine._get_session_state("rag-lust")
-        await self.engine._generate_llm_response("เงี่ยนมาก", "rag-lust", state, cog_output=None, intent="lust")
+        await self.engine._generate_llm_response(
+            "เงี่ยนมาก", "rag-lust", state, cog_output=None, intent="lust"
+        )
 
     async def test_rag_skipped_for_neutral_intent(self):
         mock_rag = MagicMock()
         self.engine.rag_memory = mock_rag
 
         state = self.engine._get_session_state("rag-neutral")
-        await self.engine._generate_llm_response("สวัสดี", "rag-neutral", state, cog_output=None, intent="neutral")
-
+        await self.engine._generate_llm_response(
+            "สวัสดี", "rag-neutral", state, cog_output=None, intent="neutral"
+        )

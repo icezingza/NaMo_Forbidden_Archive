@@ -7,6 +7,7 @@ from config import settings
 
 try:
     from elevenlabs.client import ElevenLabs as _ElevenLabsClient
+
     _ELEVENLABS_AVAILABLE = True
 except ImportError:
     _ElevenLabsClient = None  # type: ignore[assignment,misc]
@@ -44,10 +45,7 @@ class TTSAdapter:
         try:
             # ใช้ asyncio.to_thread เพื่อไม่ให้ blocking main thread
             audio_bytes = await asyncio.to_thread(
-                self._client.generate,
-                text=text,
-                voice=self._voice_id,
-                model=self._model
+                self._client.generate, text=text, voice=self._voice_id, model=self._model
             )
 
             # Consume generator if necessary
@@ -56,7 +54,7 @@ class TTSAdapter:
 
             filename = f"{uuid.uuid4().hex}.mp3"
             file_path = self._output_dir / filename
-            
+
             # Async write (via thread for standard filesystem)
             await asyncio.to_thread(file_path.write_bytes, audio_bytes)
 

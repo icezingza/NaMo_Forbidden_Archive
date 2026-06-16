@@ -152,12 +152,17 @@ class LearningEngine:
             min(playfulness_cap, playfulness_base + (lust_n / total) * playfulness_coeff), 3
         )  # noqa: E501
         self.persona_traits["vulnerability"] = round(
-            min(vulnerability_cap, vulnerability_base + (affection_n / total) * vulnerability_coeff),  # noqa: E501
+            min(
+                vulnerability_cap, vulnerability_base + (affection_n / total) * vulnerability_coeff
+            ),  # noqa: E501
             3,
         )
         # Expressiveness grows with overall experience (capped at 0.9)
         self.persona_traits["expressiveness"] = round(
-            min(expressiveness_cap, expressiveness_base + self._observation_count / expressiveness_coeff),  # noqa: E501
+            min(
+                expressiveness_cap,
+                expressiveness_base + self._observation_count / expressiveness_coeff,
+            ),  # noqa: E501
             3,
         )
         return dict(self.persona_traits)

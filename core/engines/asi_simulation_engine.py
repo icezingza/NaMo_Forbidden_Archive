@@ -3,6 +3,7 @@
 Full implementation requires Qdrant + Neo4j + OpenAI API.
 This version gracefully handles missing dependencies for testing/development.
 """
+
 import asyncio
 import logging
 import os
@@ -14,18 +15,21 @@ logger = logging.getLogger(__name__)
 # Try to import heavy dependencies
 try:
     from qdrant_client import AsyncQdrantClient
+
     HAS_QDRANT = True
 except ImportError:
     HAS_QDRANT = False
 
 try:
     from neo4j import AsyncGraphDatabase
+
     HAS_NEO4J = True
 except ImportError:
     HAS_NEO4J = False
 
 try:
     from openai import AsyncOpenAI
+
     HAS_OPENAI = True
 except ImportError:
     HAS_OPENAI = False
@@ -115,9 +119,7 @@ class ASISimulationEngine:
             if not self.openai:
                 return {
                     "status": "ASI engine partial",
-                    "hypothesis": (
-                        f"Synthesized from {len(fragments)} memory fragments"
-                    ),
+                    "hypothesis": (f"Synthesized from {len(fragments)} memory fragments"),
                     "fragments": fragments,
                     "mode": "simulation_no_llm",
                 }
@@ -209,10 +211,7 @@ class ASISimulationEngine:
                 logger.info("[ASI]: NaMo entering deep sleep... researching...")
                 discovery = await self.generate_hypothesis()
                 if isinstance(discovery, dict) and "content" in discovery:
-                    logger.info(
-                        f"[ASI]: Discovery completed: "
-                        f"{discovery['content'][:50]}..."
-                    )
+                    logger.info(f"[ASI]: Discovery completed: {discovery['content'][:50]}...")
                 else:
                     logger.debug(f"[ASI]: Discovery: {discovery}")
             except asyncio.CancelledError:
@@ -234,6 +233,7 @@ class ASISimulationEngine:
                 await self.neo4j_driver.close()
             except Exception as err:
                 logger.warning(f"[ASI]: Neo4j close failed: {err}")
+
 
 # Singleton for background processing
 asi_engine = ASISimulationEngine()

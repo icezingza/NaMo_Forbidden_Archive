@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_memory(tmp_path=None):
     """Return NaMoInfiniteMemory with OpenAI client mocked."""
     with patch("core.rag_memory_system.AsyncOpenAI") as mock_openai_cls:
@@ -24,6 +25,7 @@ def _make_memory(tmp_path=None):
 # ===========================================================================
 # retrieve_context
 # ===========================================================================
+
 
 class TestRetrieveContext:
     async def test_returns_string_when_no_files(self, tmp_path):
@@ -66,6 +68,7 @@ class TestRetrieveContext:
 # ingest_data
 # ===========================================================================
 
+
 class TestIngestData:
     def test_ingest_no_files_sets_fallback_memories(self, tmp_path):
         mem = _make_memory(tmp_path)
@@ -92,6 +95,7 @@ class TestIngestData:
 # _vector_search
 # ===========================================================================
 
+
 class TestVectorSearch:
     async def test_returns_none_when_no_index(self, tmp_path):
         mem = _make_memory(tmp_path)
@@ -105,4 +109,3 @@ class TestVectorSearch:
         with patch.object(mem, "_embed_with_retry", side_effect=Exception("embed error")):
             result = await mem._vector_search("query")
         assert result is None
-

@@ -182,9 +182,7 @@ class MemoryManager:
                 rec
                 for rec in filtered_records
                 if rec.get("dark_concepts")
-                and any(
-                    concept in rec["dark_concepts"] for concept in query.dark_concepts_filter
-                )  # noqa: E501
+                and any(concept in rec["dark_concepts"] for concept in query.dark_concepts_filter)  # noqa: E501
             ]
 
         # NOTE: Full-text search on 'query.query', emotion filtering, and time range filtering are not implemented here for brevity.  # noqa: E501
@@ -253,7 +251,8 @@ async def store(
 
 @app.post("/recall", response_model=list[MemoryRecord])
 async def recall(
-    query: MemoryQuery, manager: MemoryManager = Depends(get_memory_manager)  # noqa: B008
+    query: MemoryQuery,
+    manager: MemoryManager = Depends(get_memory_manager),  # noqa: B008
 ):
     """
     Recalls memory records based on a query.
