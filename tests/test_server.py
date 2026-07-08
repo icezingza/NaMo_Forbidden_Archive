@@ -559,3 +559,22 @@ def test_chat_with_engine_override(mock_settings):
     assert response.status_code == 200
     data = response.json()
     assert data["engine"] == "NaMoUltimateBrain"
+
+
+@patch("server.settings")
+def test_chat_with_unknown_engine_returns_400(mock_settings):
+    """An unknown engine name is rejected by the registry with HTTP 400."""
+    mock_settings.namo_api_keys = None
+    mock_settings.namo_api_default_plan = "public"
+    mock_settings.public_base_url = None
+    mock_settings.default_engine = "omega"
+    mock_settings.memory_logging = 0
+
+    with patch("server._store_memory_if_enabled"):
+        response = client.post(
+            "/chat",
+            json={"text": "hi", "engine": "does-not-exist", "session_id": "unknown-eng"},
+        )
+
+    assert response.status_code == 400
+    assert "unknown_engine" in response.json()["detail"]
