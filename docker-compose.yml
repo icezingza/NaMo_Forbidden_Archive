@@ -1,9 +1,43 @@
-version: '3.8'
+# Full local stack for NaMo Forbidden Archive.
+#   docker compose up --build
+# Requires a .env file at the repo root (copy from .env.example first).
 services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # server.py CMD uses ${PORT:-8080}; pin it to the mapped port
+      - PORT=8000
+      # reach the memory service over the compose network
+      - MEMORY_API_URL=http://memory:8081
+    depends_on:
+      - memory
+    restart: unless-stopped
+
+  memory:
+    build:
+      context: .
+      dockerfile: Dockerfile.memory
+    ports:
+      - "8081:8081"
+    env_file:
+      - .env
+    environment:
+      # Dockerfile.memory CMD uses $PORT with no default — must be set
+      - PORT=8081
+    restart: unless-stopped
+
+  # --- Optional backing services for the ASI engines (core/engines/*) ---
   qdrant:
     image: qdrant/qdrant:latest
     ports:
       - "6333:6333"
+
   neo4j:
     image: neo4j:latest
     environment:
