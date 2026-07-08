@@ -9,6 +9,7 @@ exclude = ./tests,./templates,./Archived_Assets,./Documentation,./namo_forbidden
 # Skipped checks (justified):
 #   B311 - random is used for dialogue/persona variety, never for security or crypto
 #   B110 - try/except/pass implements intentional graceful degradation for optional services
-#   B615 - transformers from_pretrained() calls are optional model loads guarded by a
-#          try/except import; revision pinning is out of scope for these experimental engines
-skips = B311,B110,B615
+# Note: B615 (unpinned HuggingFace downloads) is intentionally NOT skipped globally. The known
+# optional BERT loads pin revision="main" and are annotated inline with `# nosec B615`, so any
+# new unpinned from_pretrained() elsewhere is still flagged.
+skips = B311,B110

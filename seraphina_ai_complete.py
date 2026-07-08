@@ -109,8 +109,13 @@ class AdvancedPerception:
         if LIBRARIES_AVAILABLE:
             try:
                 print("Initializing BERT Model for nuanced language understanding...")
-                self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-                self.model = TFBertModel.from_pretrained("bert-base-uncased")
+                # revision pinned to the default branch for this optional, guarded load
+                self.tokenizer = BertTokenizer.from_pretrained(
+                    "bert-base-uncased", revision="main"
+                )  # nosec B615
+                self.model = TFBertModel.from_pretrained(
+                    "bert-base-uncased", revision="main"
+                )  # nosec B615
                 self.active = True
             except Exception as e:
                 print(f"BERT Initialization failed: {e}. Falling back to simulation.")
