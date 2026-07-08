@@ -49,15 +49,15 @@ NaMo Forbidden Archive เป็นระบบ AI Persona สำหรับบ
 ---
 
 ### **Phase 2: ปรับปรุงประสบการณ์ผู้ใช้ (UX/UI)** (1-2 สัปดาห์)
-- [ ] ปรับ Web UI ให้สวยงาม ทันสมัย และ Responsive
-- [ ] เพิ่มฟีเจอร์ History, Settings, Persona Switch
+- [~] ปรับ Web UI ให้สวยงาม ทันสมัย และ Responsive — ดีไซน์ ivory/crimson มีอยู่แล้ว + responsive breakpoints (ปรับเพิ่มได้)
+- [~] เพิ่มฟีเจอร์ History, Settings, Persona Switch — Settings + local history มีแล้ว; เหลือ Persona Switch UI
 - [ ] เพิ่ม Voice Input/Output (Whisper + ElevenLabs)
 - [ ] สร้าง Landing Page สำหรับขาย
-- [ ] เพิ่ม Age Gate / Content Warning
+- [x] เพิ่ม Age Gate / Content Warning — overlay 18+ (`web/`), ยืนยันแล้วจำผ่าน localStorage; verify ด้วย headless Chromium
 
 **Deliverable:** เว็บแอพที่ใช้งานง่ายและดูเป็นผลิตภัณฑ์
 
-**สถานะ:** ⬜ ยังไม่ทำ
+**สถานะ:** 🟡 กำลังทำ — ก้าว 1 (Age Gate) เสร็จ; เหลือ Persona Switch UI, Voice I/O, Landing Page, ขัดเกลา responsive
 
 ---
 

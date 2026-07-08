@@ -11,6 +11,7 @@ const STORAGE_KEYS = {
   sessionId: "namo_session_id",
   messages: "namo_messages",
   streamMode: "namo_stream_mode",
+  ageConfirmed: "namo_age_confirmed",
 };
 
 const state = {
@@ -563,15 +564,68 @@ function bindEvents() {
 }
 
 // ---------------------------------------------------------------------------
+// Age gate (18+) — mandatory front-door confirmation
+// ---------------------------------------------------------------------------
+// Returns true when the app may boot now (gate absent or already confirmed).
+// Returns false while the gate is blocking; boot() is deferred until confirm.
+function enforceAgeGate() {
+  const gate = document.getElementById("age-gate");
+  if (!gate) {
+    return true;
+  }
+  if (localStorage.getItem(STORAGE_KEYS.ageConfirmed) === "1") {
+    gate.classList.add("hidden");
+    return true;
+  }
+
+  // Block the background app: no NSFW history render, no network, no focus escape.
+  const appEl = document.querySelector(".app");
+  if (appEl) {
+    appEl.setAttribute("inert", "");
+  }
+
+  const confirmBtn = document.getElementById("age-confirm");
+  const leaveBtn = document.getElementById("age-leave");
+  if (confirmBtn) {
+    confirmBtn.focus();
+    confirmBtn.addEventListener("click", () => {
+      localStorage.setItem(STORAGE_KEYS.ageConfirmed, "1");
+      gate.classList.add("hidden");
+      if (appEl) {
+        appEl.removeAttribute("inert");
+      }
+      boot();
+    });
+  }
+  if (leaveBtn) {
+    leaveBtn.addEventListener("click", () => {
+      // Do not enter the app; replace the gate with a farewell that stays blocking.
+      gate.innerHTML =
+        '<div class="agegate__card"><div class="agegate__sigil"></div>' +
+        "<h2>ขอบคุณที่แวะมา</h2><p>เนื้อหานี้สำหรับผู้ที่มีอายุ 18 ปีขึ้นไปเท่านั้น</p></div>";
+    });
+  }
+  return false;
+}
+
+// ---------------------------------------------------------------------------
 // Boot
 // ---------------------------------------------------------------------------
-function init() {
+// Full application boot — runs exactly once, only after the age gate is passed.
+function boot() {
   loadState();
   updateSessionUI();
   updateStreamToggleUI();
   renderMessages();
   bindEvents();
   pingServer();
+}
+
+function init() {
+  if (!enforceAgeGate()) {
+    return; // gate is blocking; boot() will run when the user confirms 18+
+  }
+  boot();
 }
 
 init();
