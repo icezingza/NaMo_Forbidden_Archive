@@ -17,6 +17,7 @@ YELLOW = "\033[93m"
 RESET = "\033[0m"
 BOLD = "\033[1m"
 
+
 def test_import(dotted_path: str, error_ok: bool = False) -> bool:
     """Test if a module or class can be imported via dotted path."""
     try:
@@ -45,6 +46,7 @@ def verify_config() -> bool:
     print(f"\n{BOLD}Checking Config...{RESET}")
     try:
         from config import settings
+
         print(f"{GREEN}✓{RESET} config.Settings")
         print(f"  - NAMO_LLM_ENABLED: {settings.namo_llm_enabled}")
         print(f"  - SAFETY_FILTER_ENABLED: {settings.safety_filter_enabled}")
@@ -110,6 +112,7 @@ def verify_critical_fixes() -> bool:
     # Check 2: ASI engine can be imported gracefully
     try:
         from core.engines.asi_simulation_engine import asi_engine
+
         print(f"{GREEN}✓{RESET} core.engines.asi_simulation_engine")
         print(f"  - asi_engine available: {asi_engine is not None}")
     except ImportError as err:
@@ -118,6 +121,7 @@ def verify_critical_fixes() -> bool:
     # Check 3: Reasoning engine can be imported gracefully
     try:
         from core.engines.reasoning_engine import NaMoReasoningEngine
+
         print(f"{GREEN}✓{RESET} core.engines.reasoning_engine")
         engine = NaMoReasoningEngine()
         print(f"  - Engine initialized: {engine is not None}")
@@ -132,6 +136,7 @@ def verify_server() -> bool:
     print(f"\n{BOLD}Checking Server Module...{RESET}")
     try:
         from server import app
+
         print(f"{GREEN}✓{RESET} server.app (FastAPI)")
         print(f"  - Title: {app.title}")
         return True

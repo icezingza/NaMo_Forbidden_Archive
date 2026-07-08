@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_engine():
     from seraphina_ai_complete import SeraphinaAI
 
@@ -19,6 +20,7 @@ def _make_engine():
 # ===========================================================================
 # process_input contract
 # ===========================================================================
+
 
 class TestSeraphinaProcessInput:
     def setup_method(self):
@@ -64,6 +66,7 @@ class TestSeraphinaProcessInput:
 # get_status
 # ===========================================================================
 
+
 class TestSeraphinaGetStatus:
     def setup_method(self):
         self.engine = _make_engine()
@@ -90,6 +93,7 @@ class TestSeraphinaGetStatus:
 # _build_system_prompt
 # ===========================================================================
 
+
 class TestSeraphinaBuildSystemPrompt:
     def test_prompt_contains_name(self):
         engine = _make_engine()
@@ -105,6 +109,7 @@ class TestSeraphinaBuildSystemPrompt:
 # ===========================================================================
 # interact() — covers lines 366-413
 # ===========================================================================
+
 
 class TestSeraphinaInteract:
     def test_interact_returns_string(self, capsys):
@@ -146,6 +151,7 @@ class TestSeraphinaInteract:
 # SeraphinaIdentity — adapt_goal
 # ===========================================================================
 
+
 class TestSeraphinaIdentityAdaptGoal:
     def test_adapt_goal_adds_to_goals(self):
         from seraphina_ai_complete import SeraphinaIdentity
@@ -166,6 +172,7 @@ class TestSeraphinaIdentityAdaptGoal:
 # ===========================================================================
 # RelationshipManager — update branches
 # ===========================================================================
+
 
 class TestRelationshipManagerUpdate:
     def test_update_new_contact(self):

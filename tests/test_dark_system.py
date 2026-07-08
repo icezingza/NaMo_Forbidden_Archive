@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_engine():
     """Return DarkNaMoSystem with EmotionAdapter and MemoryAdapter mocked."""
     mock_emotion = MagicMock()
@@ -32,6 +33,7 @@ def _make_engine():
 # ===========================================================================
 # process_input — standard paths
 # ===========================================================================
+
 
 class TestDarkNaMoProcessInput:
     def setup_method(self):
@@ -74,6 +76,7 @@ class TestDarkNaMoProcessInput:
 # safe word
 # ===========================================================================
 
+
 class TestDarkNaMoSafeWord:
     def setup_method(self):
         self.engine = _make_engine()
@@ -95,6 +98,7 @@ class TestDarkNaMoSafeWord:
 # ===========================================================================
 # get_status
 # ===========================================================================
+
 
 class TestDarkNaMoGetStatus:
     def setup_method(self):
@@ -122,6 +126,7 @@ class TestDarkNaMoGetStatus:
 # ===========================================================================
 # _build_system_prompt (previously had bug: self.intensity)
 # ===========================================================================
+
 
 class TestDarkNaMoBuildSystemPrompt:
     def test_prompt_contains_context(self):

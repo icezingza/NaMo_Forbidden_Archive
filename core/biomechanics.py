@@ -6,13 +6,13 @@ class BiomechanicsEngine:
     Shared Engine for Biomechanical Realism & Ergonomics.
     รองรับทฤษฎีการขยับกล้ามเนื้อ, CAT technique, และ Waterfall positioning
     """
-    
+
     def __init__(self):
         self.techniques = [
             "CAT (Co-Active Tension) technique",
             "Waterfall positioning for maximum neural alignment",
             "Isometric muscle tension synchronization",
-            "Syncopated breathing rhythm"
+            "Syncopated breathing rhythm",
         ]
 
     def apply(self, text: str) -> str:

@@ -34,7 +34,7 @@ class NaMoInfiniteMemory:
         self.client = AsyncOpenAI()  # เปลี่ยนเป็น Async ตามมาตรฐาน NRE
         self.memories: list[str] = []
         self.is_loaded = False
-        
+
         # Configuration สำหรับ Micro-chunking
         self.CHUNK_SIZE = 150  # tokens (approx)
         self.CHUNK_OVERLAP = 20
@@ -66,19 +66,25 @@ class NaMoInfiniteMemory:
                     # Micro-chunking strategy: 100-150 tokens overlap
                     # Simple char-based approximation for now, should be token-based in production
                     stride = self.CHUNK_SIZE - self.CHUNK_OVERLAP
-                    chunks = [content[i : i + self.CHUNK_SIZE] for i in range(0, len(content), stride)]
+                    chunks = [
+                        content[i : i + self.CHUNK_SIZE] for i in range(0, len(content), stride)
+                    ]
                     self.memories.extend(chunks)
             except Exception as e:
                 print(f"อ่านไฟล์ {file_path} ไม่ได้: {e}")
 
         self._load_vector_index()
         self.is_loaded = True
-        print(f"[Memory System]: จดจำข้อมูลเสร็จสิ้น! มีคลังความรู้ {len(self.memories)} micro-fragments")
+        print(
+            f"[Memory System]: จดจำข้อมูลเสร็จสิ้น! มีคลังความรู้ {len(self.memories)} micro-fragments"
+        )
 
     def _load_vector_index(self):
         """โหลด FAISS index และ metadata"""
         if faiss is None:
-            print("[Memory System]: FAISS RAG is disabled (NAMO_RAG_ENABLED != 1). Skipping index load.")
+            print(
+                "[Memory System]: FAISS RAG is disabled (NAMO_RAG_ENABLED != 1). Skipping index load."
+            )
             return
 
         if self.meta_path.exists() and self.index_path.exists():
@@ -94,15 +100,16 @@ class NaMoInfiniteMemory:
         for attempt in range(1, attempts + 1):
             try:
                 response = await self.client.embeddings.create(
-                    model="text-embedding-3-large", 
-                    input=text
+                    model="text-embedding-3-large", input=text
                 )
                 return response.data[0].embedding
             except Exception as e:
                 if attempt == attempts:
                     raise
                 wait = delay * attempt
-                print(f"[Memory System]: retry embed {attempt}/{attempts} failed ({e}) -> wait {wait}s")
+                print(
+                    f"[Memory System]: retry embed {attempt}/{attempts} failed ({e}) -> wait {wait}s"
+                )
                 await asyncio.sleep(wait)
 
     async def _vector_search(self, user_input: str) -> str | None:
@@ -117,10 +124,12 @@ class NaMoInfiniteMemory:
 
         q_emb = np.array([q_emb]).astype("float32")
         distances, indices = self._faiss_index.search(q_emb, 1)
-        
+
         # ตรวจสอบ threshold เพื่อความแม่นยำ
         if distances[0][0] > self.SEARCH_THRESHOLD:
-            print(f"[Memory System]: Search result ignored (distance {distances[0][0]:.4f} > threshold)")
+            print(
+                f"[Memory System]: Search result ignored (distance {distances[0][0]:.4f} > threshold)"
+            )
             return None
 
         best_idx = int(indices[0][0])

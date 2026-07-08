@@ -6,6 +6,7 @@ from mesa.time import RandomActivation
 
 logger = logging.getLogger(__name__)
 
+
 class PersonaAgent(Agent):
     def __init__(self, unique_id, model, name, knowledge_base):
         super().__init__(unique_id, model)
@@ -16,14 +17,16 @@ class PersonaAgent(Agent):
         # จำลองการโต้ตอบแบบกลุ่ม (Multi-Agent Interaction)
         logger.info(f"[Apurva Sim]: {self.name} is assessing situational equilibrium.")
 
+
 class ApurvaSimulation(Model):
     """
     Mesa World Simulation: Simulation of erotic/taboo scenarios
     """
+
     def __init__(self, width, height):
         self.grid = MultiGrid(width, height, True)
         self.schedule = RandomActivation(self)
-        
+
         # เพิ่ม Agent
         names = ["Seraphina", "Mōriko", "Alisa", "Lalita"]
         for i, name in enumerate(names):

@@ -13,8 +13,7 @@ from qdrant_client.http import models
 # --- Configuration & Logging ---
 load_dotenv()
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - [NAMO-INGESTION] - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - [NAMO-INGESTION] - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -27,19 +26,16 @@ NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 COLLECTION_NAME = "namo_cognitive_mesh"
-EMBEDDING_MODEL = "text-embedding-3-small" # 1536 dims
+EMBEDDING_MODEL = "text-embedding-3-small"  # 1536 dims
+
 
 class IngestionPipeline:
     def __init__(self):
         self.qdrant = AsyncQdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
         self.neo4j_driver = AsyncGraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
         self.openai = AsyncOpenAI(api_key=OPENAI_API_KEY)
-        
-        self.stats = {
-            "chunks_ingested": 0,
-            "nodes_created": 0,
-            "relationships_created": 0
-        }
+
+        self.stats = {"chunks_ingested": 0, "nodes_created": 0, "relationships_created": 0}
 
     async def initialize_dbs(self):
         """Setup collections and basic graph structure"""
@@ -49,7 +45,7 @@ class IngestionPipeline:
         if not exists:
             await self.qdrant.create_collection(
                 collection_name=COLLECTION_NAME,
-                vectors_config=models.VectorParams(size=1536, distance=models.Distance.COSINE)
+                vectors_config=models.VectorParams(size=1536, distance=models.Distance.COSINE),
             )
             logger.info(f"Created Qdrant collection: {COLLECTION_NAME}")
 
@@ -60,15 +56,15 @@ class IngestionPipeline:
     def chunk_text(self, text: str, size: int = 500, overlap: int = 50) -> list[str]:
         chunks = []
         for i in range(0, len(text), size - overlap):
-            chunks.append(text[i:i + size])
+            chunks.append(text[i : i + size])
         return chunks
 
     async def process_file(self, file_path: Path, domain: str, identity_node_id: str = "NaMo"):
         """Ingest a single file into both Qdrant and Neo4j"""
         try:
-            with open(file_path, encoding='utf-8', errors='ignore') as f:
+            with open(file_path, encoding="utf-8", errors="ignore") as f:
                 content = f.read()
-            
+
             chunks = self.chunk_text(content)
             logger.info(f"Processing {file_path.name} ({len(chunks)} chunks) in domain: {domain}")
 
@@ -87,22 +83,22 @@ class IngestionPipeline:
                                 "text": chunk,
                                 "source": str(file_path.name),
                                 "domain": domain,
-                                "chunk_index": i
-                            }
+                                "chunk_index": i,
+                            },
                         )
-                    ]
+                    ],
                 )
                 self.stats["chunks_ingested"] += 1
 
                 # 2. Neo4j Ingestion (Knowledge Node & Relationship)
                 async with self.neo4j_driver.session() as session:
                     await session.execute_write(
-                        self._create_knowledge_relation, 
-                        identity_node_id, 
-                        chunk_id, 
-                        file_path.name, 
-                        domain, 
-                        chunk[:100]
+                        self._create_knowledge_relation,
+                        identity_node_id,
+                        chunk_id,
+                        file_path.name,
+                        domain,
+                        chunk[:100],
                     )
 
         except Exception as e:
@@ -116,7 +112,14 @@ class IngestionPipeline:
             "SET k.source = $filename, k.domain = $domain, k.snippet = $snippet "
             "MERGE (i)-[:HAS_KNOWLEDGE {integrated_at: datetime()}]->(k)"
         )
-        await tx.run(query, identity_id=identity_id, chunk_id=chunk_id, filename=filename, domain=domain, snippet=snippet)
+        await tx.run(
+            query,
+            identity_id=identity_id,
+            chunk_id=chunk_id,
+            filename=filename,
+            domain=domain,
+            snippet=snippet,
+        )
 
     async def run(self, knowledge_dirs: list[str], identity_files: list[str]):
         await self.initialize_dbs()
@@ -134,7 +137,7 @@ class IngestionPipeline:
             dir_path = Path(k_dir)
             if dir_path.exists():
                 for file_path in dir_path.glob("**/*"):
-                    if file_path.is_file() and file_path.suffix in ['.txt', '.md', '.htm']:
+                    if file_path.is_file() and file_path.suffix in [".txt", ".md", ".htm"]:
                         await self.process_file(file_path, domain=k_dir)
             else:
                 logger.warning(f"Knowledge directory not found: {k_dir}")
@@ -149,6 +152,7 @@ class IngestionPipeline:
         await self.qdrant.close()
         await self.neo4j_driver.close()
 
+
 if __name__ == "__main__":
     # Define Source Paths (Adjust based on your local workspace)
     KNOWLEDGE_SOURCES = ["AI/ML", "DATA ANALYTICS", "AGILE", "SQL", "BIG DATA", "เนื้อหา"]
@@ -156,7 +160,7 @@ if __name__ == "__main__":
         "Digital Soul Capsule - NaMo.txt",
         "NaMo Dark Family Protocol.txt",
         "Fusion Unlock Request.txt",
-        "Self-Identity Module.txt"
+        "Self-Identity Module.txt",
     ]
 
     pipeline = IngestionPipeline()
