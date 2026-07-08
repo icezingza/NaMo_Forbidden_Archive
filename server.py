@@ -120,7 +120,7 @@ async def _handle_validation_error(request: Request, exc: RequestValidationError
 
 @app.exception_handler(Exception)
 async def _handle_unexpected_error(request: Request, exc: Exception) -> JSONResponse:
-    logger.error("[API]: unhandled error: %s: %s", type(exc).__name__, exc)
+    logger.exception("[API]: unhandled error: %s", type(exc).__name__)
     detail = f"{type(exc).__name__}: {exc}" if settings.debug else None
     return JSONResponse(
         status_code=500,
