@@ -30,10 +30,10 @@ NaMo Forbidden Archive เป็นระบบ AI Persona สำหรับบ
 
 **โค้ดและคุณภาพ**
 - [x] Refactor โค้ดหลักให้ตรง PEP 8 (black + ruff) — CI เขียวครบ
-- [ ] แก้ Bug และเพิ่ม Error Handling ที่เหมาะสม (ก้าว 3)
+- [x] แก้ Bug และเพิ่ม Error Handling ที่เหมาะสม — `core/exceptions.py` + global handlers (server + memory), client-safe JSON, ซ่อน stack trace เมื่อ `debug=False`
 - [x] เพิ่ม Structured Logging — `config.setup_logging()` + entry points `server.py`/`memory_service.py`
-- [ ] เพิ่ม/ปรับ Unit Test ให้ครอบคลุมมากขึ้น (ก้าว 4; ปัจจุบัน 344 tests)
-- [~] แยก Configuration สำหรับ Production / Development — `debug`/`log_level` คุม logging แล้ว, เหลือ error-detail/prod hardening
+- [~] เพิ่ม/ปรับ Unit Test ให้ครอบคลุมมากขึ้น (ก้าว 4; ปัจจุบัน 351 tests — error paths ครอบคลุมแล้ว)
+- [x] แยก Configuration สำหรับ Production / Development — `debug`/`log_level` คุม logging + error-detail exposure
 
 **ระบบ**
 - [x] ทำให้ Docker + docker-compose ใช้งานได้สมบูรณ์ — compose มี `api` + `memory` (+qdrant/neo4j), `docker compose up --build` รันทั้ง stack
@@ -44,7 +44,7 @@ NaMo Forbidden Archive เป็นระบบ AI Persona สำหรับบ
 
 **Deliverable:** Docker image ที่เสถียร + API ที่พร้อมใช้งาน
 
-**สถานะ:** 🟡 กำลังทำ (~85%) — ก้าว 1 (Logging) + ก้าว 2 (Docker Compose) เสร็จ; เหลือ Error Handling, Tests
+**สถานะ:** 🟡 กำลังทำ (~95%) — ก้าว 1 (Logging), 2 (Docker Compose), 3 (Error Handling) เสร็จ; เหลือ ก้าว 4 (เติม Unit Tests เพิ่มเติม)
 
 ---
 
