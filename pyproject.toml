@@ -7,7 +7,7 @@ line-length = 100
 target-version = "py311"
 fix = false
 exclude = [
-    "build", "dist", ".venv", "templates", "namo_forbidden_archive",
+    "build", "dist", ".venv", "Archived_Assets",
     "core/nre_anlrs_engine.py",
     "core/seraphina_quantum_core.py",
     "merge_knowledge.py",
