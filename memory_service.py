@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from datetime import datetime
 from threading import Lock
@@ -6,7 +7,10 @@ from threading import Lock
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from config import settings
+from config import settings, setup_logging
+
+setup_logging()
+logger = logging.getLogger("namo.memory")
 
 # --- Pydantic Models based on OpenAPI Spec ---
 
@@ -94,7 +98,7 @@ class MemoryManager:
             A dictionary containing the loaded memory data.
         """
         if not os.path.exists(self.file_path):
-            print(f"[!] Memory file not found, creating new one: {self.file_path}")
+            logger.info("[MemoryService]: creating new memory file: %s", self.file_path)
             # Added a top-level key to store records
             return {"records": [], "protocol_metadata": {}}
         with open(self.file_path, encoding="utf-8") as f:
@@ -285,4 +289,4 @@ async def health_check(manager: MemoryManager = Depends(get_memory_manager)):  #
     return {"status": "ok", "memory_records": len(manager.memory.get("records", []))}
 
 
-print("Memory Service script created. Ready to be run with Uvicorn.")
+logger.info("[MemoryService]: module loaded; ready to run with Uvicorn.")

@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import time
 import uuid
 from collections import defaultdict
@@ -17,7 +18,10 @@ from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from config import settings
+from config import settings, setup_logging
+
+setup_logging()
+logger = logging.getLogger("namo.server")
 from core.base_persona import BasePersonaEngine
 from core.dark_system import DarkNaMoSystem
 from core.namo_omega_engine import NaMoOmegaEngine
@@ -127,7 +131,7 @@ class _EngineRegistry:
                 detail=f"unknown_engine '{name}'. available: {cls.available()}",
             )
         if name not in cls._instances:
-            print(f"[EngineRegistry]: loading '{name}'...")
+            logger.info(f"[EngineRegistry]: loading '{name}'...")
             cls._instances[name] = cls._constructors[name]()
         return cls._instances[name]
 
@@ -144,7 +148,7 @@ _EngineRegistry.register("dark", DarkNaMoSystem)
 _EngineRegistry.register("ultimate", NaMoUltimateBrain)
 
 # Pre-load default engine at startup
-print("[System]: Awakening NaMo Omega...")
+logger.info("[System]: Awakening NaMo Omega...")
 engine = _EngineRegistry.get(settings.default_engine)
 
 # Optional: ASI Simulation Engine (graceful fallback if dependencies missing)
@@ -152,7 +156,7 @@ asi_engine = None
 try:
     from core.engines.asi_simulation_engine import asi_engine
 except ImportError as err:
-    print(f"[Warning]: ASI Simulation Engine not available ({err})")
+    logger.warning(f"[Warning]: ASI Simulation Engine not available ({err})")
 
 
 @app.post("/api/dream")
@@ -168,7 +172,7 @@ async def trigger_dream(x_admin_secret: str | None = Header(default=None)):
         asyncio.create_task(asi_engine.generate_hypothesis())
         return {"status": "NaMo is dreaming and researching..."}
     except Exception as exc:
-        print(f"[Dream]: Error: {exc}")
+        logger.error(f"[Dream]: Error: {exc}")
         return {"status": "error", "detail": str(exc)}
 
 
@@ -233,7 +237,7 @@ def _store_memory_if_enabled(
     try:
         requests.post(memory_url, json=payload, headers=headers, timeout=2)
     except requests.RequestException as exc:
-        print(f"[MemoryLog]: Failed to store memory: {exc}")
+        logger.warning(f"[MemoryLog]: Failed to store memory: {exc}")
 
 
 def _parse_api_key_map(raw: str | None) -> dict[str, str]:
@@ -274,7 +278,7 @@ def _log_usage(event: dict) -> None:
         with open(path, "a", encoding="utf-8") as handle:
             handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
     except OSError as exc:
-        print(f"[UsageLog]: Failed to write usage event: {exc}")
+        logger.warning(f"[UsageLog]: Failed to write usage event: {exc}")
 
 
 def _get_base_url(request: Request) -> str:
