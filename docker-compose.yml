@@ -13,8 +13,9 @@ services:
     environment:
       # server.py CMD uses ${PORT:-8080}; pin it to the mapped port
       - PORT=8000
-      # reach the memory service over the compose network
-      - MEMORY_API_URL=http://memory:8081
+      # reach the memory service over the compose network.
+      # server.py POSTs directly to this URL, so it must include the /store path.
+      - MEMORY_API_URL=http://memory:8081/store
     depends_on:
       - memory
     restart: unless-stopped
