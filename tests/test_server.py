@@ -483,6 +483,61 @@ def test_engine_status_endpoint():
 
 
 # ---------------------------------------------------------------------------
+# /api/dream endpoint
+# ---------------------------------------------------------------------------
+
+
+def test_dream_returns_403_with_wrong_admin_secret():
+    """POST /api/dream returns 403 when ADMIN_SECRET is set and header is wrong."""
+    with patch("server.settings") as mock_settings:
+        mock_settings.admin_secret = "correct-secret"
+        response = client.post("/api/dream", headers={"x-admin-secret": "wrong"})
+    assert response.status_code == 403
+
+
+def test_dream_reports_missing_engine():
+    """POST /api/dream returns a graceful payload when the ASI engine is unavailable."""
+    with patch("server.settings") as mock_settings, patch("server.asi_engine", None):
+        mock_settings.admin_secret = None
+        response = client.post("/api/dream")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ASI engine not initialized"
+    assert data["error"] == "dependencies_missing"
+
+
+def test_dream_triggers_hypothesis_when_engine_available():
+    """POST /api/dream schedules hypothesis generation when the ASI engine is loaded."""
+    from unittest.mock import AsyncMock
+
+    mock_engine = MagicMock()
+    mock_engine.generate_hypothesis = AsyncMock(return_value={"hypothesis": "test"})
+
+    with patch("server.settings") as mock_settings, patch("server.asi_engine", mock_engine):
+        mock_settings.admin_secret = None
+        response = client.post("/api/dream")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "NaMo is dreaming and researching..."}
+    mock_engine.generate_hypothesis.assert_called_once()
+
+
+def test_dream_returns_error_payload_on_failure():
+    """POST /api/dream returns an error payload instead of raising when scheduling fails."""
+    mock_engine = MagicMock()
+    mock_engine.generate_hypothesis.side_effect = RuntimeError("loop closed")
+
+    with patch("server.settings") as mock_settings, patch("server.asi_engine", mock_engine):
+        mock_settings.admin_secret = None
+        response = client.post("/api/dream")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "error"
+    assert "loop closed" in data["detail"]
+
+
+# ---------------------------------------------------------------------------
 # Per-request engine override
 # ---------------------------------------------------------------------------
 
