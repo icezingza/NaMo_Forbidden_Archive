@@ -707,6 +707,38 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
+   Persona picker (topbar engine selector)
+   --------------------------------------------------------------------------- */
+.persona-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.persona-picker__label {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--olive);
+}
+
+.persona-picker__select {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--bg-ink);
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.persona-picker__select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ---------------------------------------------------------------------------
    Age gate (18+) — mandatory front-door confirmation, not a content filter
    --------------------------------------------------------------------------- */
 .agegate {

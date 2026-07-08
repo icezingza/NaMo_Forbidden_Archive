@@ -12,7 +12,10 @@ const STORAGE_KEYS = {
   messages: "namo_messages",
   streamMode: "namo_stream_mode",
   ageConfirmed: "namo_age_confirmed",
+  engine: "namo_engine",
 };
+
+const DEFAULT_ENGINE = "omega";
 
 const state = {
   baseUrl: "",
@@ -20,6 +23,7 @@ const state = {
   messages: [],
   loading: false,
   streamMode: true,
+  engine: DEFAULT_ENGINE,
 };
 
 const dom = {
@@ -49,6 +53,7 @@ const dom = {
   statusStageDesc: document.getElementById("status-stage-desc"),
   emotionProse: document.getElementById("emotion-prose"),
   streamToggle: document.getElementById("stream-toggle"),
+  personaSelect: document.getElementById("persona-select"),
   ebarJoy: document.getElementById("ebar-joy"),
   ebarArousal: document.getElementById("ebar-arousal"),
   ebarTrust: document.getElementById("ebar-trust"),
@@ -104,6 +109,9 @@ function loadState() {
 
   const storedStream = localStorage.getItem(STORAGE_KEYS.streamMode);
   state.streamMode = storedStream === null ? true : storedStream === "1";
+
+  const storedEngine = localStorage.getItem(STORAGE_KEYS.engine);
+  state.engine = storedEngine || DEFAULT_ENGINE;
 }
 
 function saveMessages() {
@@ -346,7 +354,7 @@ async function sendMessagePlain(text) {
     const response = await fetch(`${state.baseUrl}/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, session_id: state.sessionId }),
+      body: JSON.stringify({ text, session_id: state.sessionId, engine: state.engine }),
     });
 
     if (!response.ok) throw new Error(`API error: ${response.status}`);
@@ -396,7 +404,7 @@ async function sendMessageStream(text) {
     const response = await fetch(`${state.baseUrl}/v1/chat/stream`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, session_id: state.sessionId }),
+      body: JSON.stringify({ text, session_id: state.sessionId, engine: state.engine }),
     });
 
     if (!response.ok) throw new Error(`API error: ${response.status}`);
@@ -549,6 +557,13 @@ function bindEvents() {
     updateStreamToggleUI();
   });
 
+  if (dom.personaSelect) {
+    dom.personaSelect.addEventListener("change", () => {
+      state.engine = dom.personaSelect.value || DEFAULT_ENGINE;
+      localStorage.setItem(STORAGE_KEYS.engine, state.engine);
+    });
+  }
+
   dom.saveSettings.addEventListener("click", () => {
     const value = dom.baseUrlInput.value.trim();
     if (value) {
@@ -616,6 +631,9 @@ function boot() {
   loadState();
   updateSessionUI();
   updateStreamToggleUI();
+  if (dom.personaSelect) {
+    dom.personaSelect.value = state.engine;
+  }
   renderMessages();
   bindEvents();
   pingServer();
