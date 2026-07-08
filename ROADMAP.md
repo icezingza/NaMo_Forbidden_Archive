@@ -36,7 +36,7 @@ NaMo Forbidden Archive เป็นระบบ AI Persona สำหรับบ
 - [~] แยก Configuration สำหรับ Production / Development — `debug`/`log_level` คุม logging แล้ว, เหลือ error-detail/prod hardening
 
 **ระบบ**
-- [ ] ทำให้ Docker + docker-compose ใช้งานได้สมบูรณ์ (ก้าว 2 — ปัจจุบัน compose มีแค่ qdrant/neo4j)
+- [x] ทำให้ Docker + docker-compose ใช้งานได้สมบูรณ์ — compose มี `api` + `memory` (+qdrant/neo4j), `docker compose up --build` รันทั้ง stack
 - [x] แยก Memory Service เป็น microservice — `memory_service.py` + `Dockerfile.memory`
 - [x] เพิ่ม Security (Rate Limiting, CORS, Admin Secret, API Key)
 - [x] เพิ่ม Session Management และ Auto Cleanup — `SESSION_TTL_SECONDS` + cleanup loop
@@ -44,7 +44,7 @@ NaMo Forbidden Archive เป็นระบบ AI Persona สำหรับบ
 
 **Deliverable:** Docker image ที่เสถียร + API ที่พร้อมใช้งาน
 
-**สถานะ:** 🟡 กำลังทำ (~75%) — ก้าว 1 (Structured Logging) เสร็จ; เหลือ Docker Compose, Error Handling, Tests
+**สถานะ:** 🟡 กำลังทำ (~85%) — ก้าว 1 (Logging) + ก้าว 2 (Docker Compose) เสร็จ; เหลือ Error Handling, Tests
 
 ---
 
