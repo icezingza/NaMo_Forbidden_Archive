@@ -525,12 +525,9 @@ def test_dream_triggers_hypothesis_when_engine_available():
 def test_dream_returns_error_payload_on_failure():
     """POST /api/dream returns an error payload instead of raising when scheduling fails."""
     mock_engine = MagicMock()
+    mock_engine.generate_hypothesis.side_effect = RuntimeError("loop closed")
 
-    with (
-        patch("server.settings") as mock_settings,
-        patch("server.asi_engine", mock_engine),
-        patch("server.asyncio.create_task", side_effect=RuntimeError("loop closed")),
-    ):
+    with patch("server.settings") as mock_settings, patch("server.asi_engine", mock_engine):
         mock_settings.admin_secret = None
         response = client.post("/api/dream")
 
