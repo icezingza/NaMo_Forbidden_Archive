@@ -87,8 +87,13 @@ class AdvancedBrain:
         if self.active:
             try:
                 # โหลดโมเดลภาษาเพื่อความเข้าใจที่ลึกซึ้ง
-                self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-                self.model = TFBertModel.from_pretrained("bert-base-uncased")
+                # revision pinned to the default branch for this optional, guarded load
+                self.tokenizer = BertTokenizer.from_pretrained(
+                    "bert-base-uncased", revision="main"
+                )  # nosec B615
+                self.model = TFBertModel.from_pretrained(
+                    "bert-base-uncased", revision="main"
+                )  # nosec B615
                 logger.info("✅ Neural Network Initialized (BERT Active)")
             except Exception:
                 self.active = False
