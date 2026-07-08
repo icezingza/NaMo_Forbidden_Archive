@@ -112,3 +112,20 @@ def test_remote_failure_does_not_raise(tmp_path):
     ):
         # Should not raise
         adapter.store_interaction("msg", "resp")
+
+
+def test_store_local_write_error_is_silent(local_adapter):
+    """A corrupt local store makes json.load fail — store_interaction must not raise."""
+    adapter, db = local_adapter
+    with open(db, "w", encoding="utf-8") as f:
+        f.write("{ not valid json")
+    # json.load inside store_interaction raises; the adapter swallows it
+    adapter.store_interaction("hi", "there", session_id="s-corrupt")
+
+
+def test_get_last_conversation_corrupt_file_returns_none(local_adapter):
+    """A corrupt store file yields None rather than raising."""
+    adapter, db = local_adapter
+    with open(db, "w", encoding="utf-8") as f:
+        f.write("]]not json[[")
+    assert adapter.get_last_conversation() is None
