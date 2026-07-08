@@ -43,8 +43,7 @@ Visual_Scenes/         → static image assets  → served at /media/visual
 learning_set/          → input ZIPs for FAISS knowledge base
 tools/                 → one-off utility scripts (not part of the app)
 emotion_fusion_engine/ → standalone multi-modal emotion analysis service
-templates/             → improved/refactored engine templates (not imported by server.py)
-Archived_Assets/       → archived legacy files
+Archived_Assets/       → archived legacy files + refactor/experimental "improved" templates (not imported)
 Documentation/         → legacy documentation
 ```
 
@@ -309,7 +308,7 @@ Rules:
 - `test_main.py` at root is legacy — add new tests under `tests/` only
 
 CI runs five gates in `build-test` (ruff → black → pytest → pip-audit → bandit). `bandit` is configured
-via the root `.bandit` file (excludes test/template/archive trees; skips B311/B110 with justifications;
+via the root `.bandit` file (excludes test/archive/docs trees; skips B311/B110 with justifications;
 B615 is scoped to inline `# nosec` on the optional BERT loads, not skipped globally).
 
 ---
