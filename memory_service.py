@@ -4,10 +4,13 @@ import os
 from datetime import datetime
 from threading import Lock
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from config import settings, setup_logging
+from core.exceptions import NamoAPIError, error_payload
 
 setup_logging()
 logger = logging.getLogger("namo.memory")
@@ -224,6 +227,36 @@ class MemoryManager:
 
 app = FastAPI(title="Infinity Awareness Engine - Memory Service")
 memory_manager = MemoryManager()  # Will now respect the MEMORY_FILE_PATH env var
+
+
+# --- Global error handlers: consistent, client-safe JSON; no stack traces in prod ---
+@app.exception_handler(NamoAPIError)
+async def _handle_namo_error(request: Request, exc: NamoAPIError) -> JSONResponse:
+    logger.warning("[MemoryService]: %s (%s)", exc.error_code, exc.message)
+    detail = exc.detail if settings.debug else None
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=error_payload(exc.message, exc.error_code, detail),
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def _handle_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
+    detail = str(exc.errors()) if settings.debug else None
+    return JSONResponse(
+        status_code=422,
+        content=error_payload("Invalid request", "VALIDATION_ERROR", detail),
+    )
+
+
+@app.exception_handler(Exception)
+async def _handle_unexpected_error(request: Request, exc: Exception) -> JSONResponse:
+    logger.exception("[MemoryService]: unhandled error: %s", type(exc).__name__)
+    detail = f"{type(exc).__name__}: {exc}" if settings.debug else None
+    return JSONResponse(
+        status_code=500,
+        content=error_payload("Internal server error", "INTERNAL_ERROR", detail),
+    )
 
 
 def get_memory_manager() -> MemoryManager:
