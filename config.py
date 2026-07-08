@@ -1,3 +1,5 @@
+import logging
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -86,3 +88,24 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
+def setup_logging(level: str | None = None) -> None:
+    """Configure root logging from settings.
+
+    In development (``settings.debug`` True) the level floor is DEBUG; otherwise
+    it honors ``settings.log_level`` (or an explicit ``level`` override). Safe to
+    call more than once — reconfigures the root handler idempotently.
+
+    Log messages keep the ``[ComponentName]: message`` convention in their text;
+    the formatter adds timestamp, level, and logger name around it.
+    """
+    resolved = (level or settings.log_level or "INFO").upper()
+    numeric_level = getattr(logging, resolved, logging.INFO)
+    if settings.debug:
+        numeric_level = logging.DEBUG
+    logging.basicConfig(
+        level=numeric_level,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        force=True,
+    )
