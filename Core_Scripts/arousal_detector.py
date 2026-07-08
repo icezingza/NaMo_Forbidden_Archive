@@ -52,7 +52,18 @@ class ArousalDetector:
                 "warm",
                 "affection",
             ],
-            "low": ["สวัสดี", "คุย", "อ่อนโยน", "เบาๆ", "hello", "hi", "talk", "hey", "greet", "chat"],
+            "low": [
+                "สวัสดี",
+                "คุย",
+                "อ่อนโยน",
+                "เบาๆ",
+                "hello",
+                "hi",
+                "talk",
+                "hey",
+                "greet",
+                "chat",
+            ],
         }
 
     def analyze(self, text: str) -> float:

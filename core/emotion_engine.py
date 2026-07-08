@@ -80,11 +80,13 @@ class EmotionEngine:
     @property
     def DECAY_RATE(self) -> float:
         from config import settings
+
         return getattr(settings, "emotion_decay_rate", 0.06)
 
     @property
     def INERTIA(self) -> float:
         from config import settings
+
         return getattr(settings, "emotion_inertia", 0.65)
 
     # Maps trigger names → direction vector (scaled later by intensity)

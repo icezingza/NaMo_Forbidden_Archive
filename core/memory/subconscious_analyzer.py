@@ -6,6 +6,7 @@ from arousal_detector import ArousalDetector
 
 logger = logging.getLogger(__name__)
 
+
 class SubconsciousAnalyzer:
     """
     วิเคราะห์ความฝันและจิตใต้สำนึก (Dream/Subconscious Analysis Engine)
@@ -20,18 +21,18 @@ class SubconsciousAnalyzer:
         ประมวลผลบันทึกความฝันเทียบกับอารมณ์ในปัจจุบัน
         """
         logger.info("[Subconscious]: Analyzing dream patterns...")
-        
+
         # วิเคราะห์ความเข้มข้นจากความฝัน
         analysis = self.detector.detect_arousal(dream_text)
-        
+
         # สร้างโปรไฟล์จิตใต้สำนึก
         subconscious_profile = {
             "timestamp": datetime.utcnow().isoformat(),
             "dream_intensity": analysis["arousal_level"],
             "correlation_score": abs(analysis["arousal_level"] - current_arousal),
-            "key_themes": self._extract_themes(dream_text)
+            "key_themes": self._extract_themes(dream_text),
         }
-        
+
         return subconscious_profile
 
     def _extract_themes(self, text: str) -> list[str]:

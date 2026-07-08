@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
 import requests
@@ -169,6 +170,7 @@ async def trigger_dream(x_admin_secret: str | None = Header(default=None)):
     except Exception as exc:
         print(f"[Dream]: Error: {exc}")
         return {"status": "error", "detail": str(exc)}
+
 
 # Rate limiter instance — initialized from settings
 _rate_limiter = _RateLimiter(
@@ -376,8 +378,12 @@ async def chat_stream(
                 async for chunk in stream:
                     full_text.append(chunk)
                     data = json.dumps(
-                        {"chunk": chunk, "session_id": session_id,
-                         "plan": plan, "engine": engine_name},
+                        {
+                            "chunk": chunk,
+                            "session_id": session_id,
+                            "plan": plan,
+                            "engine": engine_name,
+                        },
                         ensure_ascii=False,
                     )
                     yield f"data: {data}\n\n"
@@ -385,8 +391,12 @@ async def chat_stream(
                 for chunk in stream:
                     full_text.append(chunk)
                     data = json.dumps(
-                        {"chunk": chunk, "session_id": session_id,
-                         "plan": plan, "engine": engine_name},
+                        {
+                            "chunk": chunk,
+                            "session_id": session_id,
+                            "plan": plan,
+                            "engine": engine_name,
+                        },
                         ensure_ascii=False,
                     )
                     yield f"data: {data}\n\n"
@@ -405,9 +415,7 @@ async def chat_stream(
                     "text_length": len(payload.text),
                 }
             )
-            done_msg = json.dumps(
-                {"done": True, "session_id": session_id, "engine": engine_name}
-            )
+            done_msg = json.dumps({"done": True, "session_id": session_id, "engine": engine_name})
             yield f"data: {done_msg}\n\n"
 
     return StreamingResponse(_event_stream(), media_type="text/event-stream")
@@ -467,17 +475,19 @@ def list_sessions(x_admin_secret: str | None = Header(default=None)):
 
 
 @app.get("/v1/admin/explain")
-
 def explain_decision(x_admin_secret: str | None = Header(default=None)):
     """Admin endpoint to explain AI decision process."""
     _assert_admin(x_admin_secret)
     return {
         "explanation": {
-            name: inst.fusion_engine.explain() if hasattr(inst, "fusion_engine") else "No fusion engine"  # noqa: E501
+            name: (
+                inst.fusion_engine.explain()
+                if hasattr(inst, "fusion_engine")
+                else "No fusion engine"
+            )  # noqa: E501
             for name, inst in _EngineRegistry._instances.items()
         }
     }
-
 
 
 @app.delete("/v1/admin/sessions/{session_id}")

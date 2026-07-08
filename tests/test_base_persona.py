@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 # Minimal concrete engine for testing BasePersonaEngine abstract methods
 # ---------------------------------------------------------------------------
 
+
 def _make_minimal_engine(text="hello world. goodbye."):
     from core.base_persona import BasePersonaEngine
 
@@ -30,6 +31,7 @@ def _make_minimal_engine(text="hello world. goodbye."):
 # ===========================================================================
 # CognitiveCore
 # ===========================================================================
+
 
 class TestCognitiveCore:
     def setup_method(self, tmp_path_factory=None):
@@ -99,6 +101,7 @@ class TestCognitiveCore:
 # BasePersonaEngine — stream_input sentence splitting
 # ===========================================================================
 
+
 class TestBasePersonaEngineStreamInput:
     def test_stream_yields_chunks(self):
         engine = _make_minimal_engine("Hello world. How are you?")
@@ -133,6 +136,7 @@ class TestBasePersonaEngineStreamInput:
 # ===========================================================================
 # BasePersonaEngine — get_status
 # ===========================================================================
+
 
 class TestBasePersonaEngineGetStatus:
     def test_get_status_no_cognitive(self):

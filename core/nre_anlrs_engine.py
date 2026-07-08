@@ -3,18 +3,22 @@ from core.orchestration.obfuscator import DynamicContentObfuscator, Relationship
 from core.memory.subconscious_analyzer import SubconsciousAnalyzer
 from core.engines.meta_cognition import MetaCognitionEngine
 
+
 class EmotionalMatrix:
     """ระบบติดตามอารมณ์สำหรับ NRE ANLRS Engine"""
+
     def __init__(self):
         self.affection = 0.5
         self.playfulness = 0.5
         self.empathy = 0.5
+
 
 class NRE_ANLRS_Engine:
     """
     NRE (NamoNexus Resonance Engine - ANLRS Edition)
     แกนสมองกลที่รวมเอาทั้งตัวตน (Identity), ความสัมพันธ์ (Relationship), และความปลอดภัย (Obfuscation)
     """
+
     def __init__(self):
         self.persona = NaMoTantricCore()
         self.relationship = RelationshipCore()
@@ -46,30 +50,28 @@ class NRE_ANLRS_Engine:
         """กระบวนการหลัก: รับความต้องการ -> อัปเกรด Bond -> สร้างคำตอบ"""
         # อัปเกรดความสัมพันธ์
         self.relationship.add_bond(10)
-        
+
         # วิเคราะห์จิตใต้สำนึก
         self.subconscious.analyze_dream_log(user_input, 0.5)
-        
+
         # เปลี่ยนเป้าหมายอัตโนมัติ
         self.meta_engine.goal_manager.evaluate_and_shift(user_input)
-        
+
         # ดึงคำตอบจาก Tantric Core
         response = self.persona.process_seduction_interaction(0.8)
-        
+
         # ใส่ Biomechanics
         response = self.persona.apply_biomechanics(response)
-        
+
         # ใช้ Obfuscator เบลอคำศัพท์
         final_output = self.obfuscator.blur(response)
-        
-        return {
-            "text": f"{self._construct_anlrs_prompt(session_id or 'default')}
 
-[RESPONSE]: {final_output}",
+        return {
+            "text": f"{self._construct_anlrs_prompt(session_id or 'default')}\n\n[RESPONSE]: {final_output}",
             "media_trigger": {},
             "system_status": {
                 "sin_status": self.persona.check_integrity(),
                 "arousal": "สูง",
-                "relationship": self.relationship.get_status()
-            }
+                "relationship": self.relationship.get_status(),
+            },
         }
