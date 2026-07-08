@@ -11,6 +11,7 @@ const STORAGE_KEYS = {
   sessionId: "namo_session_id",
   messages: "namo_messages",
   streamMode: "namo_stream_mode",
+  ageConfirmed: "namo_age_confirmed",
 };
 
 const state = {
@@ -563,9 +564,36 @@ function bindEvents() {
 }
 
 // ---------------------------------------------------------------------------
+// Age gate (18+) — mandatory front-door confirmation
+// ---------------------------------------------------------------------------
+function enforceAgeGate() {
+  const gate = document.getElementById("age-gate");
+  if (!gate) {
+    return;
+  }
+  if (localStorage.getItem(STORAGE_KEYS.ageConfirmed) === "1") {
+    gate.classList.add("hidden");
+    return;
+  }
+  const confirmBtn = document.getElementById("age-confirm");
+  const leaveBtn = document.getElementById("age-leave");
+  confirmBtn.addEventListener("click", () => {
+    localStorage.setItem(STORAGE_KEYS.ageConfirmed, "1");
+    gate.classList.add("hidden");
+  });
+  leaveBtn.addEventListener("click", () => {
+    // Do not enter the app; replace the gate with a farewell that stays blocking.
+    gate.innerHTML =
+      '<div class="agegate__card"><div class="agegate__sigil"></div>' +
+      "<h2>ขอบคุณที่แวะมา</h2><p>เนื้อหานี้สำหรับผู้ที่มีอายุ 18 ปีขึ้นไปเท่านั้น</p></div>";
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Boot
 // ---------------------------------------------------------------------------
 function init() {
+  enforceAgeGate();
   loadState();
   updateSessionUI();
   updateStreamToggleUI();
