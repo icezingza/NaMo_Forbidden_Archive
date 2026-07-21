@@ -75,7 +75,9 @@ class RelationshipEngine:
         self._load_state()
 
     def _state_path(self) -> Path:
-        safe_key = "".join(ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in self.persistence_key)
+        safe_key = "".join(
+            ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in self.persistence_key
+        )
         return self._state_root / f"{safe_key}.json"
 
     def _serialize_stage(self, stage: RelationshipStage) -> dict[str, str]:
@@ -145,29 +147,30 @@ class RelationshipEngine:
     ) -> RelationshipStage:
         """Update and return the relationship stage based on current metrics."""
         previous_stage = self.current_stage
-        target_stage = self.STAGE_STRANGER
-
-        # Progression logic mapping sin and arousal to stages
-        if sin_points >= 2000 and arousal >= 80:
-            target_stage = self.STAGE_OBSESSION
-        elif arousal >= 60 and sin_points < 1000:
-            target_stage = self.STAGE_LOVER
-        elif sin_points >= 500:
-            target_stage = self.STAGE_PLAYTHING
 
         low_signal = sin_points < self._low_signal_threshold and arousal < 30
         if low_signal:
             self.low_signal_streak += 1
+            target_stage = self.current_stage
+            if self.low_signal_streak >= self._demotion_patience:
+                if self.current_stage is self.STAGE_OBSESSION:
+                    target_stage = self.STAGE_LOVER
+                elif self.current_stage is self.STAGE_LOVER:
+                    target_stage = self.STAGE_PLAYTHING
+                elif self.current_stage is self.STAGE_PLAYTHING:
+                    target_stage = self.STAGE_STRANGER
+                self.low_signal_streak = 0
         else:
             self.low_signal_streak = 0
+            target_stage = self.STAGE_STRANGER
 
-        if self.low_signal_streak >= self._demotion_patience:
-            if self.current_stage is self.STAGE_OBSESSION:
+            # Progression logic mapping sin and arousal to stages
+            if sin_points >= 2000 and arousal >= 80:
+                target_stage = self.STAGE_OBSESSION
+            elif arousal >= 60 and sin_points < 1000:
                 target_stage = self.STAGE_LOVER
-            elif self.current_stage is self.STAGE_LOVER:
+            elif sin_points >= 500:
                 target_stage = self.STAGE_PLAYTHING
-            elif self.current_stage is self.STAGE_PLAYTHING:
-                target_stage = self.STAGE_STRANGER
 
         self.current_stage = target_stage
 

@@ -1,0 +1,22 @@
+{
+  "fused_score": 0.2375,
+  "confidence": 0.5,
+  "has_drift_alarm": false,
+  "last_drift_at": null,
+  "history": [
+    {
+      "timestamp": 1784637742.136454,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.325
+    },
+    {
+      "timestamp": 1784637929.6912136,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.2375
+    }
+  ]
+}

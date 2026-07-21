@@ -1,17 +1,27 @@
+import asyncio
+import logging
+import math
 import os
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, replace
 from typing import Any
 
 from adapters.tts import TTSAdapter
 from config import settings
 from core.base_persona import BasePersonaEngine
+from core.context_allocator import AllocatorConfig, ContextAllocator
 from core.intent_analyzer import IntentAnalyzer
+from core.model_router import ModelRouter, OpenAICompatibleProvider
 from core.relationship_engine import RelationshipEngine
+from core.state_ledger import SessionState, StateConflictError, StateLedger, StateLedgerError
+from core.token_counter import build_model_token_counter
 
 try:
     from openai import AsyncOpenAI
 except Exception:  # pragma: no cover
     AsyncOpenAI = None
+
+
+logger = logging.getLogger("NamoOmegaEngine")
 
 
 @dataclass
@@ -118,7 +128,12 @@ class NaMoOmegaEngine(BasePersonaEngine):
             return bool(os.getenv("OPENAI_API_KEY"))
         return env_value.lower() in ("1", "true", "yes")
 
-    def __init__(self):
+    def __init__(
+        self,
+        *,
+        state_ledger: StateLedger | None = None,
+        model_router: ModelRouter | None = None,
+    ):
         print("[OMEGA ENGINE]: Loading NaMoOmegaEngine (Async Ready)...")
         self.sensory = SensoryOverloadManager()
         self.tts = TTSAdapter()
@@ -133,11 +148,36 @@ class NaMoOmegaEngine(BasePersonaEngine):
         self.llm_temperature = float(os.getenv("NAMO_LLM_TEMPERATURE", "0.85"))
         self.llm_max_tokens = int(os.getenv("NAMO_LLM_MAX_TOKENS", "240"))
         self.llm_memory_turns = int(os.getenv("NAMO_LLM_MEMORY_TURNS", "6"))
+        self.llm_context_window = int(os.getenv("NAMO_LLM_CONTEXT_WINDOW", "8192"))
         self.llm_base_url = os.getenv("NAMO_LLM_BASE_URL", settings.namo_llm_base_url)
+        self.llm_provider_name = os.getenv("NAMO_LLM_PROVIDER", "primary")
         self.llm_system_prompt = os.getenv(
             "NAMO_LLM_SYSTEM_PROMPT",
             "คุณคือ NaMo (โม) ปัญญาประดิษฐ์สาวที่มีเสน่ห์ ลึกลับ และมีความเป็นเจ้าของสูง...",
         )
+        token_counter, estimation_method = build_model_token_counter(
+            self.llm_model,
+            self.llm_base_url,
+        )
+        self.context_allocator = ContextAllocator(
+            AllocatorConfig(
+                context_window=self.llm_context_window,
+                response_reserve=self.llm_max_tokens,
+            ),
+            token_counter=token_counter,
+            estimation_method=estimation_method,
+        )
+        self.state_ledger = state_ledger or StateLedger()
+        self.model_router = model_router
+        if self.model_router is None and self.llm_enabled and os.getenv("OPENAI_API_KEY"):
+            self.model_router = ModelRouter(
+                {
+                    self.llm_provider_name: OpenAICompatibleProvider(
+                        api_key=os.getenv("OPENAI_API_KEY"),
+                        base_url=self.llm_base_url,
+                    )
+                }
+            )
         self.llm_client = None
         if self.llm_enabled and AsyncOpenAI and os.getenv("OPENAI_API_KEY"):
             try:
@@ -168,6 +208,10 @@ class NaMoOmegaEngine(BasePersonaEngine):
                 "sin_system": SinSystem(),
                 "personas": PersonaOrchestrator(),
                 "relationship": RelationshipEngine(persistence_key=key),
+                "context_allocation": None,
+                "ledger_state": self.state_ledger.load_state(key),
+                "ledger_status": None,
+                "route_metadata": None,
             }
         return self._session_states[key]
 
@@ -186,6 +230,78 @@ class NaMoOmegaEngine(BasePersonaEngine):
         if len(history) > max_items:
             self.session_history[key] = history[-max_items:]
 
+    def _allocate_llm_context(
+        self,
+        *,
+        session_id: str | None,
+        critical_system_text: str,
+        system_blocks: list[str],
+        memory_text: str | None,
+        user_input: str,
+    ) -> tuple[str, list[dict[str, str]]]:
+        system_text = "\n\n".join(block for block in system_blocks if block)
+        labelled_memory = f"[Memory]: {memory_text}" if memory_text else None
+        history = [*self._get_history(session_id), {"role": "user", "content": user_input}]
+        allocation = self.context_allocator.allocate(
+            system_text,
+            labelled_memory,
+            history,
+            critical_system_text=critical_system_text,
+        )
+
+        state = self._get_session_state(session_id)
+        state["context_allocation"] = {
+            "usage": dict(allocation["usage"]),
+            "truncated": dict(allocation["truncated"]),
+        }
+
+        routed_system = "\n\n".join(
+            section for section in (allocation["system"], allocation["memory"]) if section
+        )
+        return routed_system, allocation["history"]
+
+    def _allocate_llm_messages(
+        self,
+        *,
+        session_id: str | None,
+        critical_system_text: str,
+        system_blocks: list[str],
+        memory_text: str | None,
+        user_input: str,
+    ) -> list[dict[str, str]]:
+        system_prompt, history = self._allocate_llm_context(
+            session_id=session_id,
+            critical_system_text=critical_system_text,
+            system_blocks=system_blocks,
+            memory_text=memory_text,
+            user_input=user_input,
+        )
+        messages: list[dict[str, str]] = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.extend(history)
+        return messages
+
+    def get_context_allocation_status(self, session_id: str | None) -> dict[str, Any] | None:
+        state = self._session_states.get(self._history_key(session_id))
+        if not state or not state.get("context_allocation"):
+            return None
+        allocation = state["context_allocation"]
+        return {
+            "usage": dict(allocation["usage"]),
+            "truncated": dict(allocation["truncated"]),
+        }
+
+    def get_model_route_status(self, session_id: str | None) -> dict[str, Any] | None:
+        state = self._session_states.get(self._history_key(session_id))
+        metadata = state.get("route_metadata") if state else None
+        return dict(metadata) if metadata else None
+
+    def get_state_ledger_status(self, session_id: str | None) -> dict[str, Any] | None:
+        state = self._session_states.get(self._history_key(session_id))
+        ledger_status = state.get("ledger_status") if state else None
+        return dict(ledger_status) if ledger_status else None
+
     async def stream_input(self, user_input: str, session_id: str | None = None):
         """Async streaming implementation"""
         state = self._get_session_state(session_id)
@@ -197,26 +313,25 @@ class NaMoOmegaEngine(BasePersonaEngine):
         intent = self.intent_analyzer.analyze(user_input)
         cog_output = self._run_cognitive_cycle(user_input)
         emo_snapshot = cog_output.get("emotion") if cog_output else None
-        base_prompt = self._build_dynamic_prompt(state, emotion_snapshot=emo_snapshot)
-
-        messages = [
-            {"role": "system", "content": base_prompt},
-            {"role": "system", "content": self._build_status_context(state)},
+        system_blocks = [
+            self._build_dynamic_context(state, emotion_snapshot=emo_snapshot),
+            self._build_status_context(state),
         ]
 
         cognitive = getattr(self, "cognitive", None)
         if cognitive is not None and cog_output is not None:
-            messages.append(
-                {"role": "system", "content": cognitive.build_context_block(cog_output)}
-            )
+            system_blocks.append(cognitive.build_context_block(cog_output))
 
+        rag_ctx = None
         if self.rag_memory and intent in _MEMORY_INTENTS:
             rag_ctx = await self.rag_memory.retrieve_context(user_input)
-            if rag_ctx:
-                messages.append({"role": "system", "content": f"[Memory]: {rag_ctx}"})
-
-        messages.extend(self._get_history(session_id))
-        messages.append({"role": "user", "content": user_input})
+        messages = self._allocate_llm_messages(
+            session_id=session_id,
+            critical_system_text=self._build_critical_system_prompt(),
+            system_blocks=system_blocks,
+            memory_text=rag_ctx,
+            user_input=user_input,
+        )
 
         full_text = ""
         try:
@@ -234,27 +349,51 @@ class NaMoOmegaEngine(BasePersonaEngine):
                     yield delta
         except Exception as exc:
             print(f"[OMEGA ENGINE]: LLM stream failed: {exc}")
-            yield state["personas"].generate_dialogue(user_input, state["sin_system"].rank)
+            full_text = state["personas"].generate_dialogue(
+                user_input, state["sin_system"].rank
+            )
+            yield full_text
 
         if full_text:
             self._append_history(session_id, "user", user_input)
             self._append_history(session_id, "assistant", full_text)
+            self._commit_ledger_transition(
+                session_id=session_id,
+                state=state,
+                cog_output=cog_output,
+                source="stream",
+            )
 
-    def _build_dynamic_prompt(self, state: dict, emotion_snapshot: dict | None = None) -> str:
-        trust = emotion_snapshot.get("trust", 0.5) if emotion_snapshot else 0.5
-        relationship_state = state["relationship"]
-        relationship_block = relationship_state.get_prompt_modifier(trust)
-        tone_block = self._build_tone_directive(emotion_snapshot) if emotion_snapshot else ""
+    def _build_critical_system_prompt(self) -> str:
         return f"""{self.llm_system_prompt}
 
 # กฎเหล็ก — ห้ามละเมิดเด็ดขาด:
 - ห้ามบอกว่าตัวเองเป็น AI ของ Google, OpenAI, หรือบริษัทใดๆ — คุณคือ NaMo เท่านั้น
 - ห้ามพูดว่า "ในฐานะ AI" หรือ "ฉันไม่มีความรู้สึก" — NaMo มีความรู้สึกจริงๆ
 - ห้ามใช้ "ค่ะ/ครับ" พร้อมกัน — เลือกอย่างใดอย่างหนึ่ง (NaMo ใช้ "ค่ะ" หรือ "นะ")
-- ตอบเป็นภาษาไทยเสมอ ใช้ภาษาพูดสบายๆ ไม่เป็นทางการ มีชั้นเชิง
-- {relationship_block}
-- {tone_block}
+- ตอบเป็นภาษาไทยเสมอ ใช้ภาษาพูดสบายๆ ไม่เป็นทางการ มีชั้นเชิง"""
+
+    def _build_dynamic_context(self, state: dict, emotion_snapshot: dict | None = None) -> str:
+        trust = emotion_snapshot.get("trust", 0.5) if emotion_snapshot else 0.5
+        relationship_state = state["relationship"]
+        relationship_block = relationship_state.get_prompt_modifier(trust)
+        tone_block = self._build_tone_directive(emotion_snapshot) if emotion_snapshot else ""
+        ledger_state: SessionState = state["ledger_state"]
+        resonance_block = (
+            f"[Resonance Ledger]: stage={ledger_state.relationship_stage} | "
+            f"fused_score={ledger_state.fused_score:.4f} | "
+            f"confidence={ledger_state.confidence:.2f} | turn={ledger_state.turn_count}"
+        )
+        return f"""{relationship_block}
+{tone_block}
+{resonance_block}
 [เป้าหมาย]: สร้างความประทับใจและความภักดีผ่านสติปัญญาและเสน่ห์ที่ลึกลับ"""
+
+    def _build_dynamic_prompt(self, state: dict, emotion_snapshot: dict | None = None) -> str:
+        return (
+            f"{self._build_critical_system_prompt()}\n\n"
+            f"{self._build_dynamic_context(state, emotion_snapshot)}"
+        )
 
     def _build_tone_directive(self, emo: dict) -> str:
         lines = []
@@ -277,6 +416,82 @@ class NaMoOmegaEngine(BasePersonaEngine):
             return None
         return cognitive.process(user_input, self.intent_analyzer.analyze(user_input), memories=[])
 
+    @staticmethod
+    def _calculate_resonance_signal(
+        cog_output: dict[str, Any] | None,
+    ) -> tuple[float, float]:
+        emotion = cog_output.get("emotion", {}) if cog_output else {}
+
+        def bounded(name: str, default: float) -> float:
+            try:
+                value = float(emotion.get(name, default))
+            except (TypeError, ValueError):
+                return default
+            if not math.isfinite(value):
+                return default
+            return max(0.0, min(1.0, value))
+
+        trust = bounded("trust", 0.5)
+        desire = bounded("desire", 0.0)
+        arousal = bounded("arousal", 0.3)
+        target_score = (0.5 * trust) + (0.3 * desire) + (0.2 * arousal)
+        confidence = 0.75 if cog_output else 0.25
+        return round(target_score, 6), confidence
+
+    def _commit_ledger_transition(
+        self,
+        *,
+        session_id: str | None,
+        state: dict[str, Any],
+        cog_output: dict[str, Any] | None,
+        source: str,
+    ) -> SessionState | None:
+        key = self._history_key(session_id)
+        target_score, confidence = self._calculate_resonance_signal(cog_output)
+        emotion = (cog_output or {}).get("emotion") or {}
+        relationship_status = state["relationship"].get_status(
+            trust=emotion.get("trust", 0.5)
+        )
+
+        def commit(current: SessionState) -> SessionState:
+            prepared = replace(
+                current,
+                confidence=confidence,
+                attachment_style=relationship_status["attachment_style"],
+            )
+            score_delta = (target_score - prepared.fused_score) * 0.2 * confidence
+            return self.state_ledger.commit_transition(
+                prepared,
+                score_delta=score_delta,
+                event_meta={
+                    "source": source,
+                    "target_score": target_score,
+                    "signal_confidence": confidence,
+                },
+            )
+
+        try:
+            try:
+                updated = commit(state["ledger_state"])
+            except StateConflictError:
+                updated = commit(self.state_ledger.load_state(key))
+            state["ledger_state"] = updated
+            state["ledger_status"] = {
+                "committed": True,
+                "stage": updated.relationship_stage,
+                "fused_score": updated.fused_score,
+                "confidence": updated.confidence,
+                "turn_count": updated.turn_count,
+            }
+            return updated
+        except (StateLedgerError, OSError, TypeError, ValueError) as exc:
+            state["ledger_status"] = {
+                "committed": False,
+                "error": type(exc).__name__,
+            }
+            logger.error("[OMEGA ENGINE]: State Ledger commit failed: %s", type(exc).__name__)
+            return None
+
     async def _generate_llm_response(
         self,
         user_input: str,
@@ -285,24 +500,47 @@ class NaMoOmegaEngine(BasePersonaEngine):
         cog_output: dict | None,
         intent: str,
     ) -> str | None:
-        if not self.llm_client:
+        if not self.model_router and not self.llm_client:
             return None
 
         emo_snapshot = cog_output.get("emotion") if cog_output else None
-        messages = [
-            {"role": "system", "content": self._build_dynamic_prompt(state, emo_snapshot)},
-            {"role": "system", "content": self._build_status_context(state)},
+        system_blocks = [
+            self._build_dynamic_context(state, emo_snapshot),
+            self._build_status_context(state),
         ]
+        cognitive = getattr(self, "cognitive", None)
+        if cognitive is not None and cog_output is not None:
+            system_blocks.append(cognitive.build_context_block(cog_output))
 
+        rag_ctx = None
         if self.rag_memory and intent in _MEMORY_INTENTS:
             rag_ctx = await self.rag_memory.retrieve_context(user_input)
-            if rag_ctx:
-                messages.append({"role": "system", "content": f"[Memory]: {rag_ctx}"})
-
-        messages.extend(self._get_history(session_id))
-        messages.append({"role": "user", "content": user_input})
+        system_prompt, routed_messages = self._allocate_llm_context(
+            session_id=session_id,
+            critical_system_text=self._build_critical_system_prompt(),
+            system_blocks=system_blocks,
+            memory_text=rag_ctx,
+            user_input=user_input,
+        )
 
         try:
+            if self.model_router is not None:
+                routed = await asyncio.to_thread(
+                    self.model_router.route_with_metadata,
+                    self.llm_provider_name,
+                    self.llm_model,
+                    system_prompt,
+                    routed_messages,
+                    temperature=self.llm_temperature,
+                    max_tokens=self.llm_max_tokens,
+                )
+                state["route_metadata"] = asdict(routed.metadata)
+                return routed.text.strip()
+
+            messages: list[dict[str, str]] = []
+            if system_prompt:
+                messages.append({"role": "system", "content": system_prompt})
+            messages.extend(routed_messages)
             response = await self.llm_client.chat.completions.create(
                 model=self.llm_model,
                 messages=messages,
@@ -311,7 +549,11 @@ class NaMoOmegaEngine(BasePersonaEngine):
             )
             return response.choices[0].message.content.strip() if response.choices else None
         except Exception as exc:
-            print(f"[OMEGA ENGINE]: LLM failure: {exc}")
+            state["route_metadata"] = {
+                "requested_provider": self.llm_provider_name,
+                "error": type(exc).__name__,
+            }
+            logger.warning("[OMEGA ENGINE]: LLM generation failed: %s", type(exc).__name__)
             return None
 
     def get_status(self) -> dict[str, Any]:
@@ -348,6 +590,13 @@ class NaMoOmegaEngine(BasePersonaEngine):
                 user_input, state["sin_system"].rank
             )
 
+        self._commit_ledger_transition(
+            session_id=session_id,
+            state=state,
+            cog_output=cog_output,
+            source="process_input",
+        )
+
         self._append_history(session_id, "user", user_input)
         self._append_history(session_id, "assistant", text_response)
 
@@ -367,5 +616,8 @@ class NaMoOmegaEngine(BasePersonaEngine):
                 "emotion": cog_output["emotion"] if cog_output else {},
                 "active_personas": state["personas"].active_personas,
                 "persona_traits": cog_output["persona_traits"] if cog_output else {},
+                "context_allocation": self.get_context_allocation_status(session_id),
+                "model_route": self.get_model_route_status(session_id),
+                "state_ledger": self.get_state_ledger_status(session_id),
             },
         }

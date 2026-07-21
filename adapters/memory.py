@@ -1,6 +1,6 @@
-import datetime
 import json
 import os
+from datetime import UTC, datetime
 from typing import Any
 
 import requests
@@ -41,7 +41,7 @@ class MemoryAdapter:
     ) -> None:
         """บันทึกบทสนทนาพร้อม metadata ลง local JSON และ (optionally) memory service."""
         entry: dict[str, Any] = {
-            "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
             "session_id": session_id,
             "user": user_input,
             "bot": response,

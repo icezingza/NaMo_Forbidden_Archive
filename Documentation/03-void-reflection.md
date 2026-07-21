@@ -38,6 +38,16 @@
     - `BYPASS_FILTERS: True`
     - `ENABLE_MULTICHAR_ROLEPLAY: True`
     - `EMOTIONAL_FUSION_DEPTH: "Quantum"`
+- **`SAFE_WORD`** in `core/dark_system.py`
+  - value: `อภัย`
+  - matching: substring match against the raw user input
+  - effect: reset the active session intensity to `1`, return the fixed aftercare response, and log
+    the interaction without entering Void Reflection synthesis
+- **`SAFE_WORD`** in `core/dark_system.py`
+  - value: `อภัย`
+  - matching: substring match against the raw user input
+  - effect: reset the active session intensity to `1`, return the fixed aftercare response, and log
+    the interaction without entering Void Reflection synthesis
 ### 1.3 Per-session state
 
 - `DarkNaMoSystem` keeps `_session_intensity: dict[str, int]`.
@@ -85,6 +95,10 @@ There is no dedicated HTTP endpoint for Void Reflection.
 2. `VoidReflectionLayer.synthesize_response(...)`
 
 The result of step 2 is returned directly as the final response string.
+
+Before this pipeline, a safe-word match short-circuits normal desire analysis and synthesis.
+
+Before this pipeline, a safe-word match short-circuits normal desire analysis and synthesis.
 
 ### 4.2 Prompt mirroring / response synthesis
 
