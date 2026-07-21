@@ -164,7 +164,13 @@ def test_chat_v1_endpoint_success_with_key(
     mock_process_input.return_value = {
         "text": "This is the response.",
         "media_trigger": {"visual": "Visual_Scenes/test.jpg"},
-        "system_status": {"sin_level": 2},
+        "system_status": {
+            "sin_level": 2,
+            "context_allocation": {
+                "usage": {"total_prompt_tokens": 10},
+                "truncated": {"system": False},
+            },
+        },
     }
 
     payload = {"text": "Hello", "session_id": "test-session-123"}
@@ -181,17 +187,18 @@ def test_chat_v1_endpoint_success_with_key(
     assert data["session_id"] == "test-session-123"
     assert data["plan"] == "premium"
     assert data["media"]["visual"].endswith("/media/visual/test.jpg")
-    assert data["status"] == {"sin_level": 2}
+    assert data["status"]["sin_level"] == 2
 
     mock_process_input.assert_called_once_with("Hello", session_id="test-session-123")
     mock_store_memory.assert_called_once_with(
-        "test-session-123", "Hello", "This is the response.", {"sin_level": 2}
+        "test-session-123", "Hello", "This is the response.", mock_process_input.return_value["system_status"]
     )
     mock_log_usage.assert_called_once()
     log_call_args = mock_log_usage.call_args[0][0]
     assert log_call_args["endpoint"] == "/v1/chat"
     assert log_call_args["session_id"] == "test-session-123"
     assert log_call_args["plan"] == "premium"
+    assert log_call_args["context_allocation"]["usage"]["total_prompt_tokens"] == 10
 
 
 @patch("server.engine.process_input")
@@ -350,6 +357,7 @@ def test_log_usage_writes_to_file(tmp_path):
         line = _json.loads(f.read().strip())
     assert line["endpoint"] == "/v1/chat"
     assert "timestamp" in line
+    assert line["timestamp"].endswith("Z")
 
 
 def test_log_usage_no_path_is_noop():
@@ -459,8 +467,16 @@ def test_stream_endpoint_returns_sse(mock_settings):
 
     with patch("server._rate_limiter") as mock_rl:
         mock_rl.is_allowed.return_value = True
-        with patch("server.engine.stream_input") as mock_stream:
+        with (
+            patch("server.engine.stream_input") as mock_stream,
+            patch("server.engine.get_context_allocation_status") as mock_allocation,
+            patch("server._log_usage") as mock_log_usage,
+        ):
             mock_stream.return_value = iter(["สวัสดี", "ค่ะ"])
+            mock_allocation.return_value = {
+                "usage": {"total_prompt_tokens": 10},
+                "truncated": {"system": False},
+            }
             response = client.post(
                 "/v1/chat/stream",
                 json={"text": "hello", "session_id": "stream-test"},
@@ -468,6 +484,10 @@ def test_stream_endpoint_returns_sse(mock_settings):
 
     assert response.status_code == 200
     assert "text/event-stream" in response.headers["content-type"]
+    assert '"context_allocation"' in response.text
+    mock_allocation.assert_called_once_with("stream-test")
+    stream_usage = mock_log_usage.call_args[0][0]
+    assert stream_usage["context_allocation"]["usage"]["total_prompt_tokens"] == 10
 
 
 # ---------------------------------------------------------------------------

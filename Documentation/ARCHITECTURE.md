@@ -137,6 +137,10 @@ The following sequence describes the full processing pipeline for a single `/cha
        • Current emotional state snapshot
        • Cognitive monologue (last N thoughts)
        • Retrieved memory fragments
+   └─ Context Allocator reserves response capacity, applies section budgets,
+      and retains the newest history that fits the model context window
+   └─ Critical persona/rule text is allocated before dynamic relationship,
+      cognitive, memory, and history context
 
 6. RESPONSE GENERATION
    └─ LLM streams output via Server-Sent Events (SSE)
@@ -243,6 +247,7 @@ bash deploy.sh
 | `NAMO_LLM_TEMPERATURE` | `0.85` | Sampling temperature |
 | `NAMO_LLM_MAX_TOKENS` | `240` | Maximum tokens per response |
 | `NAMO_LLM_MEMORY_TURNS` | `6` | Number of past turns included in context |
+| `NAMO_LLM_CONTEXT_WINDOW` | `8192` | Total model context window used by Omega prompt allocation |
 | `TELEGRAM_TOKEN` | — | Telegram Bot API token |
 | `ELEVENLABS_API_KEY` | — | ElevenLabs API key |
 | `ELEVENLABS_VOICE_ID` | — | ElevenLabs voice identifier |

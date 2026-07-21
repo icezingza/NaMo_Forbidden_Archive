@@ -378,6 +378,36 @@ class TestNaMoOmegaEngineLLMPath:
         )
         assert result == "LLM replied!"
 
+    async def test_non_streaming_llm_payload_uses_context_allocator(self):
+        engine = _make_engine()
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock(message=MagicMock(content="allocated"))]
+        captured = {}
+
+        async def mock_create(*args, **kwargs):
+            captured.update(kwargs)
+            return mock_response
+
+        mock_client.chat.completions.create = mock_create
+        engine.llm_client = mock_client
+        engine._append_history("allocated-non-stream", "user", "older message")
+
+        state = engine._get_session_state("allocated-non-stream")
+        result = await engine._generate_llm_response(
+            "latest message",
+            "allocated-non-stream",
+            state,
+            cog_output=None,
+            intent="neutral",
+        )
+
+        assert result == "allocated"
+        assert captured["messages"][-1] == {"role": "user", "content": "latest message"}
+        allocation = engine.get_context_allocation_status("allocated-non-stream")
+        assert allocation is not None
+        assert allocation["usage"]["total_prompt_tokens"] <= allocation["usage"]["prompt_budget"]
+
     async def test_generate_llm_response_exception_returns_none(self):
         engine = _make_engine()
         mock_client = MagicMock()
@@ -417,6 +447,52 @@ class TestNaMoOmegaEngineLLMPath:
             chunks.append(chunk)
         assert "สวัสดี" in chunks
         assert "ค่ะ" in chunks
+
+    async def test_streaming_llm_payload_uses_context_allocator(self):
+        engine = _make_engine()
+        mock_client = MagicMock()
+        captured = {}
+        chunk = MagicMock(choices=[MagicMock(delta=MagicMock(content="allocated"))])
+
+        async def mock_create_stream(*args, **kwargs):
+            captured.update(kwargs)
+
+            async def async_iter():
+                yield chunk
+
+            return async_iter()
+
+        mock_client.chat.completions.create = mock_create_stream
+        engine.llm_client = mock_client
+
+        chunks = []
+        async for output in engine.stream_input("latest", session_id="allocated-stream"):
+            chunks.append(output)
+
+        assert chunks == ["allocated"]
+        assert captured["messages"][-1] == {"role": "user", "content": "latest"}
+        allocation = engine.get_context_allocation_status("allocated-stream")
+        assert allocation is not None
+        assert allocation["usage"]["total_prompt_tokens"] <= allocation["usage"]["prompt_budget"]
+
+    def test_context_allocation_status_is_session_scoped_and_copied(self):
+        engine = _make_engine()
+        engine._allocate_llm_messages(
+            session_id="allocation-a",
+            critical_system_text="critical",
+            system_blocks=["system"],
+            memory_text=None,
+            user_input="hello",
+        )
+
+        status = engine.get_context_allocation_status("allocation-a")
+        assert status is not None
+        status["usage"]["total_prompt_tokens"] = -1
+
+        fresh_status = engine.get_context_allocation_status("allocation-a")
+        assert fresh_status is not None
+        assert fresh_status["usage"]["total_prompt_tokens"] >= 0
+        assert engine.get_context_allocation_status("allocation-b") is None
 
     async def test_stream_input_llm_exception_falls_back(self):
         engine = _make_engine()

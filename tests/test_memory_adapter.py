@@ -38,6 +38,7 @@ def test_store_creates_entry_in_local_json(local_adapter):
     assert entry["bot"] == "world"
     assert entry["session_id"] == "test-session"
     assert "timestamp" in entry
+    assert entry["timestamp"].endswith("Z")
 
 
 def test_store_multiple_entries_append(local_adapter):

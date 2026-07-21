@@ -5,7 +5,7 @@ import time
 import uuid
 from collections import defaultdict
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 
 from dotenv import load_dotenv
 
@@ -306,7 +306,7 @@ def _log_usage(event: dict) -> None:
     if not path:
         return
     payload = dict(event)
-    payload["timestamp"] = datetime.utcnow().isoformat() + "Z"
+    payload["timestamp"] = datetime.now(UTC).isoformat().replace("+00:00", "Z")
     try:
         with open(path, "a", encoding="utf-8") as handle:
             handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
@@ -368,15 +368,17 @@ async def chat_with_namo_v1(
 
     media = _normalize_media(result["media_trigger"], _get_base_url(request))
     _store_memory_if_enabled(session_id, payload.text, result["text"], result["system_status"])
-    _log_usage(
-        {
-            "endpoint": "/v1/chat",
-            "session_id": session_id,
-            "plan": plan,
-            "engine": active_engine.__class__.__name__,
-            "text_length": len(payload.text),
-        }
-    )
+    usage_event = {
+        "endpoint": "/v1/chat",
+        "session_id": session_id,
+        "plan": plan,
+        "engine": active_engine.__class__.__name__,
+        "text_length": len(payload.text),
+    }
+    allocation_status = result["system_status"].get("context_allocation")
+    if allocation_status is not None:
+        usage_event["context_allocation"] = allocation_status
+    _log_usage(usage_event)
 
     return {
         "response": result["text"],
@@ -443,16 +445,24 @@ async def chat_stream(
         finally:
             assembled = "".join(full_text)
             _store_memory_if_enabled(session_id, payload.text, assembled)
-            _log_usage(
-                {
-                    "endpoint": "/v1/chat/stream",
-                    "session_id": session_id,
-                    "plan": plan,
-                    "engine": engine_name,
-                    "text_length": len(payload.text),
-                }
-            )
-            done_msg = json.dumps({"done": True, "session_id": session_id, "engine": engine_name})
+            allocation_status = None
+            allocation_getter = getattr(active_engine, "get_context_allocation_status", None)
+            if callable(allocation_getter):
+                allocation_status = allocation_getter(session_id)
+            usage_event = {
+                "endpoint": "/v1/chat/stream",
+                "session_id": session_id,
+                "plan": plan,
+                "engine": engine_name,
+                "text_length": len(payload.text),
+            }
+            if allocation_status is not None:
+                usage_event["context_allocation"] = allocation_status
+            _log_usage(usage_event)
+            done_payload = {"done": True, "session_id": session_id, "engine": engine_name}
+            if allocation_status is not None:
+                done_payload["context_allocation"] = allocation_status
+            done_msg = json.dumps(done_payload)
             yield f"data: {done_msg}\n\n"
 
     return StreamingResponse(_event_stream(), media_type="text/event-stream")

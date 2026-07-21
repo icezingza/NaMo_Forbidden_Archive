@@ -113,6 +113,7 @@ The function returns the updated `RelationshipStage` object.
 If low signals continue, the engine can demote instead of only advancing:
 
 - low-signal detection is `sin_points < 45` and `arousal < 30`
+- before the streak reaches 2, the current stage is retained
 - after 2 consecutive low-signal calls, `STAGE_OBSESSION` demotes to `STAGE_LOVER`
 - after 2 consecutive low-signal calls, `STAGE_LOVER` demotes to `STAGE_PLAYTHING`
 - after 2 consecutive low-signal calls, `STAGE_PLAYTHING` demotes to `STAGE_STRANGER`
