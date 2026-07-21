@@ -8,10 +8,10 @@ import requests
 
 from core.model_router import (
     BaseProvider,
+    MockProvider,
     ModelRequest,
     ModelRouter,
     ModelRouterValidationError,
-    MockProvider,
     OpenAICompatibleProvider,
     ProviderConfigurationError,
     ProviderExecutionError,

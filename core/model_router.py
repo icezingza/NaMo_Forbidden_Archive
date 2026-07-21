@@ -9,8 +9,9 @@ import re
 import threading
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 import requests
 
@@ -126,7 +127,10 @@ class OpenAICompatibleProvider(BaseProvider):
         if (
             not isinstance(timeout, tuple)
             or len(timeout) != 2
-            or any(isinstance(value, bool) or not isinstance(value, (int, float)) for value in timeout)
+            or any(
+                isinstance(value, bool) or not isinstance(value, (int, float))
+                for value in timeout
+            )
             or any(not math.isfinite(value) or value <= 0 for value in timeout)
         ):
             raise ModelRouterValidationError("timeout must contain positive connect/read seconds.")
@@ -200,7 +204,9 @@ class ModelRouter:
             for name, provider in providers.items():
                 self.register_provider(name, provider)
 
-    def register_provider(self, name: str, provider: BaseProvider, *, replace: bool = False) -> None:
+    def register_provider(
+        self, name: str, provider: BaseProvider, *, replace: bool = False
+    ) -> None:
         normalized = _normalize_provider_name(name)
         if not isinstance(provider, BaseProvider):
             raise ModelRouterValidationError("provider must implement BaseProvider.")
@@ -254,7 +260,9 @@ class ModelRouter:
             selected = _normalize_provider_name(fallback_provider)
             fallback = self._get_provider(selected)
             if selected == requested:
-                raise ModelRouterValidationError("Fallback provider must differ from primary provider.") from exc
+                raise ModelRouterValidationError(
+                    "Fallback provider must differ from primary provider."
+                ) from exc
             fallback_used = True
             logger.warning(
                 "Provider '%s' failed with %s; routing to explicit fallback '%s'.",
@@ -324,7 +332,8 @@ def _build_request(
 
     unknown = set(options) - _GENERATION_OPTIONS
     if unknown:
-        raise ModelRouterValidationError(f"Unsupported generation options: {', '.join(sorted(unknown))}.")
+        names = ", ".join(sorted(unknown))
+        raise ModelRouterValidationError(f"Unsupported generation options: {names}.")
     _validate_options(options)
     return ModelRequest(
         model_name=model_name.strip(),
@@ -338,7 +347,9 @@ def _validate_options(options: Mapping[str, Any]) -> None:
     for name in ("temperature", "top_p", "presence_penalty", "frequency_penalty"):
         value = options.get(name)
         if value is not None and (
-            isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value)
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(value)
         ):
             raise ModelRouterValidationError(f"{name} must be a finite number.")
     for name in ("max_tokens", "seed"):
