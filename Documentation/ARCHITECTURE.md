@@ -143,7 +143,8 @@ The following sequence describes the full processing pipeline for a single `/cha
       cognitive, memory, and history context
 
 6. RESPONSE GENERATION
-   └─ LLM streams output via Server-Sent Events (SSE)
+   └─ Non-streaming generation routes through the Model Router on a worker thread
+   └─ Streaming generation uses the native async provider contract via SSE
 
 7. SENSORY FEEDBACK (conditional)
    └─ If arousal ≥ threshold → ElevenLabs TTS audio generated
@@ -151,6 +152,7 @@ The following sequence describes the full processing pipeline for a single `/cha
    └─ Media URLs attached to response payload
 
 8. MEMORY COMMIT
+   └─ State Ledger commits one signal-driven resonance transition
    └─ Transaction logged asynchronously to JSON session file
    └─ Embedding written to vector store
 ```
@@ -244,6 +246,7 @@ bash deploy.sh
 | `OPENAI_API_KEY` | — | OpenAI API key (required) |
 | `NAMO_LLM_ENABLED` | `0` | Enable LLM-powered responses (`1` = on) |
 | `NAMO_LLM_MODEL` | `gpt-4o-mini` | LLM model identifier |
+| `NAMO_LLM_PROVIDER` | `primary` | Registered Model Router provider name |
 | `NAMO_LLM_TEMPERATURE` | `0.85` | Sampling temperature |
 | `NAMO_LLM_MAX_TOKENS` | `240` | Maximum tokens per response |
 | `NAMO_LLM_MEMORY_TURNS` | `6` | Number of past turns included in context |

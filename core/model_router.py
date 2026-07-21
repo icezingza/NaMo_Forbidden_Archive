@@ -249,20 +249,25 @@ class ModelRouter:
         request = _build_request(model_name, system_prompt, messages, options)
         provider = self._get_provider(requested)
 
+        fallback: BaseProvider | None = None
+        fallback_name: str | None = None
+        if fallback_provider is not None:
+            fallback_name = _normalize_provider_name(fallback_provider)
+            if fallback_name == requested:
+                raise ModelRouterValidationError(
+                    "Fallback provider must differ from primary provider."
+                )
+            fallback = self._get_provider(fallback_name)
+
         selected = requested
         fallback_used = False
         started = time.perf_counter()
         try:
             text = provider.generate(request)
         except ProviderExecutionError as exc:
-            if fallback_provider is None:
+            if fallback is None or fallback_name is None:
                 raise
-            selected = _normalize_provider_name(fallback_provider)
-            fallback = self._get_provider(selected)
-            if selected == requested:
-                raise ModelRouterValidationError(
-                    "Fallback provider must differ from primary provider."
-                ) from exc
+            selected = fallback_name
             fallback_used = True
             logger.warning(
                 "Provider '%s' failed with %s; routing to explicit fallback '%s'.",
@@ -335,11 +340,15 @@ def _build_request(
         names = ", ".join(sorted(unknown))
         raise ModelRouterValidationError(f"Unsupported generation options: {names}.")
     _validate_options(options)
+    copied_options = dict(options)
+    stop = copied_options.get("stop")
+    if isinstance(stop, Sequence) and not isinstance(stop, (str, bytes)):
+        copied_options["stop"] = tuple(stop)
     return ModelRequest(
         model_name=model_name.strip(),
         system_prompt=system_prompt,
         messages=tuple(normalized_messages),
-        options=tuple((key, options[key]) for key in sorted(options)),
+        options=tuple((key, copied_options[key]) for key in sorted(copied_options)),
     )
 
 

@@ -378,6 +378,12 @@ async def chat_with_namo_v1(
     allocation_status = result["system_status"].get("context_allocation")
     if allocation_status is not None:
         usage_event["context_allocation"] = allocation_status
+    model_route = result["system_status"].get("model_route")
+    if isinstance(model_route, dict):
+        usage_event["model_route"] = model_route
+    state_ledger = result["system_status"].get("state_ledger")
+    if isinstance(state_ledger, dict):
+        usage_event["state_ledger"] = state_ledger
     _log_usage(usage_event)
 
     return {
@@ -449,6 +455,18 @@ async def chat_stream(
             allocation_getter = getattr(active_engine, "get_context_allocation_status", None)
             if callable(allocation_getter):
                 allocation_status = allocation_getter(session_id)
+            model_route_status = None
+            route_getter = getattr(active_engine, "get_model_route_status", None)
+            if callable(route_getter):
+                candidate = route_getter(session_id)
+                if isinstance(candidate, dict):
+                    model_route_status = candidate
+            state_ledger_status = None
+            ledger_getter = getattr(active_engine, "get_state_ledger_status", None)
+            if callable(ledger_getter):
+                candidate = ledger_getter(session_id)
+                if isinstance(candidate, dict):
+                    state_ledger_status = candidate
             usage_event = {
                 "endpoint": "/v1/chat/stream",
                 "session_id": session_id,
@@ -458,10 +476,18 @@ async def chat_stream(
             }
             if allocation_status is not None:
                 usage_event["context_allocation"] = allocation_status
+            if model_route_status is not None:
+                usage_event["model_route"] = model_route_status
+            if state_ledger_status is not None:
+                usage_event["state_ledger"] = state_ledger_status
             _log_usage(usage_event)
             done_payload = {"done": True, "session_id": session_id, "engine": engine_name}
             if allocation_status is not None:
                 done_payload["context_allocation"] = allocation_status
+            if model_route_status is not None:
+                done_payload["model_route"] = model_route_status
+            if state_ledger_status is not None:
+                done_payload["state_ledger"] = state_ledger_status
             done_msg = json.dumps(done_payload)
             yield f"data: {done_msg}\n\n"
 

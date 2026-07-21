@@ -59,6 +59,18 @@ def test_route_normalizes_provider_and_copies_messages() -> None:
     assert provider.request.options_dict() == {"max_tokens": 50}
 
 
+def test_route_copies_mutable_stop_sequence() -> None:
+    provider = CapturingProvider()
+    router = ModelRouter({"provider": provider})
+    stop = ["END"]
+
+    router.route("provider", "model", "", [], stop=stop)
+    stop.append("MUTATED")
+
+    assert provider.request is not None
+    assert provider.request.options_dict()["stop"] == ("END",)
+
+
 def test_route_with_metadata_reports_explicit_fallback() -> None:
     router = ModelRouter({"primary": FailingProvider(), "mock": MockProvider("offline")})
 
@@ -214,5 +226,12 @@ def test_fallback_must_be_distinct_and_registered() -> None:
 
     with pytest.raises(ModelRouterValidationError, match="must differ"):
         router.route("primary", "model", "", [], fallback_provider="primary")
+    with pytest.raises(ProviderNotFoundError):
+        router.route("primary", "model", "", [], fallback_provider="missing")
+
+
+def test_invalid_fallback_is_rejected_even_when_primary_would_succeed() -> None:
+    router = ModelRouter({"primary": CapturingProvider()})
+
     with pytest.raises(ProviderNotFoundError):
         router.route("primary", "model", "", [], fallback_provider="missing")

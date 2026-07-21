@@ -170,6 +170,8 @@ def test_chat_v1_endpoint_success_with_key(
                 "usage": {"total_prompt_tokens": 10},
                 "truncated": {"system": False},
             },
+            "model_route": {"selected_provider": "primary", "fallback_used": False},
+            "state_ledger": {"committed": True, "turn_count": 1},
         },
     }
 
@@ -199,6 +201,8 @@ def test_chat_v1_endpoint_success_with_key(
     assert log_call_args["session_id"] == "test-session-123"
     assert log_call_args["plan"] == "premium"
     assert log_call_args["context_allocation"]["usage"]["total_prompt_tokens"] == 10
+    assert log_call_args["model_route"]["selected_provider"] == "primary"
+    assert log_call_args["state_ledger"]["turn_count"] == 1
 
 
 @patch("server.engine.process_input")
@@ -470,6 +474,8 @@ def test_stream_endpoint_returns_sse(mock_settings):
         with (
             patch("server.engine.stream_input") as mock_stream,
             patch("server.engine.get_context_allocation_status") as mock_allocation,
+            patch("server.engine.get_model_route_status") as mock_route,
+            patch("server.engine.get_state_ledger_status") as mock_ledger,
             patch("server._log_usage") as mock_log_usage,
         ):
             mock_stream.return_value = iter(["สวัสดี", "ค่ะ"])
@@ -477,6 +483,11 @@ def test_stream_endpoint_returns_sse(mock_settings):
                 "usage": {"total_prompt_tokens": 10},
                 "truncated": {"system": False},
             }
+            mock_route.return_value = {
+                "selected_provider": "primary",
+                "fallback_used": False,
+            }
+            mock_ledger.return_value = {"committed": True, "turn_count": 1}
             response = client.post(
                 "/v1/chat/stream",
                 json={"text": "hello", "session_id": "stream-test"},
@@ -485,9 +496,13 @@ def test_stream_endpoint_returns_sse(mock_settings):
     assert response.status_code == 200
     assert "text/event-stream" in response.headers["content-type"]
     assert '"context_allocation"' in response.text
+    assert '"model_route"' in response.text
+    assert '"state_ledger"' in response.text
     mock_allocation.assert_called_once_with("stream-test")
     stream_usage = mock_log_usage.call_args[0][0]
     assert stream_usage["context_allocation"]["usage"]["total_prompt_tokens"] == 10
+    assert stream_usage["model_route"]["selected_provider"] == "primary"
+    assert stream_usage["state_ledger"]["turn_count"] == 1
 
 
 # ---------------------------------------------------------------------------

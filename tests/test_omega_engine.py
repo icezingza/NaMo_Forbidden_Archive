@@ -2,6 +2,8 @@
 
 import os
 import sys
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import AsyncMock, MagicMock, patch
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -18,6 +20,9 @@ os.environ["DEBUG"] = "0"
 
 def _make_engine():
     """Return a NaMoOmegaEngine with LLM and RAG mocked out."""
+    from core.state_ledger import StateLedger
+
+    temp_dir = TemporaryDirectory()
     with (
         patch("core.namo_omega_engine.TTSAdapter") as mock_tts_cls,
         patch("core.namo_omega_engine.NaMoOmegaEngine._resolve_llm_enabled", return_value=False),
@@ -25,7 +30,10 @@ def _make_engine():
         mock_tts_cls.return_value = MagicMock(_client=None, synthesize=AsyncMock(return_value=None))
         from core.namo_omega_engine import NaMoOmegaEngine
 
-        engine = NaMoOmegaEngine()
+        engine = NaMoOmegaEngine(
+            state_ledger=StateLedger(Path(temp_dir.name) / "namo_state.json")
+        )
+    engine._test_state_temp_dir = temp_dir
     return engine
 
 
@@ -297,6 +305,9 @@ def _make_engine_with_llm():
     """Return NaMoOmegaEngine with a mocked OpenAI LLM client."""
     from unittest.mock import MagicMock, patch
 
+    from core.state_ledger import StateLedger
+
+    temp_dir = TemporaryDirectory()
     with (
         patch("core.namo_omega_engine.TTSAdapter") as mock_tts_cls,
         patch("core.namo_omega_engine.NaMoOmegaEngine._resolve_llm_enabled", return_value=True),
@@ -310,7 +321,10 @@ def _make_engine_with_llm():
         mock_openai_cls.return_value = MagicMock()
         from core.namo_omega_engine import NaMoOmegaEngine
 
-        engine = NaMoOmegaEngine()
+        engine = NaMoOmegaEngine(
+            state_ledger=StateLedger(Path(temp_dir.name) / "namo_state.json")
+        )
+    engine._test_state_temp_dir = temp_dir
     return engine
 
 
