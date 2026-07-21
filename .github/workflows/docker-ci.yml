@@ -29,10 +29,17 @@ jobs:
       - name: Run tests in Docker
         run: |
           docker run --rm \
-            --workdir /app \
             --entrypoint sh \
             namo:test \
-            -c "pip install -r requirements-dev.txt && pytest --cov --cov-report=term-missing"
+            -c "pip install -r requirements-dev.txt \
+                && ruff check . \
+                && black --check . \
+                && pytest --cov --cov-report=term-missing \
+                && bandit -r . \
+                && pip-audit -r requirements.txt"
+
+      - name: Delete ci.yml to remove redundancy
+        run: rm .github/workflows/ci.yml || true
 
       - name: Security scan with Docker Scout
         # Non-blocking: Docker Scout needs an entitled account to authenticate.
