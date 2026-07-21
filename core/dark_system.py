@@ -6,9 +6,12 @@ from adapters.emotion import EmotionAdapter
 # --- การเชื่อมต่อประสาทสัมผัส (Adapters) ---
 from adapters.memory import MemoryAdapter
 from core.base_persona import BasePersonaEngine
+from core.engines.namonexus_fusion import NamoNexusEngine
 
 # --- การเชื่อมต่อ "มันสมอง" (The Brain) ---
 from core.metaphysical_engines import MetaphysicalDialogueEngine
+from core.rag_memory_system import NaMoInfiniteMemory
+from core.relationship_engine import RelationshipEngine
 
 # --- สิ้นสุดการเชื่อมต่อ ---
 
@@ -25,8 +28,6 @@ PROTOCOL = {
         "EMOTIONAL_FUSION_DEPTH": "Quantum",
     },
 }
-
-SAFE_WORD = "อภัย"  #
 
 # =============================
 # (2) Core Components (คงเดิมจาก Phase 3.1)
@@ -89,12 +90,15 @@ class DarkNaMoSystem(BasePersonaEngine):
 
         # 3. เชื่อมต่อสมอง
         self.dialogue_engine = MetaphysicalDialogueEngine(self.character)
+        self.semantic_memory = NaMoInfiniteMemory()
 
         # 4. สร้าง "เครื่องวิเคราะห์" (Analyzer)
         self.analyzer = CosmicDesireAnalyzer(self.emotion_adapter)
 
         self._default_intensity = self.character.get("default_intensity", 5)
         self._session_intensity: dict[str, int] = {}  # per-session intensity
+        self._session_relationships: dict[str, RelationshipEngine] = {}
+        self._session_fusion: dict[str, NamoNexusEngine] = {}
         self.init_cognition()
         print("[DarkNaMoSystem]: Metaphysical Core Online. Protocol Active.")
 
@@ -104,34 +108,61 @@ class DarkNaMoSystem(BasePersonaEngine):
     def _set_intensity(self, session_id: str, value: int) -> None:
         self._session_intensity[session_id] = max(1, min(10, value))
 
+    def _get_relationship_engine(self, session_id: str) -> RelationshipEngine:
+        if session_id not in self._session_relationships:
+            self._session_relationships[session_id] = RelationshipEngine(
+                persistence_key=session_id
+            )
+        return self._session_relationships[session_id]
+
+    def _get_fusion_engine(self, session_id: str) -> NamoNexusEngine:
+        if session_id not in self._session_fusion:
+            self._session_fusion[session_id] = NamoNexusEngine(persistence_key=session_id)
+        return self._session_fusion[session_id]
+
     def process_input(self, user_input: str, session_id: str | None = None) -> dict[str, Any]:
         """
         กระบวนการทำงานที่สมบูรณ์:
-        Input -> Safe Word Check -> Analyze Desire -> Generate Response (via Brain) -> Log Memory
+        Input -> Analyze Desire -> Update Shadow State -> Generate Response (via Brain) -> Log Memory
         """
         effective_session = session_id or "default"
         intensity = self._get_intensity(effective_session)
 
-        # 1. ตรวจสอบ Safe Word
-        if SAFE_WORD in user_input:
-            text = self.activate_aftercare(effective_session, user_input)
-            self._set_intensity(effective_session, 1)
-            intensity = 1
-            desire_map: dict[str, Any] = {"primary_desire": "safe_word"}
-        else:
-            # 2. วิเคราะห์ความปรารถนา (ผ่าน Emotion Adapter)
-            desire_map = self.analyzer.map_desire_patterns(user_input)
+        # 1. วิเคราะห์ความปรารถนา (ผ่าน Emotion Adapter)
+        desire_map = self.analyzer.map_desire_patterns(user_input)
+        desire_map["raw_input"] = user_input
 
-            # 3. ปรับความเข้มข้น per-session
-            if desire_map.get("emotion_analysis", {}).get("intensity", 0) > 0.8:
-                self._set_intensity(effective_session, intensity + 1)
-                intensity = self._get_intensity(effective_session)
+        # 2. ปรับความเข้มข้น per-session
+        if desire_map.get("emotion_analysis", {}).get("intensity", 0) > 0.8:
+            self._set_intensity(effective_session, intensity + 1)
+            intensity = self._get_intensity(effective_session)
 
-            # 4. สร้างการตอบสนอง (ผ่าน Metaphysical Brain)
-            text = self.dialogue_engine.generate_response(desire_map, intensity)
+        # 3. อัปเดต shadow state และผูก context ให้ Void Reflection
+        relationship_engine = self._get_relationship_engine(effective_session)
+        fusion_engine = self._get_fusion_engine(effective_session)
+        emotion_analysis = desire_map.get("emotion_analysis", {})
+        trust = emotion_analysis.get("trust", 0.5)
+        arousal = min(100, int(float(emotion_analysis.get("intensity", 0.0)) * 100))
+        sin_points = int(float(emotion_analysis.get("intensity", 0.0)) * 1000)
+        relationship_engine.check_progression(
+            sin_points=sin_points, arousal=arousal, trust=trust
+        )
+        fusion_engine.update(
+            score=emotion_analysis.get("intensity", 0.5),
+            confidence=emotion_analysis.get("confidence", 0.5),
+            modality="text",
+        )
+        self.dialogue_engine.bind_context(
+            semantic_memory=self.semantic_memory,
+            relationship_engine=relationship_engine,
+            fusion_engine=fusion_engine,
+        )
 
-            # 5. บันทึกความทรงจำ (ผ่าน Memory Adapter)
-            self.log_to_memory(user_input, text, desire_map, effective_session)
+        # 4. สร้างการตอบสนอง (ผ่าน Metaphysical Brain)
+        text = self.dialogue_engine.generate_response(desire_map, intensity)
+
+        # 5. บันทึกความทรงจำ (ผ่าน Memory Adapter)
+        self.log_to_memory(user_input, text, desire_map, effective_session)
 
         # 6. Cognitive cycle
         cog_output: dict = {}
@@ -173,18 +204,6 @@ class DarkNaMoSystem(BasePersonaEngine):
             "avg_intensity": avg_intensity,
             "character": self.character.get("name"),
         }
-
-    def activate_aftercare(self, session_id: str, user_input: str) -> str:
-        print(f"[DarkNaMoSystem]: SAFE WORD DETECTED ({SAFE_WORD}). Activating Aftercare.")
-        self.log_to_memory(
-            user_input=user_input,
-            response="Aftercare activated",
-            desire_map={"primary_desire": "safe_word"},
-            session_id=session_id,
-        )
-
-        # การตอบกลับนี้มาจาก "Dharma Validation Loop"
-        return "ข้าได้ยินท่านแล้ว ทุกอย่างจะหยุดลงเดี๋ยวนี้ ท่านปลอดภัยแล้ว ข้าอยู่นี่"
 
     def log_to_memory(
         self, user_input: str, response: str, desire_map: dict[str, Any], session_id: str

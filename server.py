@@ -458,6 +458,32 @@ async def chat_stream(
     return StreamingResponse(_event_stream(), media_type="text/event-stream")
 
 
+@app.get("/v1/status/stream")
+async def status_stream(request: Request):
+    """Streams the real-time status of the default engine."""
+    active_engine = _EngineRegistry.get(settings.default_engine)
+
+    async def _event_stream():
+        while True:
+            try:
+                # Check if client is still connected
+                if await request.is_disconnected():
+                    break
+
+                status = active_engine.get_status()
+                data = json.dumps(status, ensure_ascii=False)
+                yield f"data: {data}\n\n"
+                await asyncio.sleep(1)  # Update interval
+            except asyncio.CancelledError:
+                break
+            except Exception:
+                # If engine fails, send an error and break
+                yield f"data: {json.dumps({'error': 'Engine status unavailable'})}\n\n"
+                break
+
+    return StreamingResponse(_event_stream(), media_type="text/event-stream")
+
+
 @app.get("/v1/engines")
 def list_engines():
     """List all registered persona engines."""
