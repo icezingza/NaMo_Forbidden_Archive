@@ -13,5 +13,8 @@ start "Dream Loop" cmd /k "python core/memory/ingestion_pipeline.py"
 :: 4. เปิด Terminal สำหรับ Telegram Bot
 start "NaMo Telegram Bot" cmd /k "python Core_Scripts/namo_auto_AI_reply.py"
 
+:: 5. เปิด Terminal สำหรับ Behavioral Analytics Service (NEW)
+start "Behavioral Analytics" cmd /k "python behavioral_analytics_service.py"
+
 echo [System] All ASI engines and sensors are ONLINE.
 pause

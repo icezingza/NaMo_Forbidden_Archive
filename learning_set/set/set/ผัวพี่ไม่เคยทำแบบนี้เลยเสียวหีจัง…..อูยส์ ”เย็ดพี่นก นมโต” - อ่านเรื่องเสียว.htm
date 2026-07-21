@@ -1,0 +1,386 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!DOCTYPE html>
+<html lang="th" dir="ltr" platform="win" style="--font-family: sans-serif; --font-weight: normal;"><head>
+    <title id="reader-title">ผัวพี่ไม่เคยทำแบบนี้เลยเสียวหีจัง…..อูยส์ ”เย็ดพี่นก นมโต” - อ่านเรื่องเสียว</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src chrome:; img-src data: *; media-src *; object-src 'none'">
+    <meta content="text/html; charset=UTF-8" http-equiv="content-type">
+    <meta name="viewport" content="width=device-width; user-scalable=0">
+    <link rel="stylesheet" href="chrome://global/skin/design-system/tokens-brand.css">
+    <link rel="stylesheet" href="chrome://global/skin/aboutReader.css" type="text/css">
+    <link rel="localization" href="toolkit/about/aboutReader.ftl">
+    <link rel="localization" href="toolkit/branding/brandings.ftl">
+    <script type="module" src="chrome://global/content/reader/moz-slider.mjs"></script>
+    <script type="module" src="chrome://global/content/elements/moz-input-color.mjs"></script>
+    <script type="module" src="chrome://global/content/elements/named-deck.js"></script>
+  <link rel="stylesheet" href="chrome://global/skin/narrate.css"></head>
+
+  <body class="dark loaded" style="--content-width: 30em; --font-size: 20px;">
+    <div class="top-anchor"></div>
+
+    <div id="toolbar" class="toolbar-container">
+      <div class="toolbar reader-toolbar">
+        <div class="reader-controls" articledir="ltr">
+          <button class="close-button toolbar-button" aria-labelledby="toolbar-close" data-telemetry-id="reader-close">
+            <span class="hover-label" id="toolbar-close" data-l10n-id="about-reader-toolbar-close">ปิดมุมมองผู้อ่าน</span>
+          </button>
+          <ul class="dropdown text-layout-dropdown">
+            <li>
+              <button class="dropdown-toggle toolbar-button text-layout-button" aria-labelledby="toolbar-text-layout-controls" data-telemetry-id="reader-text-layout-controls">
+                <span class="hover-label" id="toolbar-text-layout-controls" data-l10n-id="about-reader-toolbar-text-layout-controls">ข้อความและเค้าโครง</span>
+              </button>
+            </li>
+            <li class="dropdown-popup" id="text-layout-controls" tabindex="-1">
+              <h2 data-l10n-id="about-reader-text-header" id="about-reader-text-header">ข้อความ</h2>
+              <div id="text-size-controls">
+                <span data-l10n-id="about-reader-text-size-label" id="about-reader-text-size-label">ขนาดตัวอักษร</span>
+                <div class="text-size-buttons buttonrow">
+                  <button class="text-size-minus-button" data-l10n-id="about-reader-toolbar-minus" data-telemetry-id="text-size-minus-button" title="ลดขนาดแบบอักษร"></button>
+                  <button class="text-size-plus-button" data-l10n-id="about-reader-toolbar-plus" data-telemetry-id="text-size-plus-button" title="เพิ่มขนาดแบบอักษร"></button>
+                </div>
+              </div>
+              <div id="font-controls">
+                <div id="font-type-dropdown" class="dropdown-selector">
+                  <label for="font-type-selector" data-l10n-id="about-reader-font-type-selector-label">แบบอักษร</label>
+                  <select name="font-type-selector" id="font-type-selector" data-telemetry-id="font-type-selector"><option data-l10n-id="about-reader-font-type-sans-serif" value="sans-serif" selected="selected">ไม่มีเชิง</option><option data-l10n-id="about-reader-font-type-serif" value="serif">มีเชิง</option><option data-l10n-id="about-reader-font-type-monospace" value="monospace">ความกว้างคงที่</option></select>
+                </div>
+                <div id="font-weight-dropdown" class="dropdown-selector">
+                  <label for="font-weight-selector" data-l10n-id="about-reader-font-weight-selector-label">น้ำหนักตัวอักษร</label>
+                  <select name="font-weight-selector" id="font-weight-selector" data-telemetry-id="font-weight-selector"><option data-l10n-id="about-reader-font-weight-regular" value="regular" selected="selected">ธรรมดา</option><option data-l10n-id="about-reader-font-weight-light" value="light">บาง</option><option data-l10n-id="about-reader-font-weight-bold" value="bold">หนา</option></select>
+                </div>
+              </div>
+              <hr>
+              <h2 data-l10n-id="about-reader-layout-header" id="about-reader-layout-header">เค้าโครง</h2>
+              <div id="content-width-slider" class="slider-container"><moz-slider min="1" max="9" value="3" ticks="9" tick-labels="[]" data-l10n-id="about-reader-content-width-label" data-l10n-attrs="label" slider-icon="chrome://global/skin/reader/content-width-20.svg" data-telemetry-id="content-width-slider" label="ความกว้างของเนื้อหา"></moz-slider></div>
+              <div id="line-spacing-slider" class="slider-container"><moz-slider min="1" max="9" value="4" ticks="9" tick-labels="[]" data-l10n-id="about-reader-line-spacing-label" data-l10n-attrs="label" slider-icon="chrome://global/skin/reader/line-spacing-20.svg" data-telemetry-id="line-spacing-slider" label="ระยะห่างระหว่างบรรทัด"></moz-slider></div>
+              <hr>
+              <details id="about-reader-advanced-layout">
+                <summary class="accordion-header">
+                  <h2 data-l10n-id="about-reader-advanced-layout-header" id="about-reader-advanced-layout-header">ขั้นสูง</h2>
+                  <span class="chevron-icon"></span>
+                </summary>
+                <div id="character-spacing-slider" class="slider-container"><moz-slider min="1" max="9" value="0" ticks="9" tick-labels="[&quot;มาตรฐาน&quot;, &quot;กว้าง&quot;]" data-l10n-id="about-reader-character-spacing-label" data-l10n-attrs="label" slider-icon="chrome://global/skin/reader/character-spacing-20.svg" data-telemetry-id="character-spacing-slider" label="ช่องไฟระหว่างอักขระ"></moz-slider></div>
+                <div id="word-spacing-slider" class="slider-container"><moz-slider min="1" max="9" value="0" ticks="9" tick-labels="[&quot;มาตรฐาน&quot;, &quot;กว้าง&quot;]" data-l10n-id="about-reader-word-spacing-label" data-l10n-attrs="label" slider-icon="chrome://global/skin/reader/word-spacing-20.svg" data-telemetry-id="word-spacing-slider" label="ช่องไฟระหว่างคำ"></moz-slider></div>
+                <label for="text-alignment-buttons" data-l10n-id="about-reader-text-alignment-label">การจัดตำแหน่งข้อความ</label>
+                <div class="text-alignment-buttons radiorow" id="text-alignment-buttons"><input id="radio-itemleft-align-button" type="radio" class="radio-button" name="text-alignment" data-telemetry-id="left-align-button" checked="checked"><label for="radio-itemleft-align-button" class="left-align-button" data-l10n-id="about-reader-text-alignment-left" checked="true" title="จัดข้อความชิดซ้าย"></label><input id="radio-itemcenter-align-button" type="radio" class="radio-button" name="text-alignment" data-telemetry-id="center-align-button"><label for="radio-itemcenter-align-button" class="center-align-button" data-l10n-id="about-reader-text-alignment-center" title="จัดข้อความอยู่กึ่งกลาง"></label><input id="radio-itemright-align-button" type="radio" class="radio-button" name="text-alignment" data-telemetry-id="right-align-button"><label for="radio-itemright-align-button" class="right-align-button" data-l10n-id="about-reader-text-alignment-right" title="จัดข้อความชิดขวา"></label><input id="radio-itemjustify-align-button" type="radio" class="radio-button" name="text-alignment" data-telemetry-id="justify-align-button"><label for="radio-itemjustify-align-button" class="justify-align-button" data-l10n-id="about-reader-text-alignment-justify" title="จัดข้อความให้ชิดขอบ"></label></div>
+                <button class="text-layout-reset-button reset-button" data-l10n-id="about-reader-reset-button">กลับเป็นค่าเริ่มต้น</button>
+              </details>
+            </li>
+          </ul>
+          <ul class="dropdown colors-dropdown">
+            <li>
+              <button class="dropdown-toggle toolbar-button colors-button" aria-labelledby="toolbar-color-controls" data-telemetry-id="reader-color-controls">
+                <span class="hover-label" id="toolbar-color-controls" data-l10n-id="about-reader-toolbar-theme-controls">ชุดตกแต่ง</span>
+              </button>
+            </li>
+            <li class="dropdown-popup" id="color-controls">
+              <h2 data-l10n-id="about-reader-colors-menu-header" id="about-reader-colors-menu-header">ชุดตกแต่ง</h2>
+              <button-group aria-labelledby="about-reader-colors-menu-header" role="tablist">
+                <button is="named-deck-button" deck="tabs-deck" name="fxtheme" data-l10n-id="about-reader-fxtheme-tab" data-telemetry-id="colors-menu-default-tab" id="tabs-deck-button-fxtheme" role="tab" aria-selected="true" tabindex="0" selected="">ค่าเริ่มต้น</button>
+                <button is="named-deck-button" deck="tabs-deck" name="customtheme" data-l10n-id="about-reader-customtheme-tab" data-telemetry-id="colors-menu-custom-tab" id="tabs-deck-button-customtheme" role="tab" aria-selected="false" tabindex="-1">กำหนดเอง</button>
+              </button-group>
+              <named-deck id="tabs-deck" is-tabbed="" selected-view="fxtheme">
+                <div name="fxtheme" class="color-scheme-buttons radiorow" aria-labelledby="tabs-deck-button-fxtheme" role="tabpanel" slot="selected"><input id="radio-itemauto-button" type="radio" class="radio-button" name="color-scheme" data-telemetry-id="auto-button" checked="checked"><label for="radio-itemauto-button" class="auto-button" data-l10n-id="about-reader-color-auto-theme" checked="true" title="ชุดตกแต่งอัตโนมัติ">อัตโนมัติ</label><input id="radio-itemlight-button" type="radio" class="radio-button" name="color-scheme" data-telemetry-id="light-button"><label for="radio-itemlight-button" class="light-button" data-l10n-id="about-reader-color-light-theme" title="ชุดตกแต่งสว่าง">สว่าง</label><input id="radio-itemdark-button" type="radio" class="radio-button" name="color-scheme" data-telemetry-id="dark-button"><label for="radio-itemdark-button" class="dark-button" data-l10n-id="about-reader-color-dark-theme" title="ชุดตกแต่งมืด">มืด</label><input id="radio-itemsepia-button" type="radio" class="radio-button" name="color-scheme" data-telemetry-id="sepia-button"><label for="radio-itemsepia-button" class="sepia-button" data-l10n-id="about-reader-color-sepia-theme" title="ชุดตกแต่งซีเปีย">ซีเปีย</label><input id="radio-itemcontrast-button" type="radio" class="radio-button" name="color-scheme" data-telemetry-id="contrast-button"><label for="radio-itemcontrast-button" class="contrast-button" data-l10n-id="about-reader-color-contrast-theme" title="ชุดตกแต่งเปรียบต่าง">เปรียบต่าง</label><input id="radio-itemgray-button" type="radio" class="radio-button" name="color-scheme" data-telemetry-id="gray-button"><label for="radio-itemgray-button" class="gray-button" data-l10n-id="about-reader-color-gray-theme" title="ชุดตกแต่งเทา">เทา</label></div>
+                <div name="customtheme" aria-labelledby="tabs-deck-button-customtheme" role="tabpanel" slot="">
+                  <ul class="custom-colors-selection"><li><moz-input-color name="foreground" data-l10n-id="about-reader-custom-colors-foreground2" value="#14151A" data-l10n-attrs="label" label="ข้อความ" title="แก้ไขสี"></moz-input-color></li><li><moz-input-color name="background" data-l10n-id="about-reader-custom-colors-background2" value="#FFFFFF" data-l10n-attrs="label" label="พื้นหลัง" title="แก้ไขสี"></moz-input-color></li><li><moz-input-color name="unvisited-links" data-l10n-id="about-reader-custom-colors-unvisited-links2" value="#0060DF" data-l10n-attrs="label" label="ลิงก์ที่ยังไม่เคยเยี่ยมชม" title="แก้ไขสี"></moz-input-color></li><li><moz-input-color name="visited-links" data-l10n-id="about-reader-custom-colors-visited-links2" value="#321C64" data-l10n-attrs="label" label="ลิงก์ที่เคยเยี่ยมชมแล้ว" title="แก้ไขสี"></moz-input-color></li><li><moz-input-color name="selection-highlight" data-l10n-id="about-reader-custom-colors-selection-highlight2" value="#FFFFCC" data-l10n-attrs="label" label="ตัวเน้นข้อความสำหรับการอ่านออกเสียง" title="แก้ไขสี"></moz-input-color></li></ul>
+                  <button class="custom-colors-reset-button reset-button" data-l10n-id="about-reader-reset-button" hidden="">กลับเป็นค่าเริ่มต้น</button>
+                </div>
+              </named-deck>
+            </li>
+          </ul>
+        <ul class="dropdown narrate-dropdown"><li><button class="dropdown-toggle toolbar-button narrate-toggle" data-telemetry-id="reader-listen" aria-label="อ่านออกเสียง (บ)"><span class="hover-label">อ่านออกเสียง (บ)</span></button></li><li class="dropdown-popup"><h2 id="narrate-header">อ่านออกเสียง</h2><div class="narrate-row narrate-control"><button class="narrate-skip-previous" disabled="disabled" aria-keyshortcuts="ArrowLeft" title="ถอยกลับ (←)"></button><button class="narrate-start-stop" aria-keyshortcuts="N" title="เริ่ม (บ)"></button><button class="narrate-skip-next" disabled="disabled" aria-keyshortcuts="ArrowRight" title="เดินหน้า (→)"></button></div><div class="narrate-row narrate-rate"><span class="narrate-rate-icon slow" title="บรรยายให้ช้าลง"></span><input class="narrate-rate-input" value="0" step="5" max="100" min="-100" type="range" aria-label="Choose a narration speed from -100 to 100, where 0 is the default speed." title="ความเร็ว"><span class="narrate-rate-icon fast" title="บรรยายให้เร็วขึ้น"></span></div><hr><h2 id="voice-header">เสียงพูด</h2><div class="narrate-row narrate-voices"><div class="voiceselect voice-select"><button class="select-toggle" aria-controls="voice-options" aria-expanded="false" role="combobox" aria-labelledby="voice-header">
+      <span class="current-voice">ค่าเริ่มต้น</span>
+    </button>
+    <div class="options" id="voice-options" role="listbox"><button data-value="automatic" class="option selected" tabindex="-1" role="option" aria-selected="true">ค่าเริ่มต้น</button><button data-value="urn:moz-tts:sapi:Microsoft Pattara - Thai (Thailand)?th-TH" class="option" tabindex="-1" role="option">Microsoft Pattara - Thai (Thailand)</button></div></div></div></li></ul></div>
+      </div>
+    </div>
+
+    <div class="container" style="--line-height: 1.6em; --letter-spacing: -0.03em; --word-spacing: -0.05em; --text-alignment: start; --block-img-margin-right: unset; --block-img-margin-left: unset;" lang="th" dir="ltr">
+      <div class="header reader-header reader-show-element">
+        <a class="domain reader-domain" href="https://xn--72c9a2acwqrc6b9as0ie8hf.com/%E0%B8%9C%E0%B8%B1%E0%B8%A7%E0%B8%9E%E0%B8%B5%E0%B9%88%E0%B9%84%E0%B8%A1%E0%B9%88%E0%B9%80%E0%B8%84%E0%B8%A2%E0%B8%97%E0%B8%B3%E0%B9%81%E0%B8%9A%E0%B8%9A%E0%B8%99%E0%B8%B5%E0%B9%89%E0%B9%80%E0%B8%A5/">xn--72c9a2acwqrc6b9as0ie8hf.com</a>
+        <div class="domain-border"></div>
+        <h1 class="reader-title">ผัวพี่ไม่เคยทำแบบนี้เลยเสียวหีจัง…..อูยส์ ”เย็ดพี่นก นมโต” - อ่านเรื่องเสียว</h1>
+        <div class="credits reader-credits">อ่านเรื่องเสียว.com</div>
+        <div class="meta-data">
+          <div class="reader-estimated-time" data-l10n-args="{&quot;range&quot;:&quot;13–16&quot;,&quot;rangePlural&quot;:&quot;other&quot;}" data-l10n-id="about-reader-estimated-read-time" dir="ltr">13–16 นาที</div>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="content">
+        <div class="moz-reader-content reader-show-element"><div id="readability-page-1" class="page"><div>
+	
+	
+
+	
+
+	
+	<main id="content">
+
+	<div>
+						<article id="post-5134">
+				<div><div id="post-30776">
+<p><img width="880" height="660" src="%E0%B9%84%E0%B8%9F%E0%B8%A5%E0%B9%8C_%E0%B8%9C%E0%B8%B1%E0%B8%A7%E0%B8%9E%E0%B8%B5%E0%B9%88%E0%B9%84%E0%B8%A1%E0%B9%88%E0%B9%80%E0%B8%84%E0%B8%A2%E0%B8%97%E0%B8%B3%E0%B9%81%E0%B8%9A%E0%B8%9A%E0%B8%99%E0%B8%B5%E0%B9%89%E0%B9%80%E0%B8%A5%E0%B8%A2%E0%B9%80%E0%B8%AA%E0%B8%B5%E0%B8%A2%E0%B8%A7%E0%B8%AB%E0%B8%B5%E0%B8%88%E0%B8%B1%E0%B8%87%E2%80%A6..%E0%B8%AD%E0%B8%B9%E0%B8%A2%E0%B8%AA%E0%B9%8C%20%E2%80%9D%E0%B9%80%E0%B8%A2%E0%B9%87%E0%B8%94%E0%B8%9E%E0%B8%B5%E0%B9%88%E0%B8%99%E0%B8%81%20%E0%B8%99%E0%B8%A1%E0%B9%82%E0%B8%95%E2%80%9D%20-%20%E0%B8%AD%E0%B9%88%E0%B8%B2%E0%B8%99%E0%B9%80%E0%B8%A3%E0%B8%B7%E0%B9%88%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%AA%E0%B8%B5%E0%B8%A2%E0%B8%A7/5vlichci-880x660.png" alt="ผัวพี่ไม่เคยทำแบบนี้เลยเสียวหีจัง…..อูยส์ ”เย็ดพี่นก นมโต”" title="ผัวพี่ไม่เคยทำแบบนี้เลยเสียวหีจัง…..อูยส์ ”เย็ดพี่นก นมโต”" class="moz-reader-block-img" moz-reader-center="true"></p>
+<div>
+<p><strong>เรื่องเสียว ผัวพี่ไม่เคยทำแบบนี้เลยเสียวหีจัง…..อูยส์ ”เย็ดพี่นก นมโต”</strong></p>
+<p>พี่นกเป็นสาวออฟฟิสอายุ 30 ปี ลูก 1 แล้วครับ ไม่ค่อยสวยเท่าไหร่ 
+หน้าตาพอใช้ได้ สูง 162 หุ่นค่อนข้างอวบครับ 
+นมใหญ่ผมยาวหุ่นแกน่าฟัดมากๆเรียกได้ว่าบึ้มสุดๆ 37-27-35 
+เพราะผมวัดเองกับมือ…เหอๆ…เรื่องมีอยู่ว่า 
+สามีพี่นกไม่ค่อยชอบทำการบ้านครับ 
+แบบว่าเขาคงแอบมีเมียน้อยมั้งครับเลยไม่ค่อยได้มาสนใจพี่นก<br>แกเล่าให้ผมฟังว่า 1 ปีแกจะมีเซ็กไม่ถึง 10 ครั้ง<br>เฮ้อมีเมียหุ่นน่าเย็ดแบบนี้ทำไมไม่เอานะ<br>พี่
+นกแกกล้าบอกเพราะแกแอบชอบผมอยู่(มั๊ง) 
+มีไรก็เล่าสู่กันฟังตลอดเรื่องเซ๊กส์น่ะครับแกไม่ค่อยปิด 
+บางทีแกก็แอบหึงหวงผมเวลาที่ผมไปคุยกับเพื่อนๆ แผนกอื่น… และแกเคยได้ยินว่า
+ ควยผมนั้นใหญ่และยาวขนาด ยาวxรอบวง….8×6 นิ้ว… 
+และขี้เย็ดอีกตะหากเพราะผมเองชอบแลกเปลี่ยนเรื่องอย่างว่ากับเพื่อนๆ 
+ประจำๆ…..แล้วดูเหมือนแกจะเป็นใจให้ผมด้วยนะ<br>วันนั้นเป็นวันเสาร์ครับ 
+เมียก็ติดไฟแดงอีกตะหาก 
+เงี่ยนก็เงี่ยน……..ผมไม่ได้ทำงานเพราะต้องไปเอาเช็ค…ผมเลยอาสาไปรับพี่นก
+เพราะแกบอกว่าขี้เกียจขับรถไปเอง กลัวคนเยอะ…ไม่มีที่จอด…..7 
+โมงครึ่งผมถึงหน้าบ้านแกครับ วันนั้นพี่นกแต่งตัวแบบสบายๆ 
+กางเกงขาสั้นสีขาว โชว์ขาอ่อนขาวๆ เนียนๆ แต่เสื้อยืด คอเชิ้ตแกสิครับ 
+รัดมากๆ จนนมขนาด 37 นิ้วของแกชูออกมาเป็นภูเขาเลย….กระดุมไม่ติดอีกตะหาก 
+นมพี่นกใหญ่และชิดกัน 
+น่าจับน่าบีบมากๆ…ทำให้สายตาผมเริ่มซอกแซกมองอยู่กับนมคู่บึ้ม…..ผมงี้ควย
+แข็งเลยครับ พอขึ้นรถได้สักพัก ควยผมตุงเลยครับ แกก็ก้มๆ เงยๆ 
+หาเข็มขัดรัดเพราะเป็นเบาะรถแต่งเลยหาเจอยากหน่อย นมบึ้มๆ หกสิครับ 
+โห…ใหญ่โคตรๆ อยากจับจริงๆ เลย พี่นกสังเกตุว่าผมมองตาค้าง แล้วมองหน้าผม 
+แบบอายๆ…มองใหญ่ เลยนะนมคนแก่น่ะ….แหม…น้องเห็นนมพี่หน่อยไม่ได้ 
+เป้าตุงเชียว 
+นมคนแก่ก็งี้แหละลูกหนึ่งแระจะให้มันเต่งตึงเหมือนสาวๆได้ไง..แน่ะๆ 
+มอง…มอง…เดี๋ยวเอานมฟาดหัวเลย ไอ้น้องคนนี้…….ผมงี้อายจนหน้าแดง 
+อูย….แก่เก่อที่ไหนกันพี่ 32เองนะครับ(ผม26)… 
+แล้วก็ปวดท้องเพราะตื่นเต้นมากๆ…ผมเลยแวะเข้าปั๊มครับ….เมื่อผมกลับมาขึ้นรถ
+ก็เห็นพี่นกแกก็ปรับเบาะนอนแระ…นมเป็นนม 
+โคกเป็นโคก…เลยทีนี้….หม้อแกก็ใหญ่ใช่เล่น….ผมไม่ได้ปลุกหลังจากมองอยู่สัก
+พัก ควยแข็งอีกแล้วสิครับ…ผมจึงขับรถออกไป 
+ไม่ได้ไปเอาเช็คครับแต่…ไปม่านรูด ใกล้ๆ กันกับปั๊มน้ำมันแค่ 500 
+เมตร…แกสะดุ้งตื่นอีกทีก็งงถามผมว่า 
+ถึงแล้วเหรอน้อง…..อ้าวพาพี่มาที่ไหนมาที่นี่ทำไม….ผมเลยบอกว่า 
+ม่านรูดอ่ะพี่….พี่นกค้าพ.. ผมแอบชอบพี่นกมานานแล้วครับ 
+เมื่อก่อนที่เข้าทำงานใหม่ๆ 
+พอเงี่ยนผมก็นึกถึงแต่นมพี่นกนี่แหละครับ…ได้แต่เก็บภาพไปชักว่าวสมัยเข้า
+งานแรกๆ…..แกก็บอกว่า….อ่อๆ เอ่อๆ 
+แม้….เธอนี่ร้ายจริงๆทำแบบนี้กับผู้หญิงมากี่คนแล้วล่ะ..ผมไม่กล้ามองหน้า 
+กลัวพี่นกโกรธ…แต่แล้วพี่นกก็พูดว่า….ก็ได้…แต่… 
+อย่านานนะ..เพราะพี่นกต้องรีบไปดูลูกฝากป้าไว้น่ะ…ผมเลยจูงมือแกเข้าห้องเลย
+ครับ…..ผมรีบหอมแก้มพี่นกเลยครับหลังจากปิดประตูห้อง ผมไซร้ซอกคอ 
+ดูเหมือนแกอายๆเลยไม่กล้าร้อง…. อุ๊ย….แล้วแกก็แอ่นอกขึ้น 
+หน้าเชิ่ด(คงสยิว)เลย แอ่นคอให้ผมไซร้ อย่างเมามันส์…มือผมก็ล้วงสิครับ 
+มือซ้ายล้วงหีแก ไม่มีขนเลยแฮะ…เกลี้ยงดีจริงๆ แล้วนิ้วโป้งผมก็แหย่เข้าๆ 
+ออกๆ ในหีแก..ตอนแรกมันก็แฉะอยู่แล้วอ่ะนะ…คราวนี้ยิ่งแฉะใหญ่เลย… 
+มือขวาเฟ้นนมอย่างสนุกมือ….นมขนาด 37 นิ้วของแกใหญ่มากๆ ครับ 
+ล้นมือเลยทีเดียว…..แกเริ่มครางแล้วครับ…อือๆๆๆ…อย่าๆ…อย่า…ไม่…ไม่…โอ๊ย
+…..น้องจ๋า…พี่จะแตกแล้ว….โอว…น้ำพี่จะแตกแล้ว….ผมรีบเขี่ยติ่งเสียวแกใหญ่
+เลยครับ จนแกกระตุก 2-3 ที 
+แล้วน้ำแกก็แฉะเต็มมือผม….ผมไม่รอช้ารีบถอดเสื้อแกออก เห็นนมคู่งาม 
+ทั้งขาวทั้งสวยทั้งใหญ่..แล้วก็ดูดนมครับ ทั้งสองเต้านั้น ใหญ่มากๆ 
+ไม่ยานมากเท่าไหร่ นมแกแน่นมากๆ หัวนมสีน้ำตาลอ่อนๆ…แต่ปานหัวนมบานออกมาก 
+สงสัยเมื่อก่อนผัวแกดูดบ่อยแน่เลย (แต่เดี่ยวนี้พี่นกบอกว่า 2-3 
+เดือนถึงจะได้เย็ดกันที)…..ผมทั้งดูดทั้งเลียสลับกันแกได้แต่ครางครับ…
+อุยยยยส์..ซี้ดดดดดด…เสียวจ๊ะน้อง….พี่เสียวจัง…ผัวพี่ไม่เคยทำแบบนี้เลย…
+อูยยยยยส์…ซี้ดดดดด…..อ๊า…….ส่วนมือทั้งสองก็ถอดเสื้อผ้าครับ 
+ถอดทั้งของแกและของผม…..ผมเพิ่งรู้ว่าแกก็หุ่นอวบอัดน่าเย็ดคนนึงเหมือนกัน
+แฮะ..แต่แกก็พอมีหน้าท้องอยู่บ้างนิดๆ 
+ตามประสาคนอวบ…แต่ไม่ใช่ปัญหาเพราะเราก็อยู่ในชุดวันเกิดทั้งคู่……พี่นกดูจะ
+ตกใจกับขนาด 8×6 นิ้วของควยผมมาก แกจ้องไม่กระพริบเลยทีเดียว 
+ที่ตอนนี้มันขยายตัวเต็มที่เพราะความเงี่ยนหีพี่นก….หีก็ไม่มีหมอยสักเส้น…
+อูมเชียวครับ…นมก็น่าดูด 
+ผมจับพี่นกนอนหงายแล้วยัดควยใหญ่เข้าหีพี่นกทันที…พรวด…ผมกระแทกเข้าไปเบาๆ 
+แต่แกก้สะดุ้งเพราะขนาดมันยาวกว่าปกติ….เบาๆ 
+นะจ๊ะน้อง…พี่นกกลัวมดลูกพี่นกพัง…โอ๊ย…..ยยยยยยย….เบาจ๊ะ…เบา…โอ้ย……..อ๊า
+……ผมกระแทกเบาๆ แล้วค่อยๆ 
+แรงขึ้นๆ…..แล้วก็แรงขึ้น…พั่บๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆผมแบกขาพี่นกไว้พร้อม
+กับจูบขาอ่อนแก 
+แล้วก็กระเด้าอีก…พั่บๆๆๆๆๆๆๆๆๆๆๆๆๆๆ….โอยๆๆๆๆๆ….น้องขาทำดีเหลือเกิน…พี่นก
+จะเสร็จอีกแล้วจ๊ะ…อุ้ย….โอ้ว….วววววว…..วววว.ผมเปลี่ยนท่าทันทีครับ….ผม
+จับแกนอนตะแคง แล้วเบี่ยงขาซ้ายลงด้านข้าง 
+จากนั้นเอาท่อนควยกระแทกเข้าไปแกสะดุ้งเลยครับ 
+อูยส์….เข้ารูหีพี่นกเต็มๆเลยจ๊ะน้อง…เบาจ๊ะ….อุ้ย…ออย…ยยยยยยยยย….แกคราง
+อย่างไม่เป็นภาษาเลยครับเพราะท่านี้จะคล้ายกับท่าหมา 
+เข้าเต็มๆรูหีพี่นกเลยสิงานนี้ ผมกระแทกหีพี่นกไม่ยั้ง 
+เพราะท่านี้มันฟิตแล้วก็เข้าเต็มๆ หีพี่นกก็ตอดรัดของผมเป็นระยะๆ 
+จนผมสุดจะทนเพราะกระเด้าแรงๆมา10กว่านาทีแระน้ำจะออกแล้วคับพี่……..พี่…
+พี่นก…ผมแตกในนะพี่….โอป่าวคับ…..แตกในนะพี่……จ๊ะๆ….แกตอบเบาๆ….โอยยยยย 
+พี่เสียวหีเหลือเกินจ้าน้อง…จ๋า…เย็ดดีจังเลย..อูยยยยยยส์…..อา……อ๊า…….น้ำ
+ผมจะแตกแล้วพี่..ผมเร่งเร็วปานรถวิ่ง260 
+กม./ชม.ป้าบๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆทั้งหน้า ทั้งนมแกตอนนี้ 
+โดนกระแทกซะไหวตามแรงกระแทกได้อารมณ์เพิ่มขึ้นไปอีก……..แล้วก็….จะแตกแล้ว
+ครับพี่….แตกแตกแตกกกกก…แล้วพี่….อ้า……ซี๊ด……น้ำผมพุ่งใส่รูหีพี่นกไม่ขาด
+สายครับ 
+ผมกระเด้าช้าๆเพื่อรีดน้ำเพราะความเสียว…..หีพี่นกตอดควยผมตุ่บๆๆๆ…….อ่า
+……….เป็นไงพี่….โอป่ะคับ……จ๊ะ…โอจ๊ะ…..สุดยอดที่สุดเลยจ๊ะน้องรัก…..แล้วผม
+ก็หอมแก้มพี่นกทีนึง…แกยิ้มแล้วหอมแก้มผม…..โอมากๆ 
+จ๊ะ…ดีกว่าที่คิดไว้มากเลย…ควยน้องใหญ่มากๆ 
+หีพี่แหกหมดแล้วมั๊ง….เนี่ยพี่จุกจนร้องไม่ออกเลยจ๊ะ…แต่ก้อมัน+มีความสุข
+มากๆ เกิดมาพี่ไม่นึกเลยว่าจะมีความสุขแบบนี้….เย็ดกับผัวมา 7 
+ปีไม่เคยเสร็จแบบนี้เลยจริงๆ…กับน้องนี่แหละ…..หลายครั้งแล้วแหละ……เก่งจริง
+ๆ พ่อคุณ….มิน่าล่ะสาวๆ ถึงสะบัดไม่หลุดง่ายๆ…มีดีที่ซุปนี่เองนะเราเนี่ย<br>ว่า
+ แล้วผมก็จับแกนอนหงายอีก 
+เพื่อเย็ดต่อทันที….อุ๊ย..ไม่พักเลยเหรอน้อง….ยังเสียวหีไม่หายเลยจ๊ะ….ท่า
+นี้ก็ท่าพื้นๆ แหละครับ ผมกอดคอพี่นก พร้อมกับไซร้ซอกคอซ้าย ขวา 
+พี่นกหลับตาพริ้มเลยครับ สงสัยจะเคลิ้ม..แต่ควยผมกระเด้าพั่บๆๆๆๆๆ 
+แกครางตลอดเวลาอูยยยย…โอยยยยย….อ๊าาา……..ผมกระแทกแบบแรงๆ เลยครับ 
+เอาแบบให้หีแหกไปข้างนึงเลย.ป้าบๆๆๆๆๆๆ
+ๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆ..สุขไหมพี่…สุขจ๊ะน้องจ๋า….หลงผม
+ไหมพี่….หลงจ๊ะ….หลงควยผมหรือยัง….หลงจ๊ะ….พี่หลงควยน้องจังเลยจ๊ะ
+…..ซี๊ดดดดดดดดดดดดดด…….แกตอบเสียงสั่นๆ เบาๆ 
+สงสัยจะมัน+จุกที่ผมกระแทกมิดด้ามแบบนี้…….ป้าบๆๆๆๆๆๆๆๆๆๆๆๆ.เกือบ 10 
+นาทีผมเสร็จอีกรอบ……..ส่วนพี่นกหอบเลยครับ แกบอกหายใจไม่ทัน 
+แล้วก็จุกท้องมากๆ….อูยน้องจ๋า….พี่นกจุกไปหมดแระ…มดลูกพี่นกพังหรือยังก็
+ไม่รู้ 
+ควยเธอกระแทกมดลูกชั้นป้าบๆๆๆๆ….อูยส์…..แต่ก็ชอบล่ะสิท่า….พี่นกยิ้มอาย
+ๆแต่ไม่ว่าอะไร….ผมแอบทะเล้นด้วยการแหย่หีแกเล่นไปทีนึง….<br>ยังไม่หาย
+เหนื่อยครับ ผมเย็ดต่อทันที…คราวนี้ผมนั่งคร่อมหน้าอกแกครับ 
+แล้วเอาควยถูร่องนมแกเพื่อจะเย็ดนม…ผมเอาปลายควยถูตามหัวนมแก ถูรอบๆ 
+ปานนม…ดูแกครางซี๊ดซ๊าด….คงจะเสียว…แล้วผมจับมือให้พี่นกเอามือมาบีบนมส่วน
+แกหันหน้าออกข้างไม่กล้ามองเพราะตอนนี้ขนาดมันใหญ่มากๆ อาจยาวเกิน 7 
+นิ้วแล้วมั๊ง..เห็นพี่นกมองมันทีไร 
+ตาโตเชียว…..ผมแกล้งเอาไปทิ่มปากแก…แกร้องพระเจ้า….ผมเลยเย็ดนม….กระเด้าไป
+ก็ซี้ดไปเพราะเสียวจากน้ำเมื่อกี๊อยู่…นมแกก็เย็ดมันเหมือนกันแฮะ….แล้วผมก็
+ไซร้ซอกคอพี่นก 
+แล้วทั้งดูดทั้งเฟ้นนม37นิ้วพี่นกอย่างเมามัน…พี่นกได้แต่ร้องเบาๆ…อูยส์……
+ผมลงลิ้นต่อทันทีครับ ตั้งแต่หน้าผากยันนิ้วโป้ง ผิวพรรณพี่นกดูดีครับ 
+เกลี้ยงมาก แล้วแกเป็นคนไม่มีขนอีกด้วย เลยดูน่าเย็ดเข้าไปใหญ่…. 
+ดูที่แขนแกเหมือนขนลุกเลยครับ 
+ครางตลอด…ซี๊ดดดดดดด…..เสียวจ๊ะ…พี่นกเสียว….อ๊า…..สุขจังเลยจ๊ะน้อง
+…..พี่นกมีความสุขจังเลย….ซี๊ด…..อืม….ผมดูดนมแกอีกแระ…..ดูดแรงๆ 
+เลยจ๊ะน้องจ๋า….อูย..ซี๊ดดดดดดดดดด……ผมจับแกหันหลัง โก้งโค้ง 
+แล้วกระแทกควยใส่ท่าหมาทันทีเพราะเห็นแกมีอารมณ์มาก…..ผมค่อยๆกระเด้าเข้าไป
+…แกครางใหญ่เลยครับ..โอ้ยยยยยๆๆๆ…..พระเจ้า……ซี๊ดดดดดดดดดดด…..ผม
+เริ่มกระเด้าแรงๆ 
+แกงี้ครางเสียงดังเลยครับ…โอยยยยยยยย…..อะ…..อ่า……อือ……..อืม……..สุขจังเลย
+จ๊ะน้อง…….เสียวหีจัง…..อูยส์……….แล้วแกก็กระตุกแล้วก็ทรุดลง 
+เอาหน้าซบหมอนแทนมือ….สงสัยจะหมดแรงแฮะ……ผมกระเด้าแรงๆ 
+เร็วเลยครับทีนี้ผั่บ
+ๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆ
+……แล้วก็พี่นกจ๋า….น้ำจะแตกแล้วพี่….หีพี่นกรัดดีจังเลย….โอ้ว…จะแตกแล้ว
+ครับ…ผมกระเด้าแรงมากๆ 
+แล้วก็เร็วมากด้วย………น้ำเงี่ยนกระฉูดใส่รูหีพี่นกอีกครั้ง…โอวววว…..3 
+น้ำแระ…เบรกก่อนครับ…ผ่านไปเกือบ 2 ชั่วโมงแล้วเพิ่งเย็ดได้ 3 
+น้ำ……อีกชั่วโมงก็หมดเวลา……..แต่พี่นกสิครับบอกว่าเสร็จเกิน 10 
+ครั้งแระ……ผมแหย่ควยเข้าไปกระเด้าแก 4-5 
+ทีน้ำก็แตกแระ….แกบอกงี้ครับ….(ท่าจะเซ๊กจัดนะเนี่ย…)<br>.คราวนี้พี่นกบอก
+ว่าไม่ไหวแล้ว พี่เหนื่อยแล้วก็เพลียเหลือเกิน พี่ยอมเลยจ๊ะ…. 
+คนอะไรแรงเยอะชมัด..เย็ดเก่งเสียด้วย…เอาทนเอานาน.แถมมีดีที่ซุปอีกด้วย..มิ
+น่าสาวติดเยอะ…คนแก่อย่างพี่สู้ไม่ไหวจ๊ะ….แล้วแกก็นอนหายใจหอบๆ….ผมเลย
+นอนทาบจากด้านหลังกอดแก…เพราะวันนี้ยังไงผมก็ต้องตักตวงความสุขกับพี่นกให้
+มากที่สุด…..ผมเริ่มจูบและลงลิ้นอีกครั้ง..เพื่อปลุกอารมณ์พี่นกอีกรอบ
+..คราวนี้ผมใช้ลิ้นเลียหีแกด้วย…พี่นกถึงกับเอามือมากดหัวออก…แล้วครางอย่าง
+มีความสุข……..ซี๊ด…..น้องขา….อูยยยยยส์…เสียวจ๊ะ…แล้วผมก็จับพี่นกคร่อมผม
+ด้านบน ผมนอนหงายครับ ผมจะให้พี่นกขย่มให้ผมบ้าง แกก็เงอะๆ 
+เงิ่นๆ…ผมเลยกระเด้าควยใส่หีแกเลยครับ 
+แกร้องอูยยยส์….อ๊า…..แล้วก็ก้มหน้าลงเลยครับ 
+เจอผมเด้งใส่แบบนี้แล้วผมใส่ไม่ยั้งเลย…นมแกตอนนี้มันกระเพื่อมๆยิ่งได้
+อารมณ์….ส่วนพี่นกครางแบบไม่เป็นภาษาเลยครับ….ผมกระเด้าเกือบ 10 
+นาทีผมก็น้ำแตกใส่หีพี่นกอีกรอบ…เสร็จไป 4 น้ำแระ…ผมยังสบายๆ ครับ 
+แต่เริ่มเจ็บหัวล่างนิดหน่อย…<br>เกือบ 3 ชั่วโมงเลยครับ 
+ผมใส่ไม่ยั้งตลอด….ดูพี่นกเพลียๆเลยครับ 
+หีแกตอดควยผมตลอด…ตุบๆๆ…จนผมพาแกไปอาบน้ำเพราะอีก 20 
+กว่านาทีจะหมดเวลา…ผมเลยกระเด้าแกในห้องน้ำอีกรอบครับ….คราวนี้ทั้งจากด้าน
+หลังและยกขาแกขึ้นข้างนึง..ไซร้ซอกคอ 
+ดูดนมแกอีก…แล้วก็กระเด้าๆๆๆๆๆพั่บๆๆๆๆๆ..อีกเกือบ 10 
+นาทีน้ำเงี่ยนผมชุดสุดท้ายก็พุ่งเข้ามดลูกพี่นกอีกน้ำ…..5 ยกพอดีครับสำหรับ
+ 3 ชม……..<br>ดูพี่นกจะเพลียไปเลยครับ….กลับไปบ้านพี่คงนอนยาวเลยแหละแบบนี้
+….ไม่ไหว…เธอนี่มันเยี่ยมยอดจริงๆ…ทำคนแก่ขึ้นสวรรค์ 10ๆ …20 
+รอบเลยนะ…เก่งจังเลย…เธอรู้มั๊ยควยเธอมันกระแทกมดลูกชั้นจนจุก 
+ครางไม่ออกเลยนะ……แล้วพี่นกชอบป่าวล่ะครับ…..ชอบสิ…ชั้นต้องขอใช้บริการเธอ
+เดือนละครั้งพอแล้วล่ะแบบนี้……แต่พี่ก็มันใช่ไหมล่ะ….แกยิ้มแล้วมาตบที่บ่า
+….ไปเถอะ….จะบ่ายโมงแล้วนะ…พี่ต้องกลับบ้านแล้วล่ะ…..ผมก็อดไม่ได้ที่จะดูด
+นมขาวๆอวบๆของพี่นกในรถอีกครั้งทั้งสองเต้าก่อนจะส่งพี่นกหน้าบ้าน…..แล้ว
+เดินตามพี่นกไปเพื่อสำรวจว่ามีใครอยู่ในบ้านไหม 
+อ่อ…มีลูกสาวแกกำลังดูทีวีอยู่นั่นเอง…ผมเลยให้พี่นกไปใส่ชุดแซ็ก 
+ไม่ก็กระโปรงสั้น… แกก็เงอะๆเงิ่นๆว่าใส่ทำไม 
+…เพราะดูดนมเมื่อกี๊ควยแข็งอีกแล้วสิ….คราวนี้ผมให้พี่นกใส่กระโปรงยาวครับ 
+เพราะกระโปรงสั้นของแกมันสั้นมากๆ…เย็ดไม่สะดวก….ผมให้แกมานั่งตักผม…แล้วผม
+ก็แหย่ควยเข้าไปโดยเบี่ยงขอบกางเกงในออกข้างนึง แล้วดันควย 7.1 
+นิ้วพรวดเข้าไปทีเดียว พี่นกสะดุ้งเลยครับ…แต่ผมกระซิบเบาๆว่า 
+พี่นกอย่าเผลอร้องดังล่ะ…เดี๋ยวลูกสาวพี่นกจะสงสัย….แล้วผมก็กระเด้าๆๆๆๆๆ 
+ตรงโซฟานั่นแหละครับ ลูกสาวพี่นกก็ทำหน้างงๆ 
+คงจะงงว่าทำไมแม่เราต้องนั่งตักคนอื่น….แล้วก็ไม่สนใจ 
+ดูทีวีต่อครับ…ผมก็กระเด้าหีพี่นกอยู่อีกเกือบ 10 
+นาทีก็น้ำแตกใส่หีพี่นกอีกครั้งครับ..แกก็ครางเบาๆ…หีแกตอดควยผมตุบ 
+ๆๆๆๆ…..รวมแล้วก็ 6 
+น้ำครับที่พี่นกได้จากผม…แตกในหมดทุกดอกเลย……แล้วก็ไปล้างในห้องน้ำครับ….ผม
+งี้แสบควยเลย…ส่วนพี่นกก็แสบหี…เพราะไม่เคยเจอควยใหญ่ๆ ยาวๆ แบบนี้มาก่อน 
+อีกทั้งคงเพราะไม่ได้ใช้งานมานานอีกด้วย…..ผมนั่งเล่นสักพัก….ก็อีกแล้วครับ
+ ควยแข็งอีกแล้ว….ทำไงจะได้เย็ดอีกสักดอก….ว่าแล้วผมจึงบอกลูกสาวพี่นก(อายุ
+ 5 
+ขวบ)ไปซื้อโค้กให้น้าหน่อย…..แล้วก็เช่นเดิมครับ…ผมมองหน้าพี่นกแล้ว
+พยักหน้า…แกทำหน้าตกใจ…อีกแล้วเหรอ….โอยชั้นจะบ้าตาย.. 
+ไม่เอาแล้วนา…แสบจิ๊หมดแล้ว…..คนอะไรขี้เย็ดจัง..ก็คนมันเงี่ยนอ่ะพี่…นะค้า
+พ…ขออีกดอกนะพี่……คราวนี้ผมดึงแกเข้าที่ห้องนอนพี่นกเลยครับ….จับขาพี่นก
+ถ่างออกพาดคอ 
+ผมจูบและลงลิ้นที่ขาอ่อนพี่นก…ลากลิ้นมาที่ปลายนิ้วโป้ง….ส่วนพี่นกคราง
+อย่างเดียว..อ๊าส์….. 
+แล้วผมก็กระแทกอย่างเดียว….โอววววว….ซี๊ดดดดด…..เกือบๆ 5 นาที 
+ลูกสาวแกก็มาเรียกครับ…แม่…..แม่…..ผมงี้รีบกระเด้าใหญ่เลยครับเพราะกลัวไม่
+เสร็จ…ป้าบๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆ…. 
+……จนเสร็จไปอีกดอก…..อ่า…..ซี๊ดดดดดด……แล้วพี่นกก็รีบไปหาลูกส่วนผมเข้าห้อง
+น้ำล้างควย….คุยกันพักนึงผมก็ขอตัวกลับบ้าน…..แล้วแกก็ให้เงินผมอีกพันนึง 
+ค่าเหนื่อยมั๊ง…..ล่อไปซะหมดแรงเลยครับ…7น้ำ…จากนั้นผมและพี่นกจะเย็ดกัน
+บ่อยมากๆ…ตอนพักเที่ยงกลางวัน ช่วงทำโอทีก็จะแอบเย็ดกันในห้องปริ้นงาน 
+เย็ดไปรีบไป…..เร้าใจดีครับ……บางทีก็ในรถผมแหละ 
+ตอนพักเที่ยง…หรือหลังรถพี่นกตอนเที่ยงๆ 
+ครับ..หรือตอนทำโอทีเราจะแกล้งไปห้องน้ำคนละครั้ง 
+แล้วก็เย็ดกันในห้องน้ำแหละครับมันส์ดี….แต่ต้องเอามือปิดปากพี่นกไว้ครับ
+เพราะแกชอบร้องดังเวลาเสียว…..หรือแม้แต่ตรงโต๊ะทำงานเวลาอยู่ด้วยกันผมจะ
+ให้พี่นกนั่งตักแล้วผมจะเอาควยแหย่เข้าเหมือนนั่งตักกันธรรมดา 
+แต่ที่จริงมันควยโคตรๆ….แกจะร่อนให้ผมครับ 
+แตกในทุกครั้ง…หรือบางครั้งก็เล่นมันข้างล่างออฟฟิตนี่แหละครับ 
+มุมมืดๆ..ครับ….หลังๆมานี้พี่นกดูผอมลงน้ำหนักลดไป 6-7 โล หุ่นดี ผิวพรรณดี
+ แล้วก็สวยใสขึ้นอย่างมากเพราะได้น้ำผมแน่ๆ 
+เลย…ส่วนผมสิ…รับบทหนักจากพี่นกแล้วยังไปเจอที่บ้านต่ออีก…..แต่เวลาเมียผม
+เป็นเมนส์ก็ได้พี่นกนี่แหละครับ…เย็ดมันส์เหลือเกิน..พี่นกเป็นเมนส์ก็กลับ
+ไปเย็ดเมีย…สลับกันครับ…หลังๆ 
+ผมสอนพี่นกโม้คให้ด้วย…ตอนนี้เก่งแล้วครับ…โม้คเก่งมากๆ…เย็ดเก่งขึ้นเยอะ
+เลย….ตอนนี้พี่นกหย่าจากผัวแล้วล่ะแถมเงินไว้อีกเกือบล้านแหมดีเลย……แล้วก็
+มีผมเข้าๆ ออกๆ 
+บ้านพี่นกทุกวันครับ…เข้าไปเย็ดก่อนกลับบ้าน…เย็ดก่อนมาทำงาน…บางทีเงี่ยน
+จัดก็เย็ดมันที่ทำงานแหละ ไม่ก็ตอนเช้าตรงลานจอดรถ 
+เพราะเช้าๆไม่ค่อยมีคนมา..หรือวันที่มีโอทีเสาร์-อาทิตย์ก็เย็ดมันที่บ้าน
+พี่นกเลยครับ 
+เย็ดเสร็จค่อยกลับมาทำงานปกติ…ตอนนี้ยิ่งน่าเย็ดครับเพราะแกสวยเหลือเกินวัน
+ละ 10 น้ำอัพๆเลยครับ 
+เย็ดจนเจ็บควยเลยก็มี…บางวันผมไม่กลับบ้านเลยครับ…อยู่เย็ดกับพี่นก…โดยบอก
+เมียว่าเมาค้างบ้านเพื่อน…..เมียผมก็ไม่สงสัยเลยครับเพราะบางครั้งก็ต้อง
+เข้ากะกลางคืน…ผมก็ต้องไปค้างกับพี่นกแทบทุกวัน..เย็ดกันบ้านแทบพัง…..ส่วน
+ลูกสาวแกก็ไปอยู่บ้านผัวเก่าบ้าง 
+บ้านพี่นกบ้าง….มีความสุขจริงๆครับ…..ได้เงินแถมได้เย็ดอีกต่างหาก….ส่วนผัว
+พี่นกหลังจากหย่าแล้วก็ไปแต่งงานกับสาวมหาลัยซะงั้น……..แล้วจะมาเล่าให้ฟัง
+ใหม่ครับ</p>
+<p>ติดตามอ่านเรื่องเสียวได้ทุกวันได้ที่เรื่องเสียวๆ ยอดฮิตจาก <a href="https://xn--72c9a2acwqrc6b9as0ie8hf.com/">อ่านเรื่องเสียว.com</a></p>
+</div>
+</div>
+
+
+<p>
+ tags of your page,
+//or option 2: Save it as an external file, "popunder.js", and call it from between
+//the &amp;</p>
+
+<p>
+ tags of the parent page, with this command:
+// </p></div>
+
+			</article>
+					</div>
+
+</main>
+
+
+
+</div></div></div>
+      </div>
+
+      <div>
+        <div class="reader-message"></div>
+      </div>
+      <div aria-owns="toolbar"></div>
+    </div>
+  
+
+</body></html>

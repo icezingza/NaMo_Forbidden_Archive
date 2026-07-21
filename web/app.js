@@ -19,7 +19,25 @@ const state = {
   messages: [],
   loading: false,
   streamMode: true,
+  selectedEngine: "omega",
 };
+
+const CLASS_TO_ENGINE = {
+  "NaMoOmegaEngine": "omega",
+  "RinladaAI": "rinlada",
+  "SeraphinaAI": "seraphina",
+  "DarkNaMoSystem": "dark",
+  "NaMoUltimateBrain": "ultimate"
+};
+
+const ENGINE_DISPLAY_NAMES = {
+  omega: "NaMo Omega",
+  rinlada: "Rinlada AI",
+  seraphina: "Seraphina AI",
+  dark: "Dark NaMo",
+  ultimate: "NaMo Ultimate"
+};
+
 
 const dom = {
   chat: document.getElementById("chat"),
@@ -129,10 +147,57 @@ function updateStreamToggleUI() {
   dom.streamToggle.textContent = state.streamMode ? "Stream ◈" : "Stream ○";
 }
 
+function updateActiveEngineUI(engineKey) {
+  state.selectedEngine = engineKey;
+  const displayName = ENGINE_DISPLAY_NAMES[engineKey] || engineKey;
+  dom.statusEngine.textContent = displayName;
+  
+  document.querySelectorAll(".fab-menu-item").forEach((btn) => {
+    if (btn.dataset.engine === engineKey) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+}
+
+function resolveAndSyncEngine(engineClassName) {
+  if (!engineClassName) return;
+  const engineKey = CLASS_TO_ENGINE[engineClassName] || engineClassName.toLowerCase();
+  updateActiveEngineUI(engineKey);
+}
+
+function switchEngine(engineKey) {
+  if (state.selectedEngine === engineKey) return;
+  
+  updateActiveEngineUI(engineKey);
+  
+  // Play energy line animation
+  const chatArea = document.querySelector(".chat-area");
+  const energy = document.createElement("div");
+  energy.className = "energy-line";
+  chatArea.appendChild(energy);
+  setTimeout(() => energy.remove(), 1000);
+  
+  // Add system message
+  const displayName = ENGINE_DISPLAY_NAMES[engineKey] || engineKey;
+  addSystemMessage(`System: ${displayName} is now online.`);
+}
+
+function addSystemMessage(text) {
+  addMessage({
+    role: "system",
+    text: text,
+    timestamp: Date.now()
+  });
+}
+
 function setStatusFromRoot(payload) {
   if (!payload) return;
   if (payload.engine) {
-    dom.statusEngine.textContent = payload.engine;
+    resolveAndSyncEngine(payload.engine);
+  } else if (payload.default_engine) {
+    resolveAndSyncEngine(payload.default_engine);
   }
   if (payload.sin) {
     dom.statusSin.textContent = payload.sin;
@@ -162,7 +227,7 @@ function setStatusFromChat(payload) {
     updateEmotionBars(status.emotion);
   }
   if (payload.engine) {
-    dom.statusEngine.textContent = payload.engine;
+    resolveAndSyncEngine(payload.engine);
   }
 }
 
@@ -206,7 +271,7 @@ async function fetchAndApplyStatus() {
     const engineData = Object.values(payload)[0];
     if (!engineData) return;
     if (engineData.emotion) updateEmotionBars(engineData.emotion);
-    if (engineData.engine) dom.statusEngine.textContent = engineData.engine;
+    if (engineData.engine) resolveAndSyncEngine(engineData.engine);
   } catch {
     // silent
   }
@@ -271,11 +336,13 @@ function renderMessage(message) {
     }
   }
 
-  const meta = document.createElement("div");
-  meta.className = "message__meta";
-  const stamp = new Date(message.timestamp || Date.now());
-  meta.textContent = stamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  wrapper.appendChild(meta);
+  if (message.role !== "system") {
+    const meta = document.createElement("div");
+    meta.className = "message__meta";
+    const stamp = new Date(message.timestamp || Date.now());
+    meta.textContent = stamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    wrapper.appendChild(meta);
+  }
 
   return wrapper;
 }
@@ -345,7 +412,7 @@ async function sendMessagePlain(text) {
     const response = await fetch(`${state.baseUrl}/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, session_id: state.sessionId }),
+      body: JSON.stringify({ text, session_id: state.sessionId, engine: state.selectedEngine }),
     });
 
     if (!response.ok) throw new Error(`API error: ${response.status}`);
@@ -395,7 +462,7 @@ async function sendMessageStream(text) {
     const response = await fetch(`${state.baseUrl}/v1/chat/stream`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, session_id: state.sessionId }),
+      body: JSON.stringify({ text, session_id: state.sessionId, engine: state.selectedEngine }),
     });
 
     if (!response.ok) throw new Error(`API error: ${response.status}`);
@@ -436,7 +503,7 @@ async function sendMessageStream(text) {
           localStorage.setItem(STORAGE_KEYS.sessionId, state.sessionId);
         }
         if (event.engine) {
-          dom.statusEngine.textContent = event.engine;
+          resolveAndSyncEngine(event.engine);
         }
       }
     }
@@ -559,6 +626,37 @@ function bindEvents() {
 
   dom.settingsModal.addEventListener("click", (event) => {
     if (event.target.dataset.close === "true") closeSettings();
+  });
+
+  // FAB Toggle for touch/mobile
+  const fabContainer = document.getElementById("persona-fab-container");
+  const fabTrigger = document.getElementById("fab-trigger");
+  if (fabTrigger && fabContainer) {
+    fabTrigger.addEventListener("click", (event) => {
+      event.stopPropagation();
+      fabContainer.classList.toggle("active");
+    });
+  }
+
+  // FAB Menu Item Selection
+  document.querySelectorAll(".fab-menu-item").forEach((btn) => {
+    btn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const engineKey = btn.dataset.engine;
+      if (engineKey) {
+        switchEngine(engineKey);
+      }
+      if (fabContainer) {
+        fabContainer.classList.remove("active");
+      }
+    });
+  });
+
+  // Close FAB menu when clicking outside
+  document.addEventListener("click", () => {
+    if (fabContainer) {
+      fabContainer.classList.remove("active");
+    }
   });
 }
 
