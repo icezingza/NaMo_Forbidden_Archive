@@ -167,7 +167,7 @@ class NaMoOmegaEngine(BasePersonaEngine):
                 "arousal": 0,
                 "sin_system": SinSystem(),
                 "personas": PersonaOrchestrator(),
-                "relationship": RelationshipEngine(),
+                "relationship": RelationshipEngine(persistence_key=key),
             }
         return self._session_states[key]
 

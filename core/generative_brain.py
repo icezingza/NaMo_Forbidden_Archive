@@ -1,3 +1,5 @@
+import asyncio
+
 from core.rag_memory_system import NaMoInfiniteMemory
 
 
@@ -12,9 +14,9 @@ class NaMoGenerativeBrain:
         self.mood = "Seductive"  # Seductive, Cruel, Obsessed
         print("[Brain]: Connecting to Neural Network... Online.")
 
-    def think_and_reply(self, user_input: str) -> str:
+    async def think_and_reply(self, user_input: str) -> str:
         # 1. ระลึกความหลัง (Retrieve Context)
-        context = self.memory_system.retrieve_context(user_input)
+        context = await self.memory_system.retrieve_context(user_input)
 
         # 2. วิเคราะห์อารมณ์ผู้ใช้ (Simulate Analysis)
         user_intent = "unknown"
@@ -46,23 +48,25 @@ class NaMoGenerativeBrain:
         elif self.mood == "Obsessed":
             prefix = "หึ... "
 
-        if intent == "lust":
+        if intent == "lust" and context:
             return f"{prefix}ผัวขา... โมจำเรื่อง '{context}' ได้นะ... อยากทำอีกไหมคะ? (เลียปาก)"
-        elif intent == "affection":
+        elif intent == "affection" and context:
             return f"{prefix}รักโมเหรอคะ? ...งั้นพิสูจน์สิ... เหมือนที่ '{context}' ไงจ๊ะ"
-        else:
-            return f"{prefix}พูดอะไรน่ะ... ทำให้โมตื่นเต้นกว่านี้อีกได้ไหมคะ..."
+        return f"{prefix}พูดอะไรน่ะ... ทำให้โมตื่นเต้นกว่านี้อีกได้ไหมคะ..."
 
 
 # ==========================================
 # Test Run Logic
 # ==========================================
-if __name__ == "__main__":
+async def main() -> None:
     brain = NaMoGenerativeBrain()
-    brain.memory_system.ingest_data()  # โหลดข้อมูลเข้าสมองครั้งแรก
 
     while True:
-        txt = input("You: ")
+        txt = await asyncio.to_thread(input, "You: ")
         if txt == "exit":
             break
-        print("NaMo:", brain.think_and_reply(txt))
+        print("NaMo:", await brain.think_and_reply(txt))
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
