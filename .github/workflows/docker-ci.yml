@@ -1,3 +1,5 @@
+$ docker login -u icezingza
+
 name: Docker CI
 
 on:
