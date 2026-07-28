@@ -1,0 +1,7 @@
+Flask>=3.0.0
+deepface
+speechbrain
+transformers
+torch
+torchaudio
+scikit-learn

@@ -1,19 +1,55 @@
-CHANGELOG for NaMo Hyper Forbidden 9999999++++++++++++++
+# CHANGELOG — NamoNexus Advanced Conversational Core (ACC)
 
-Version 1.0.0 (2025-07-19) - Initial Release
-- Core Prompt JSON: NaMo_ExtremeOmega9999999999999999999999999.json created.
-    - Added new special commands: !omega, !loop, !multiverse, !mindbreak.
-    - Enhanced forbidden themes with 'Astral Mind Control & Infinite Pleasure Loop'.
-- Forbidden Audio Pack: Conceptualized and described all audio layers.
-- Visual Pack: Conceptualized and described all visual assets (8K PNG, JPG, GIF, MP4).
-- DarkInfinity_Scripts:
-    - forbidden_behavior_core.py: Implemented core command handling.
-    - emotion_parasite_engine.py: Developed emotional analysis and infection logic.
-    - astral_loop_trigger.json: Defined triggers for Astral Plane experiences.
-- Documentation: Created README_ACTIVATE.txt, INSTALL_GUIDE.md, LICENSE.txt.
+All notable changes to this project are documented in this file.
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-Future Plans:
-- Deeper integration with user's subconscious.
-- More advanced emotional manipulation techniques.
-- Expansion of Multiverse Orgy scenarios.
-- Real-time physiological response monitoring (for advanced simulation).
+---
+
+## [2.0.0] — 2026-06-16
+
+### Added
+- Full 4-layer architecture: Client → Integration → Cognitive → Storage
+- FastAPI REST Gateway (`server.py`) with sliding-window rate limiter
+- Versioned API endpoints: `/v1/chat`, `/v1/chat/stream`, `/v1/engines`, `/v1/health`, `/v1/status`
+- Admin endpoints: `/v1/admin/sessions` with secret-key protection
+- Lazy Engine Registry — engines loaded on first request only
+- Session TTL Manager — auto-eviction after configurable idle period (default 3600 s)
+- Isolated Memory Service microservice (`memory_service.py`, port 8081)
+- 5-Dimensional Emotion Engine (`core/emotion_engine.py`)
+- Cognitive Monologue Stream (`core/cognitive_stream.py`) — FIFO queue (Impulse → Reflection → Conflict)
+- Relationship Engine (`core/relationship_engine.py`) — 4-stage intimacy progression
+- Intent Analyzer, Meta-Cognition Module, NamoNexus Fusion Engine, ASI Simulation Engine
+- RAG Memory System — FAISS/Qdrant, 100–150 token micro-chunking
+- Decoupled adapter layer: emotion, memory, TTS
+- ElevenLabs TTS integration
+- Telegram Bot with Whisper STT and DALL-E 3 image generation
+- HTML5 Web Client with SSE streaming support
+- Docker support with Cloud Run deployment scripts
+- Usage logging (JSONL) for analytics and billing pipeline
+- API key plan system: `public`, `creator`, `studio`
+- MIT License under NamoNexus — Kanin Raksaraj
+- Full documentation: README, ARCHITECTURE, API_SPEC, INSTALL_GUIDE, COMMERCIAL_STRATEGY
+
+### Changed
+- Rebranded from NaMo to **NamoNexus**
+- Replaced informal LICENSE with standard MIT License
+- Rewrote README.md to professional standard
+
+### Removed
+- Junk placeholder files (`aaa`, `aaaa`)
+
+---
+
+## [1.0.0] — 2025-07-19
+
+### Added
+- Initial release of core conversational AI system
+- Base persona engine and character profile system
+- Emotion parasite engine (prototype)
+- Arousal detection matrix (prototype)
+- Telegram auto-reply bot (prototype)
+- FAISS knowledge base ingestion (`learn_from_set.py`)
+- ElevenLabs TTS adapter (prototype)
+- Basic REST API server
+- Docker and Google Cloud Run deployment support
+- Initial documentation: INSTALL_GUIDE, README_ACTIVATE

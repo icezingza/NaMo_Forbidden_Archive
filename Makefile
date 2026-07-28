@@ -26,7 +26,7 @@ audit:
 	$(VENVDIR)/bin/bandit -r . || true
 
 run:
-	APP_ENV=dev APP_PORT=8000 $(VENVDIR)/bin/uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+	APP_ENV=dev APP_PORT=8000 $(VENVDIR)/bin/uvicorn server:app --host 0.0.0.0 --port 8000 --reload
 
 precommit:
 	$(VENVDIR)/bin/pre-commit run --all-files

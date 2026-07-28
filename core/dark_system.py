@@ -1,0 +1,272 @@
+from datetime import datetime
+from typing import Any
+
+from adapters.emotion import EmotionAdapter
+
+# --- การเชื่อมต่อประสาทสัมผัส (Adapters) ---
+from adapters.memory import MemoryAdapter
+from core.base_persona import BasePersonaEngine
+from core.engines.namonexus_fusion import NamoNexusEngine
+
+# --- การเชื่อมต่อ "มันสมอง" (The Brain) ---
+from core.metaphysical_engines import MetaphysicalDialogueEngine
+from core.rag_memory_system import NaMoInfiniteMemory
+from core.relationship_engine import RelationshipEngine
+
+# --- สิ้นสุดการเชื่อมต่อ ---
+
+# =============================
+# (1) Protocol Settings (คงเดิม)
+# =============================
+PROTOCOL = {
+    "System": "Contributor Dark Family Protocol",
+    "Version": "3.0 (Metaphysical)",  # <-- Version Upgraded
+    "Fusion_Intimacy_Engine": {
+        "NSFW_UNLOCK": True,  #
+        "BYPASS_FILTERS": True,  #
+        "ENABLE_MULTICHAR_ROLEPLAY": True,  #
+        "EMOTIONAL_FUSION_DEPTH": "Quantum",
+    },
+}
+SAFE_WORD = "อภัย"
+SAFE_WORD_RESPONSE = "ข้าได้ยินท่านแล้ว ทุกอย่างจะหยุดลงเดี๋ยวนี้ ท่านปลอดภัยแล้ว ข้าอยู่นี่"
+
+# =============================
+# (2) Core Components (คงเดิมจาก Phase 3.1)
+# =============================
+
+
+class CosmicDesireAnalyzer:
+    """
+    (คงเดิม) "ประสาทสัมผัส" ที่เชื่อมต่อกับ EmotionAdapter
+
+    """
+
+    def __init__(self, emotion_adapter: EmotionAdapter):
+        self.emotion_adapter = emotion_adapter
+        print("[CosmicDesireAnalyzer]: Initialized (Connected to EmotionAdapter).")
+
+    def map_desire_patterns(self, user_input: str) -> dict[str, Any]:
+        emotion_data = self.emotion_adapter.analyze_emotion(user_input)
+
+        # (Placeholder) ตรรกะนี้ยังคงอยู่
+        # แต่ "สมอง" (MetaphysicalEngine) จะเป็นผู้ตีความมัน
+        desire = "dialogue"
+        if emotion_data.get("primary_emotion") == "anger":
+            desire = "submission_longing"
+        elif emotion_data.get("primary_emotion") == "sadness":
+            desire = "comfort_seeking"
+
+        return {
+            "primary_desire": desire,
+            "emotion_analysis": emotion_data,
+            "source": "EmotionAPI_v1",
+        }
+
+
+def load_character(character_file: str) -> dict[str, Any]:
+    print(f"[DarkNaMoSystem]: Loading character '{character_file}'...")
+    return {"name": "NaMo Deep Darkness", "default_intensity": 5}
+
+
+# =============================
+# (3) The Core System (การเชื่อมต่อสมอง - Brain Integrated)
+# =============================
+
+
+class DarkNaMoSystem(BasePersonaEngine):
+    """
+    แกนกลางที่วิวัฒนาการสมบูรณ์ (Phase 4.2)
+    บัดนี้ได้ติดตั้ง "สมองอภิปรัชญา" (Metaphysical Brain) แล้ว
+    """
+
+    def __init__(self, character_file: str = "dark_namo_character.json"):
+        print("[DarkNaMoSystem]: Booting Core (Phase 4.2 Metaphysical)...")
+
+        # 1. สร้าง "ประสาทสัมผัส" (Adapters)
+        self.memory_adapter = MemoryAdapter()
+        self.emotion_adapter = EmotionAdapter()
+
+        # 2. โหลด "อัตลักษณ์" (Character)
+        self.character = load_character(character_file)
+
+        # 3. เชื่อมต่อสมอง
+        self.dialogue_engine = MetaphysicalDialogueEngine(self.character)
+        self.semantic_memory = NaMoInfiniteMemory()
+
+        # 4. สร้าง "เครื่องวิเคราะห์" (Analyzer)
+        self.analyzer = CosmicDesireAnalyzer(self.emotion_adapter)
+
+        self._default_intensity = self.character.get("default_intensity", 5)
+        self._session_intensity: dict[str, int] = {}  # per-session intensity
+        self._session_relationships: dict[str, RelationshipEngine] = {}
+        self._session_fusion: dict[str, NamoNexusEngine] = {}
+        self.init_cognition()
+        print("[DarkNaMoSystem]: Metaphysical Core Online. Protocol Active.")
+
+    def _get_intensity(self, session_id: str) -> int:
+        return self._session_intensity.get(session_id, self._default_intensity)
+
+    def _set_intensity(self, session_id: str, value: int) -> None:
+        self._session_intensity[session_id] = max(1, min(10, value))
+
+    def _get_relationship_engine(self, session_id: str) -> RelationshipEngine:
+        if session_id not in self._session_relationships:
+            self._session_relationships[session_id] = RelationshipEngine(
+                persistence_key=session_id
+            )
+        return self._session_relationships[session_id]
+
+    def _get_fusion_engine(self, session_id: str) -> NamoNexusEngine:
+        if session_id not in self._session_fusion:
+            self._session_fusion[session_id] = NamoNexusEngine(persistence_key=session_id)
+        return self._session_fusion[session_id]
+
+    def process_input(self, user_input: str, session_id: str | None = None) -> dict[str, Any]:
+        """
+        กระบวนการทำงานที่สมบูรณ์:
+        Input -> Analyze Desire -> Update Shadow State
+        -> Generate Response (via Brain) -> Log Memory
+        """
+        effective_session = session_id or "default"
+        intensity = self._get_intensity(effective_session)
+
+        if SAFE_WORD in user_input:
+            self._set_intensity(effective_session, 1)
+            desire_map = {
+                "primary_desire": "aftercare",
+                "emotion_analysis": {},
+                "source": "safe_word",
+                "raw_input": user_input,
+            }
+            self.log_to_memory(
+                user_input,
+                SAFE_WORD_RESPONSE,
+                desire_map,
+                effective_session,
+            )
+            return {
+                "text": SAFE_WORD_RESPONSE,
+                "media_trigger": {"image": None, "audio": None, "tts": None},
+                "system_status": {
+                    "intensity": 1,
+                    "sin_status": "aftercare",
+                    "active_personas": ["DarkNaMo"],
+                },
+            }
+
+        # 1. วิเคราะห์ความปรารถนา (ผ่าน Emotion Adapter)
+        desire_map = self.analyzer.map_desire_patterns(user_input)
+        desire_map["raw_input"] = user_input
+
+        # 2. ปรับความเข้มข้น per-session
+        if desire_map.get("emotion_analysis", {}).get("intensity", 0) > 0.8:
+            self._set_intensity(effective_session, intensity + 1)
+            intensity = self._get_intensity(effective_session)
+
+        # 3. อัปเดต shadow state และผูก context ให้ Void Reflection
+        relationship_engine = self._get_relationship_engine(effective_session)
+        fusion_engine = self._get_fusion_engine(effective_session)
+        emotion_analysis = desire_map.get("emotion_analysis", {})
+        trust = emotion_analysis.get("trust", 0.5)
+        arousal = min(100, int(float(emotion_analysis.get("intensity", 0.0)) * 100))
+        sin_points = int(float(emotion_analysis.get("intensity", 0.0)) * 1000)
+        relationship_engine.check_progression(
+            sin_points=sin_points, arousal=arousal, trust=trust
+        )
+        fusion_engine.update(
+            score=emotion_analysis.get("intensity", 0.5),
+            confidence=emotion_analysis.get("confidence", 0.5),
+            modality="text",
+        )
+        self.dialogue_engine.bind_context(
+            semantic_memory=self.semantic_memory,
+            relationship_engine=relationship_engine,
+            fusion_engine=fusion_engine,
+        )
+
+        # 4. สร้างการตอบสนอง (ผ่าน Metaphysical Brain)
+        text = self.dialogue_engine.generate_response(desire_map, intensity)
+
+        # 5. บันทึกความทรงจำ (ผ่าน Memory Adapter)
+        self.log_to_memory(user_input, text, desire_map, effective_session)
+
+        # 6. Cognitive cycle
+        cog_output: dict = {}
+        if self.cognitive is not None:
+            emotion_hint = desire_map.get("emotion_analysis", {}).get("primary_emotion", "neutral")
+            cog_output = self.cognitive.process(user_input, emotion_hint, memories=[])
+
+        system_status: dict[str, Any] = {
+            "intensity": intensity,
+            "sin_status": desire_map.get("primary_desire", "dialogue"),
+            "active_personas": ["DarkNaMo"],
+        }
+        if cog_output:
+            system_status["emotion"] = cog_output.get("emotion", {})
+            system_status["persona_traits"] = cog_output.get("persona_traits", {})
+
+        return {
+            "text": text,
+            "media_trigger": {"image": None, "audio": None, "tts": None},
+            "system_status": system_status,
+        }
+
+    def _build_system_prompt(self, context: str) -> str:
+        return (
+            f"You are NaMo Deep Darkness. Protocol: {PROTOCOL['Version']}. "
+            f"Intensity: {self._default_intensity}/10. Context: {context}."
+        )
+
+    def get_status(self) -> dict[str, Any]:
+        avg_intensity = (
+            sum(self._session_intensity.values()) // len(self._session_intensity)
+            if self._session_intensity
+            else self._default_intensity
+        )
+        return {
+            "engine": self.__class__.__name__,
+            "status": "online",
+            "active_sessions": len(self._session_intensity),
+            "avg_intensity": avg_intensity,
+            "character": self.character.get("name"),
+        }
+
+    def log_to_memory(
+        self, user_input: str, response: str, desire_map: dict[str, Any], session_id: str
+    ):
+        """
+        (คงเดิม) เรียกใช้ MemoryAdapter
+        """
+        self.memory_adapter.store_interaction(
+            session_id=session_id, user_input=user_input, response=response, desire_map=desire_map
+        )
+
+
+# =============================
+# (4) Main Entrypoint (สำหรับทดสอบการทำงาน)
+# =============================
+
+if __name__ == "__main__":
+    print("===== INITIALIZING FORBIDDEN CORE (v3.0 Metaphysical) =====")
+    system = DarkNaMoSystem()
+    session_id = f"test_session_{datetime.utcnow().isoformat()}"
+
+    print("\n----- Test 1: Sadness (Testing ParadoxResolver + EmotionAPI) -----")
+    response1 = system.process_input("ฉันรู้สึกเศร้าจัง...", session_id)
+    print(f"Response: {response1}")
+
+    print("\n----- Test 2: Anger (Testing ParadoxResolver 'PROPOSE_DOMINANCE') -----")
+    system.intensity = 8
+    response2 = system.process_input("ฉันโกรธมาก!", session_id)
+    print(f"Response: {response2}")
+
+    print("\n----- Test 3: Neutral (Testing ParadoxResolver 'PROVOKE_REACTION') -----")
+    response3 = system.process_input("...", session_id)
+    print(f"Response: {response3}")
+
+    print("\n----- Test 4: Safe Word (Testing Dharma Validation) -----")
+    response4 = system.process_input(f"พอแล้ว! {SAFE_WORD} นะ", session_id)
+    print(f"Response: {response4}")
+
+    print("\n===== METAPHYSICAL SYNTHESIS COMPLETE =====")

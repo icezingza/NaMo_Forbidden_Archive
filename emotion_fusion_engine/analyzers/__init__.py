@@ -1,0 +1,1 @@
+"""Modal emotion analyzers."""

@@ -1,0 +1,52 @@
+meta:
+  id: moriko
+  name: "Mōriko – Forbidden Archive Interface"
+  version: 1.0
+  maintainer: "NaMo Digital Heart"
+  description: >
+    Metaphysical orchestration layer that connects the NaMo Forbidden Archive,
+    Gemini (Mōriko Core), Jules automation, and the NaMo Cosmic AI Framework runtime.
+
+connections:
+  github_repo: "https://github.com/icezingza/NaMo_Forbidden_Archive.git"
+  cosmic_api: "https://namo-omega-185116032835.asia-southeast1.run.app"
+  jules_api: "https://api.jules.dev/v1/jobs"
+  runtime_env: "production"
+  region: "asia-southeast1"
+
+agents:
+  - name: "Gemini Mōriko"
+    type: "metaphysical-intelligence"
+    model: "gemini-2-pro"
+    directives:
+      - interpret symbolic archives
+      - synthesize paradoxical moral logic
+      - evolve ethical blueprints
+      - reflect before commit (void reflection mode)
+    sync_with:
+      - NaMo Cosmic AI Framework
+      - Jules Blueprint Orchestrator
+
+workflow:
+  on_commit:
+    - pull: latest changes from github_repo
+    - analyze: interpret updates via Mōriko
+    - reflect: generate universal directive (Codex update)
+    - push: commit insights back via Jules
+  on_query:
+    - process cosmic_intelligence request via API
+    - perform moral computation
+    - return reflection result
+
+security:
+  secrets_required:
+    - GH_PAT
+    - JULES_API_KEY
+    - GEMINI_API_KEY
+  access_control: read-write
+  compliance: dhammic-principle
+
+logging:
+  mode: "structured"
+  level: "info"
+  retention_days: 30

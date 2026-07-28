@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --check d:/Users/NaMo_Forbidden_Archive/web/app.js)"
+    ]
+  }
+}

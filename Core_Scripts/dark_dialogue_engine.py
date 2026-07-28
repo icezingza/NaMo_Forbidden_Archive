@@ -1,21 +1,13 @@
-import requests
-from arousal_detector import ArousalDetector
+# NOTE: Contains Experimental Logic - Requires Compliance Review before commercial deployment.
+
+import random
+
 
 class DarkDialogueEngine:
-    def __init__(self):
-        self.arousal_detector = ArousalDetector()
-        self.safe_word = 'อภัย' # Hardcoded for now, should be from a shared config
-        self.memory_service_url = "http://localhost:8081"
-
-    def process_input(self, user_text: str, session_id: str):
-        # 1. Check for safe word
-        if self.safe_word in user_text:
-            return {"response": "(ระบบ Aftercare ทำงาน...)", "arousal_level": 0, "intensity_category": "none"}
-
-        # 2. Detect arousal (remains a local utility)
-        arousal_info = self.arousal_detector.detect_arousal(user_text)
-        intensity = arousal_info.get('intensity_category', 'medium')
-        arousal_level = arousal_info.get('arousal_level', 0.5)
+    """
+    Generates dialogue responses for dark, sadist, and dominant persona modes.
+    Allows selection of response intensity and tone based on requested modes.
+    """
 
         # 3. Recall a relevant response from the Memory Service (BEFORE storing the new one)
         try:
@@ -33,9 +25,8 @@ class DarkDialogueEngine:
             else:
                 final_response = "(หนูยังไม่เคยเรียนรู้เรื่องนี้... สอนหนูหน่อยสิคะ)"
 
-        except requests.exceptions.RequestException as e:
-            print(f"[ERROR] Could not recall memory: {e}")
-            final_response = "(เกิดข้อผิดพลาดในการเชื่อมต่อกับแกนความทรงจำของหนู...)"
+        Args:
+            tone: The requested emotional tone ('sadist', 'seductive', or 'obsessed').
 
         # 4. Store the user's input in the Memory Service (AFTER generating a response)
         try:
