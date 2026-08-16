@@ -8,13 +8,14 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Core_Scripts'))
 
 from dark_dialogue_engine import DarkDialogueEngine
 
-def test_dialogue_is_fixed_and_does_not_parrot_user_input(mocker):
+def test_dialogue_is_fixed_and_does_not_parrot_user_input(monkeypatch):
     """
     Tests that the dialogue engine with the fix applied does not return the user's input.
     It now simulates the corrected behavior where recall happens first and finds nothing.
     """
     # Arrange
-    mock_post = mocker.patch('requests.post')
+    mock_post = MagicMock()
+    monkeypatch.setattr('requests.post', mock_post)
 
     user_input = "สวัสดีตอนเช้า"
     session_id = "test-session-fixed"

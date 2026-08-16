@@ -34,9 +34,7 @@ async def main():
 
     last_talk = memory.get_last_conversation()
     if last_talk:
-        type_effect(
-            f"NaMo: ...เราคุยกันค้างไว้เรื่อง '{last_talk['user']}' สินะคะ? จำได้แม่นเลย..."
-        )
+        type_effect(f"NaMo: ...เราคุยกันค้างไว้เรื่อง '{last_talk['user']}' สินะคะ? จำได้แม่นเลย...")
     else:
         type_effect("NaMo: โอ้... 'ผัว' คนใหม่? หรือเหยื่อรายใหม่คะ? ยินดีต้อนรับสู่โลกของหนู...")
 

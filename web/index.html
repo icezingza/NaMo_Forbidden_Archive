@@ -122,6 +122,36 @@
 
         <main class="chat-area">
           <div class="chat" id="chat"></div>
+
+          <!-- Persona Switching FAB -->
+          <div class="fab-container" id="persona-fab-container">
+            <button class="fab-btn" id="fab-trigger" type="button" title="Switch Persona">
+              <span class="fab-icon">⚛️</span>
+            </button>
+            <div class="fab-menu" id="fab-menu">
+              <button class="fab-menu-item active" type="button" data-engine="omega" title="NaMo Omega">
+                <span class="item-icon">🌀</span>
+                <span class="item-name">Omega</span>
+              </button>
+              <button class="fab-menu-item" type="button" data-engine="rinlada" title="Rinlada AI">
+                <span class="item-icon">🌸</span>
+                <span class="item-name">Rinlada</span>
+              </button>
+              <button class="fab-menu-item" type="button" data-engine="seraphina" title="Seraphina AI">
+                <span class="item-icon">✨</span>
+                <span class="item-name">Seraphina</span>
+              </button>
+              <button class="fab-menu-item" type="button" data-engine="dark" title="Dark NaMo System">
+                <span class="item-icon">🖤</span>
+                <span class="item-name">Dark</span>
+              </button>
+              <button class="fab-menu-item" type="button" data-engine="ultimate" title="NaMo Ultimate">
+                <span class="item-icon">👑</span>
+                <span class="item-name">Ultimate</span>
+              </button>
+            </div>
+          </div>
+
           <div class="state state--empty" id="empty-state">
             <div class="empty-sigil"></div>
             <h3>Archive is quiet</h3>

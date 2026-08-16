@@ -1,6 +1,10 @@
+import logging
+
 from core.biomechanics import BiomechanicsEngine
 from core.engines.namonexus_fusion import NamoNexusEngine
 from core.orchestration.obfuscator import DynamicContentObfuscator, RelationshipCore
+
+logger = logging.getLogger(__name__)
 
 
 class DarkSubconsciousEngine:

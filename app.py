@@ -1,6 +1,6 @@
 import os
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from dotenv import load_dotenv
 
@@ -51,7 +51,7 @@ def main_loop():
             print("Please check all core files and adapters.")
             return
         system = DarkNaMoSystem()
-        session_id = f"cli_session_{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}"
+        session_id = f"cli_session_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
         print(f"\n[app.py] System Initialized. Session ID: {session_id}")
         print("Type your message to Mōriko or 'exit' to quit.")
         print("---")

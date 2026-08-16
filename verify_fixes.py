@@ -167,9 +167,9 @@ def verify_entry_points() -> bool:
 
 def main() -> int:
     """Run all verification tests."""
-    print(f"\n{BOLD}{'='*60}")
+    print(f"\n{BOLD}{'=' * 60}")
     print("NaMo Forbidden Archive — Post-Fix Verification")
-    print(f"{'='*60}{RESET}\n")
+    print(f"{'=' * 60}{RESET}\n")
 
     results = []
 
@@ -181,9 +181,9 @@ def main() -> int:
     results.append(("Entry Points", verify_entry_points()))
 
     # Summary
-    print(f"\n{BOLD}{'='*60}")
+    print(f"\n{BOLD}{'=' * 60}")
     print("Verification Summary")
-    print(f"{'='*60}{RESET}\n")
+    print(f"{'=' * 60}{RESET}\n")
 
     all_passed = True
     for name, passed in results:

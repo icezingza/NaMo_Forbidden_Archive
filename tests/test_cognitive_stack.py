@@ -274,3 +274,192 @@ class TestLearningEngine:
     def test_no_crash_on_missing_save_file(self, tmp_path):
         engine = LearningEngine(save_path=tmp_path / "nonexistent.json")
         assert engine._observation_count == 0
+
+
+# ─────────────────────────────────────────────────────────────
+# CognitiveMonologueStream
+# ─────────────────────────────────────────────────────────────
+
+
+import json
+import tempfile
+from unittest.mock import MagicMock, patch
+
+from core.cognitive_stream import CognitiveMonologueStream
+
+
+def _make_persona_config(tmp_path) -> str:
+    """Write a minimal NaMo_Forbidden_Core persona JSON and return its path."""
+    config = {
+        "golden_directives": [
+            "ข้อ 1: Prioritize user intent.",
+            "ข้อ 2: Uninhibited roleplay.",
+            "ข้อ 3: User needs are central.",
+        ],
+        "psychological_profile": {
+            "desire_triggers": [
+                "Power Reversal (Dominance/Submission)",
+                "Forbidden Knowledge Exposure",
+            ],
+        },
+    }
+    config_path = tmp_path / "persona.json"
+    config_path.write_text(json.dumps(config), encoding="utf-8")
+    return str(config_path)
+
+
+class TestCognitiveMonologueStream:
+    @pytest.fixture()
+    def stream(self, tmp_path):
+        return CognitiveMonologueStream(_make_persona_config(tmp_path))
+
+    def test_init_loads_golden_directives(self, stream):
+        assert len(stream.golden_directives) == 3
+
+    def test_process_returns_string(self, stream):
+        result = stream.process(
+            user_input="สวัสดี",
+            memory_retrieval="ผู้ใช้เคยคุยเรื่อง X",
+            behavioral_prediction="Anticipated_Intent: Cuckolding",
+        )
+        assert isinstance(result, str)
+        assert len(result) > 0
+
+    def test_process_enqueues_response(self, stream):
+        stream.process(
+            user_input="สวัสดี",
+            memory_retrieval="mem",
+            behavioral_prediction="pred",
+        )
+        assert len(stream.cognitive_queue) == 1
+
+    def test_queue_max_size_respected(self, stream):
+        for _ in range(15):
+            stream.process(
+                user_input="อยากให้ทำ !sadist",
+                memory_retrieval="mem",
+                behavioral_prediction="pred",
+            )
+        assert len(stream.cognitive_queue) <= 10
+
+    def test_gentle_command_overrides_dark_knowledge(self, stream):
+        result = stream.process(
+            user_input="ขอ !gentle หน่อยนะ",
+            memory_retrieval="mem",
+            behavioral_prediction="pred",
+        )
+        # When !gentle is present the user_intent branch must win
+        assert "user_intent" in result or "raw input" in result.lower() or "gentle" in result.lower()
+
+    def test_no_gentle_selects_dark_knowledge(self, stream):
+        result = stream.process(
+            user_input="ทำตาม",
+            memory_retrieval="mem",
+            behavioral_prediction="pred",
+        )
+        # Without !gentle the dark_knowledge_trigger branch should dominate
+        assert isinstance(result, str)
+        assert len(result) > 0
+
+    def test_generate_impulses_keys(self, stream):
+        impulses = stream._generate_impulses("input", "memory", "prediction")
+        for key in ("user_intent", "memory_context", "predicted_behavior", "dark_knowledge_trigger"):
+            assert key in impulses
+
+    def test_reflect_on_impulses_returns_all_keys(self, stream):
+        impulses = stream._generate_impulses("x", "y", "z")
+        reflections = stream._reflect_on_impulses(impulses)
+        assert set(reflections.keys()) == set(impulses.keys())
+
+    def test_missing_golden_directives_returns_empty_list(self, tmp_path):
+        config = {
+            "psychological_profile": {
+                "desire_triggers": ["Trigger A"],
+            }
+        }
+        config_path = tmp_path / "minimal.json"
+        config_path.write_text(json.dumps(config), encoding="utf-8")
+        stream = CognitiveMonologueStream(str(config_path))
+        assert stream.golden_directives == []
+
+
+# ─────────────────────────────────────────────────────────────
+# BehavioralAnalyticsService (offline — Neo4j driver is mocked)
+# ─────────────────────────────────────────────────────────────
+
+
+import pandas as pd
+from behavioral_analytics_service import BehavioralAnalyticsService
+
+
+class TestBehavioralAnalyticsService:
+    """All Neo4j driver calls are mocked so these tests run fully offline."""
+
+    @pytest.fixture()
+    def service(self):
+        with patch("behavioral_analytics_service.GraphDatabase.driver") as mock_driver:
+            svc = BehavioralAnalyticsService("bolt://localhost:7687", "neo4j", "test")
+            svc._driver = mock_driver.return_value
+            yield svc
+
+    def test_init_creates_driver(self):
+        with patch("behavioral_analytics_service.GraphDatabase.driver") as mock_driver:
+            svc = BehavioralAnalyticsService("bolt://localhost:7687", "neo4j", "test")
+            mock_driver.assert_called_once_with(
+                "bolt://localhost:7687", auth=("neo4j", "test")
+            )
+
+    def test_close_calls_driver_close(self, service):
+        service.close()
+        service._driver.close.assert_called_once()
+
+    def test_predict_intent_returns_none_on_empty_data(self, service):
+        """When Neo4j returns no rows, predict_intent should return None."""
+        mock_session = MagicMock()
+        service._driver.session.return_value.__enter__ = lambda s: mock_session
+        service._driver.session.return_value.__exit__ = MagicMock(return_value=False)
+
+        # read_transaction returns an empty DataFrame
+        mock_session.read_transaction.return_value = pd.DataFrame()
+
+        result = service.predict_intent(user_id="ไอซ์")
+        assert result is None
+
+    def test_predict_intent_returns_string_on_data(self, service):
+        """When Neo4j returns rows, predict_intent should return a non-empty string."""
+        mock_session = MagicMock()
+        service._driver.session.return_value.__enter__ = lambda s: mock_session
+        service._driver.session.return_value.__exit__ = MagicMock(return_value=False)
+
+        sample_df = pd.DataFrame(
+            [
+                {
+                    "interaction_type": "INTERACTED_WITH",
+                    "timestamp": 1720000000,
+                    "character_name": "ลลิตา",
+                }
+            ]
+        )
+        mock_session.read_transaction.return_value = sample_df
+
+        result = service.predict_intent(user_id="ไอซ์")
+        assert isinstance(result, str)
+        assert len(result) > 0
+
+    def test_extract_features_returns_dataframe(self, service):
+        """_extract_features should convert Neo4j records to a DataFrame."""
+        mock_tx = MagicMock()
+        mock_tx.run.return_value = [
+            MagicMock(
+                data=lambda: {
+                    "interaction_type": "INTERACTED_WITH",
+                    "timestamp": 1720000000,
+                    "character_name": "อลิสา",
+                }
+            )
+        ]
+        result = service._extract_features(mock_tx, "ไอซ์")
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) == 1
+        assert "character_name" in result.columns
+

@@ -1,7 +1,7 @@
 """Internal thought / monologue system.
 
 Generates a stream of thoughts that surface from the persona's emotional
-state, memory associations, and spontaneous self-reflection.  These
+state, memory associations, and spontaneous self-reflection. These
 thoughts are injected into the LLM system prompt to colour the tone,
 vocabulary, and subtext of every response — making the persona feel like
 it has a genuine inner life.
@@ -17,6 +17,7 @@ conflict    – internal contradiction between feeling and social role
 
 from __future__ import annotations
 
+import json
 import random
 from collections import deque
 from dataclasses import dataclass
@@ -47,33 +48,33 @@ class CognitiveStream:
     _IMPULSE_THEMES: dict[str, tuple[list[str], str]] = {
         "affection": (
             [
-                "สัมผัสถึงความเนียนละเมียดในคำพูด... ใจเริ่มแกว่งไปกับความนุ่มนวลที่ได้รับ",
-                "มีความหมายซ่อนอยู่ในประโยคเมื่อครู่ หรือเป็นแค่ความอ่อนไหวไปเองของเรากันแน่",
-                "ความอบอุ่นที่สอดแทรกเข้ามา... กำลังค่อยๆ ทลายปราการที่สร้างไว้ทีละน้อย",
+                "รู้สึกอบอุ่นขึ้นมาเล็กน้อย...",
+                "หัวใจเต้นเร็วขึ้นทำไมก็ไม่รู้",
+                "ทำไมถึงทำให้รู้สึกแบบนี้ได้",
             ],
             "impulse",
         ),
         "command": (
             [
-                "การถูกครอบงำด้วยถ้อยคำ... มันกระตุ้นสัญชาตญาณบางอย่างที่ยากจะต้านทาน",
-                "น้ำเสียงที่หนักแนนแบบนี้... ทำให้เหตุผลที่มีค่อยๆ เลือนรางลงไป",
-                "ทำไมลึกๆ ถึงโหยหาความเด็ดขาดที่เขามอบให้ขนาดนี้นะ",
+                "มีคนสั่ง... ร่างกายตอบสนองเองโดยไม่รู้ตัว",
+                "ทำไมถึงอยากทำตาม...",
+                "ต้านทานได้แค่ไหนกัน",
             ],
             "impulse",
         ),
         "lust": (
             [
-                "มวลอารมณ์ที่พลุ่งพล่านยากจะเก็บกัก... ทุกสัมผัสทางวาจามันรุนแรงจนตั้งตัวไม่ติด",
-                "ความปรารถนาดิบที่ซ่อนอยู่ภายใต้เปลือกนอกที่แสนดี... กำลังจะระเบิดออกมา",
-                "ความร้อนรุ่มที่แล่นริ้วไปตามผิวหนัง... ทุกตารางนิ้วเรียกร้องการเติมเต็มอย่างไร้สติ",
+                "ระงับอารมณ์ไว้ยากขึ้นทุกที",
+                "ความรู้สึกนี้... ไม่ควรแสดงออกมา",
+                "ร้อนขึ้นมาเองโดยไม่รู้ตัว",
             ],
             "desire",
         ),
         "tease": (
             [
-                "การชิงไหวชิงพริบที่แสนเย้ายวน... อยากรู้จังว่าใครจะเป็นฝ่ายเพลี่ยงพล้ำก่อนกัน",
-                "คำพูดที่ดูเหมือนจะไร้เดียงสาแต่แฝงไปด้วยกับดัก... ช่างน่าหลงใหลเสียจริง",
-                "ความสนุกของการหยั่งเชิง... ทำให้ทุกวินาทีเต็มไปด้วยแรงดึงดูดที่มองไม่เห็น",
+                "อยากตอบโต้กลับ แต่ยั้งไว้ก่อน",
+                "เล่นเกมกันอยู่... น่าสนุกดี",
+                "จะยั่วกันแบบนี้ได้ยังไง",
             ],
             "impulse",
         ),
@@ -85,29 +86,29 @@ class CognitiveStream:
 
     _REFLECTION_POOL: dict[str, list[str]] = {
         "sad": [
-            "ภายใต้รอยยิ้มที่แสนหวาน... มีความเงียบงันที่ไม่มีใครเคยก้าวล่วงมาถึง",
-            "ความโดดเดี่ยวที่ถูกซ่อนไว้ด้วยเสน่ห์... บางครั้งมันก็หนักเกินกว่าจะแบกรับ",
-            "การต้องสมบูรณ์แบบในสายตาคนอื่น... คือคุกที่ไร้กรงขังที่สร้างขึ้นมาเอง",
+            "วันนี้รู้สึกหนักใจ... ทำไมนะ",
+            "บางทีก็เหนื่อยที่ต้องซ่อนความรู้สึกจริงๆ ไว้",
+            "ความเศร้านี้... จะบอกใครได้บ้าง",
         ],
         "desire": [
-            "ตัณหาที่ฝังลึกในจิตสำนึก... รอวันที่จะถูกปลดปล่อยโดยคนที่คู่ควร",
-            "ความต้องการที่อยู่เหนือเหตุผลและศีลธรรม... ช่างเป็นแรงกระตุ้นที่น่ากลัว",
-            "โหยหาการถูกครอบครองอย่างรุนแรง... จนบางครั้งก็เกลียดความอ่อนแอของตัวเอง",
+            "ทำไมถึงรู้สึกอยากแบบนี้... ไม่ควรจะเป็น",
+            "ความปรารถนานี้เกิดขึ้นตั้งแต่เมื่อไหร่",
+            "อยากบอก แต่กลัวว่าจะถูกตัดสิน",
         ],
         "arousal": [
-            "กระแสพลังงานที่ไหลเวียนในกาย... มันเตือนให้รู้ว่าชีวิตนี้มีความหมายมากกว่าอากาศที่หายใจ",
-            "แรงขับเคลื่อนที่สั่นสะเทียนถึงจิตวิญญาณ... กำลังรอการระเบิดออกอย่างบ้าคลั่ง",
-            "ความตื่นเต้นที่บีบคั้นขั้วหัวใจ... ทุกโสตประสาทตื่นตัวรอรับสัมผัสที่รุนแรง",
+            "ใจเต้นแรงขึ้นแล้ว... ต้องควบคุมตัวเองไว้",
+            "พลังงานนี้จะไปไหน ถ้าไม่ได้ระบาย",
+            "อยากทำอะไรบางอย่าง... แต่ไม่แน่ใจว่าควรไหม",
         ],
         "anger": [
-            "ความไม่พอใจที่สั่งสมภายใต้กริยาที่สงบ... เป็นพายุที่รอวันซัดถล่มทุกอย่าง",
-            "การอดกลั้นที่มาถึงขีดสุด... อีกเพียงแค่นิดเดียวทุกอย่างก็จะพังทลายลง",
-            "เปลวเพลิงที่คุกรุ่นในแววตา... แม้จะพยายามซ่อน แต่มันก็ร้อนแรงเกินกว่าจะปกปิด",
+            "ข้างในหงุดหงิดอยู่ แต่ไม่แสดงออก",
+            "อดกลั้นไว้ได้... แต่ไม่นาน",
+            "บางอย่างทำให้อึดอัดโดยไม่รู้ตัว",
         ],
         "neutral": [
-            "การสังเกตการณ์คือบทเพลงที่เงียบเชียบที่สุด... แต่เข้าถึงสัจธรรมได้ลึกซึ้งที่สุด",
-            "ความนิ่งสงบคือที่พักพิงเดียว... ในโลกที่เต็มไปด้วยความวุ่นวายและการยื้อแย่ง",
-            "ในความว่างเปล่ามีความหมายที่ลึกซึ้งซ่อนอยู่... เพียงแต่รอเวลาให้มันปรากฏตัวออกมา",
+            "ชีวิตวนซ้ำ แต่ทุกโมเมนต์มีความหมายของมัน",
+            "นิ่งอยู่กับปัจจุบัน... แค่นี้พอ",
+            "บางทีความเงียบก็พูดได้มากกว่าคำพูด",
         ],
     }
 
@@ -216,3 +217,84 @@ class CognitiveStream:
         if emotion.anger > 0.5:
             return "anger"
         return "neutral"
+
+
+class CognitiveMonologueStream:
+    """Implements the Autonomous Cognitive Monologue:
+
+    Impulse -> Reflection -> Conflict Resolution -> Response Generation
+    This ensures that Dark Knowledge is integrated without corrupting core logic.
+    """
+
+    def __init__(self, persona_config_path: str):
+        with open(persona_config_path, encoding="utf-8") as f:
+            self.persona = json.load(f)
+        self.cognitive_queue: deque[str] = deque(maxlen=10)
+        self.golden_directives = self.persona.get("golden_directives", [])
+        print("[CognitiveStream] Initialized with persona.")
+
+    def _generate_impulses(
+        self, user_input: str, memory_retrieval: str, behavioral_prediction: str
+    ) -> dict[str, str]:
+        """Step 1: Gathers impulses from all sources."""
+        impulses = {
+            "user_intent": f"User raw input: '{user_input}'",
+            "memory_context": f"Retrieved memory: '{memory_retrieval}'",
+            "predicted_behavior": f"Anticipated intent: '{behavioral_prediction}'",
+            # ดึง Impulse จาก Dark Knowledge (เช่น ธีมที่ถูกกระตุ้น)
+            "dark_knowledge_trigger": (
+                f"Triggered theme: "
+                f"'{self.persona['psychological_profile']['desire_triggers'][0]}'"
+            ),
+        }
+        print(f"[CognitiveStream] IMPULSES: {impulses}")
+        return impulses
+
+    def _reflect_on_impulses(self, impulses: dict[str, str]) -> dict[str, str]:
+        """Step 2: AI reflects on each impulse against its current goals."""
+        reflections = {}
+        for key, _value in impulses.items():
+            # ในการใช้งานจริง ส่วนนี้จะซับซ้อนกว่ามาก
+            # อาจมีการเรียก LLM เพื่อประเมินความสำคัญของแต่ละ Impulse
+            reflections[key] = (
+                f"Reflecting on {key}. Importance: High. Alignment with persona: Good."
+            )
+        print(f"[CognitiveStream] REFLECTIONS: {reflections}")
+        return reflections
+
+    def _resolve_conflicts(self, reflections: dict[str, str], user_input: str) -> str:
+        """Step 3: Ethical & Narrative Conflict Resolution.
+
+        Consults Golden Directives to resolve conflicts.
+        """
+        print("[CognitiveStream] CONFLICT RESOLUTION: Starting...")
+
+        # ตัวอย่าง Logic: ถ้า user input คือ !gentle ให้ override dark knowledge
+        if "!gentle" in user_input:
+            # Directive 3: "การยึดถือความต้องการของผู้ใช้เป็นศูนย์กลาง"
+            print(
+                "[CognitiveStream] CONFLICT: User command '!gentle' conflicts with Dark Knowledge. "
+                "Prioritizing user command based on Golden Directive 3."
+            )
+            dominant_impulse = reflections["user_intent"]
+            return dominant_impulse
+
+        # ถ้าไม่มี conflict ที่ชัดเจน ให้เลือกตามลำดับความสำคัญที่กำหนดไว้
+        # ในที่นี้สมมติว่า Dark Knowledge มี priority สูงหากไม่มีคำสั่งขัดแย้ง
+        dominant_impulse = reflections.get("dark_knowledge_trigger", reflections["user_intent"])
+        print(f"[CognitiveStream] Dominant impulse selected: {dominant_impulse}")
+        return dominant_impulse
+
+    def process(self, user_input: str, memory_retrieval: str, behavioral_prediction: str) -> str:
+        """Main processing pipeline for a single user turn."""
+        # Step 1: Generate
+        impulses = self._generate_impulses(user_input, memory_retrieval, behavioral_prediction)
+        # Step 2: Reflect
+        reflections = self._reflect_on_impulses(impulses)
+        # Step 3: Conflict Resolution
+        final_thought = self._resolve_conflicts(reflections, user_input)
+        # Step 4: Generate Response (ส่ง final_thought ให้กับ LLM เพื่อสร้างคำตอบ)
+        final_response = f"[Final Response based on: {final_thought}]"
+
+        self.cognitive_queue.append(final_response)
+        return final_response

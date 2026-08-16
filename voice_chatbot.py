@@ -156,7 +156,7 @@ class OuroborosFeedbackLoop:
         self.experiences.append(experience)
         if len(self.experiences) % 3 == 0:
             return self.evolve()
-        return f"🐍 กลืนกินประสบการณ์: {experience}\n" f"💬 'ทุกประสบการณ์คืออาหารของจิตวิญญาณ...'"
+        return f"🐍 กลืนกินประสบการณ์: {experience}\n💬 'ทุกประสบการณ์คืออาหารของจิตวิญญาณ...'"
 
     def evolve(self) -> str:
         self.evolution_cycles += 1

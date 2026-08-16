@@ -44,9 +44,9 @@ class SovereignOrchestrator:
         User Input: "{user_input}"
         
         Available Agents:
-        - SERAPHINA: {self.agents['SERAPHINA']['description']}
-        - RINLADA: {self.agents['RINLADA']['description']}
-        - NAMO_CORE: {self.agents['NAMO_CORE']['description']}
+        - SERAPHINA: {self.agents["SERAPHINA"]["description"]}
+        - RINLADA: {self.agents["RINLADA"]["description"]}
+        - NAMO_CORE: {self.agents["NAMO_CORE"]["description"]}
         
         Task: จงเลือก Agent ที่เหมาะสมที่สุดเพียงตัวเดียว หากเป็นเรื่องอารมณ์/ปลอบโยนเลือก SERAPHINA, 
         หากเป็นเรื่องเทคนิคเฉพาะทางเลือก RINLADA, หากเป็นเรื่องทั่วไปหรือเรื่องดาร์กๆ เลือก NAMO_CORE

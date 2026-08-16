@@ -28,6 +28,14 @@ def _make_memory(tmp_path=None):
 
 
 class TestRetrieveContext:
+    def test_initialization_without_api_key_keeps_retrieval_optional(self, monkeypatch, tmp_path):
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+        from core.rag_memory_system import NaMoInfiniteMemory
+
+        memory = NaMoInfiniteMemory(dataset_path=tmp_path)
+        assert memory.client is None
+
     async def test_returns_none_when_index_is_missing(self, tmp_path):
         mem = _make_memory(tmp_path)
         result = await mem.retrieve_context("test query")

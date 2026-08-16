@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang=" en\>
+<head>
+ <meta charset=\UTF-8\>
+ <meta name=\viewport\ content=\width=device-width initial-scale=1.0\>
+ <title>NamoNexus - Real-time Emotion Dashboard</title>
+ <script src=\https://cdn.jsdelivr.net/npm/chart.js\></script>
+ <style>
+ body {font-family: -apple-system, BlinkMacSystemFont, \Segoe UI\, Roboto, Helvetica, Arial, sans-serif; background-color: #121212; color: #e0e0e0; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; flex-direction: column;}
+ .chart-container {position: relative; width: 80vw; max-width: 600px; background-color: #1e1e1e; padding: 20px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);}
+ h1 {text-align: center; color: #bb86fc; margin-bottom: 20px;}
+ #status {text-align: center; margin-top: 15px; font-size: 1.1em; color: #cfcfcf;}
+ </style>
+</head>
+<body>
+ <h1>AI Emotion State</h1>
+ <div class=chart-container>
+ <canvas id=\emotionChart\></canvas>
+ </div>
+ <div id=\status\>Connecting to stream...</div>
+ <script>
+ const ctx = document.getElementById('emotionChart').getContext('2d');
+ const emotionChart = new Chart(ctx, {
+ type: 'radar',
+ data: {
+ labels: ['Joy', 'Arousal', 'Trust', 'Anger', 'Desire'],
+ datasets: [{
+ label: 'Emotion Intensity',
+ data: [0.5, 0.3, 0.5, 0.0, 0.0],
+ fill: true,
+ backgroundColor: 'rgba(187, 134, 252, 0.2)',
+ borderColor: 'rgb(187, 134, 252)',
+ pointBackgroundColor: 'rgb(187, 134, 252)',
+ pointBorderColor: '#fff',
+ pointHoverBackgroundColor: '#fff',
+ pointHoverBorderColor: 'rgb(187, 134, 252)'
+ }]
+ },
+ options: {
+ elements: {line: {borderWidth: 3}},
+ scales: {r: {angleLines: {color: 'rgba(255, 255, 255, 0.2)'}, grid: {color: 'rgba(255, 255, 255, 0.2)'}, pointLabels: {color: '#e0e0e0', font: {size: 14}}, suggestedMin: 0, suggestedMax: 1}}
+ }
+ });
+ const statusDiv = document.getElementById('status');
+ const eventSource = new EventSource('/v1/status/stream');
+ eventSource.onmessage = function(event) {
+ const data = JSON.parse(event.data);
+ const emotion = data.emotion;
+ if (emotion) {
+ emotionChart.data.datasets[0].data = [emotion.joy, emotion.arousal, emotion.trust, emotion.anger, emotion.desire];
+ emotionChart.update();
+ statusDiv.textContent = Dominant Emotion: | Prose: ;
+ }
+ };
+ eventSource.onerror = function() {
+ statusDiv.textContent = 'Stream connection failed. Reconnecting...';
+ eventSource.close();
+ setTimeout(() => { window.location.reload(); }, 5000);
+ };
+ </script>
+</body>
+</html>
