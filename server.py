@@ -10,8 +10,10 @@ from datetime import UTC, datetime
 try:
     from dotenv import load_dotenv
 except ImportError:  # pragma: no cover - optional in minimal environments
+
     def load_dotenv() -> None:
         return None
+
 
 load_dotenv()
 
