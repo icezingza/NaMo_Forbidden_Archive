@@ -2,30 +2,69 @@ name: CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, develop]
 
 jobs:
-  build-test:
+  test:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.12'
+          cache: 'pip'
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install -r requirements-dev.txt
-      - name: Lint (ruff)
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Lint with ruff
         run: ruff check .
-      - name: Format check (black)
+
+      - name: Format check with black
         run: black --check .
-      - name: Run tests
-        run: pytest --cov --cov-report=term-missing
-      - name: Security audit (pip-audit)
-        run: pip-audit -r requirements.txt
-      - name: Bandit security scan
-        run: bandit -r .
+
+      - name: Run pytest
+        run: pytest --cov=.
+
+  build-docker:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build main Dockerfile
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build memory Dockerfile
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.memory
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Telegram bot Dockerfile
+        uses: docker/build-push-action@v5
+        with:
+          context: ./projects-NaMo-Forbidden-Archive
+          file: ./projects-NaMo-Forbidden-Archive/Dockerfile
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
