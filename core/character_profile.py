@@ -13,13 +13,19 @@ class CharacterProfile:
         self.arousal_level = 0  # 0-100 (ระดับความเงี่ยน)
         self.load_state()
 
-    def update_state(self, mood_change=None, corruption_delta=0, arousal_delta=0):
+    def update_state(
+        self, mood_change=None, corruption_delta=0, arousal_delta=0
+    ):
         """อัปเดตสถานะตัวละครและบันทึกลงไฟล์"""
         if mood_change:
             self.mood = mood_change
 
-        self.corruption_level = max(0, min(100, self.corruption_level + corruption_delta))
-        self.arousal_level = max(0, min(100, self.arousal_level + arousal_delta))
+        self.corruption_level = max(
+            0, min(100, self.corruption_level + corruption_delta)
+        )
+        self.arousal_level = max(
+            0, min(100, self.arousal_level + arousal_delta)
+        )
 
         # Logic การเปลี่ยน Mood อัตโนมัติเมื่อค่าถึงกำหนด
         if self.arousal_level > 80:
@@ -36,13 +42,13 @@ class CharacterProfile:
             "obedience": self.obedience_level,
             "arousal": self.arousal_level,
         }
-        with open(self.state_file, "w", encoding="utf-8") as f:
+        with open(self.state_file, "w") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
 
     def load_state(self):
         if os.path.exists(self.state_file):
             try:
-                with open(self.state_file, encoding="utf-8") as f:
+                with open(self.state_file) as f:
                     data = json.load(f)
                     self.mood = data.get("mood", "Neutral")
                     self.corruption_level = data.get("corruption", 0)
@@ -52,4 +58,7 @@ class CharacterProfile:
                 print("[System]: Memory corrupted. Resetting state.")
 
     def get_status_str(self):
-        return f"[Mood: {self.mood} | Corruption: {self.corruption_level}% | Arousal: {self.arousal_level}%]"  # noqa: E501
+        return (
+            f"[Mood: {self.mood} | Corruption: {self.corruption_level}% | "
+            f"Arousal: {self.arousal_level}%]"
+        )

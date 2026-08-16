@@ -21,10 +21,40 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-          pip install black pytest pytest-asyncio
+          docker run --rm \
+            --entrypoint sh \
+            namo:test \
+            -c "pip install -r requirements-dev.txt \
+                && ruff check . \
+                && black --check . \
+                && pytest --cov --cov-report=term-missing \
+                && bandit -r . \
+                && pip-audit -r requirements.txt"
+
+      - name: Security scan with Docker Scout
+        # Non-blocking: Docker Scout needs an entitled account to authenticate.
+        # Report findings when available, but never fail the build on scan access.
+        continue-on-error: true
+        uses: docker/scout-action@v1
+        with:
+          image: namo:test
+          only-severities: critical,high
+
+  docker-build-push:
+    needs: docker-build-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: icezingza
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - name: Run Black Check
         run: |
