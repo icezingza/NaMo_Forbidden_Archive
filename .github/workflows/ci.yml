@@ -82,6 +82,7 @@ jobs:
         uses: docker/scout-action@v1
         continue-on-error: true # Do not fail build if scout has issues
         with:
+          command: cves
           image: namo-${{ matrix.service }}:test
           only-severities: critical,high
 
