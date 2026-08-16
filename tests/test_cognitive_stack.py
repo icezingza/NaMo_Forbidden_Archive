@@ -282,7 +282,6 @@ class TestLearningEngine:
 
 
 import json
-import tempfile
 from unittest.mock import MagicMock, patch
 
 from core.cognitive_stream import CognitiveMonologueStream
@@ -349,7 +348,9 @@ class TestCognitiveMonologueStream:
             behavioral_prediction="pred",
         )
         # When !gentle is present the user_intent branch must win
-        assert "user_intent" in result or "raw input" in result.lower() or "gentle" in result.lower()
+        assert (
+            "user_intent" in result or "raw input" in result.lower() or "gentle" in result.lower()
+        )
 
     def test_no_gentle_selects_dark_knowledge(self, stream):
         result = stream.process(
@@ -363,7 +364,12 @@ class TestCognitiveMonologueStream:
 
     def test_generate_impulses_keys(self, stream):
         impulses = stream._generate_impulses("input", "memory", "prediction")
-        for key in ("user_intent", "memory_context", "predicted_behavior", "dark_knowledge_trigger"):
+        for key in (
+            "user_intent",
+            "memory_context",
+            "predicted_behavior",
+            "dark_knowledge_trigger",
+        ):
             assert key in impulses
 
     def test_reflect_on_impulses_returns_all_keys(self, stream):
@@ -389,6 +395,7 @@ class TestCognitiveMonologueStream:
 
 
 import pandas as pd
+
 from behavioral_analytics_service import BehavioralAnalyticsService
 
 
@@ -405,9 +412,7 @@ class TestBehavioralAnalyticsService:
     def test_init_creates_driver(self):
         with patch("behavioral_analytics_service.GraphDatabase.driver") as mock_driver:
             svc = BehavioralAnalyticsService("bolt://localhost:7687", "neo4j", "test")
-            mock_driver.assert_called_once_with(
-                "bolt://localhost:7687", auth=("neo4j", "test")
-            )
+            mock_driver.assert_called_once_with("bolt://localhost:7687", auth=("neo4j", "test"))
 
     def test_close_calls_driver_close(self, service):
         service.close()
@@ -462,4 +467,3 @@ class TestBehavioralAnalyticsService:
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 1
         assert "character_name" in result.columns
-

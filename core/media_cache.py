@@ -7,8 +7,7 @@ import hashlib
 import json
 import logging
 import os
-from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger("NamoMediaCache")
 
@@ -45,7 +44,7 @@ class MediaCacheManager:
         content = f"{text.strip().lower()}::{voice_or_style.strip().lower()}"
         return hashlib.sha256(content.encode()).hexdigest()
 
-    def get_cached_audio(self, text: str, voice_id: str = "default") -> Optional[str]:
+    def get_cached_audio(self, text: str, voice_id: str = "default") -> str | None:
         h = self.compute_hash(text, voice_id)
         if h in self._index and self._index[h]["type"] == "audio":
             file_path = self._index[h]["file_path"]
@@ -75,7 +74,7 @@ class MediaCacheManager:
         logger.info(f"💾 Audio Cache Stored: {file_path}")
         return file_path
 
-    def get_cached_image(self, prompt: str, style: str = "default") -> Optional[str]:
+    def get_cached_image(self, prompt: str, style: str = "default") -> str | None:
         h = self.compute_hash(prompt, style)
         if h in self._index and self._index[h]["type"] == "image":
             file_path = self._index[h]["file_path"]

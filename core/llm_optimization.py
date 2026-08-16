@@ -4,10 +4,8 @@ Integrates Prompt Caching, Thinking Budgeting, Cache Miss Prevention, and Token 
 directly into the NaMo Model Router pipeline.
 """
 
-import json
 import logging
-
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger("NamoLLMOptimizer")
 
@@ -19,8 +17,8 @@ class NaMoLLMOptimizer:
     """
 
     DYNAMIC_PATTERNS = [
-        r'\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b', # UUID
-        r'\b\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?\b',      # ISO Timestamp
+        r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b",  # UUID
+        r"\b\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?\b",  # ISO Timestamp
     ]
 
     def __init__(self, provider: str = "Anthropic"):
@@ -31,8 +29,8 @@ class NaMoLLMOptimizer:
         system_prompt: str,
         user_message: str,
         task_type: str = "qa",
-        tools: Optional[List[Dict[str, Any]]] = None
-    ) -> Dict[str, Any]:
+        tools: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
         """
         Structures System Prompt + Tools as an ephemeral cache prefix
         and calculates the optimal Thinking Budget.
@@ -50,19 +48,12 @@ class NaMoLLMOptimizer:
             formatted_payload = {
                 "model": budget_config["model"],
                 "max_tokens": budget_config["max_tokens"],
-                "thinking": {
-                    "type": "enabled",
-                    "budget_tokens": budget_config["budget_tokens"]
-                },
+                "thinking": {"type": "enabled", "budget_tokens": budget_config["budget_tokens"]},
                 "system": [
-                    {
-                        "type": "text",
-                        "text": system_prompt,
-                        "cache_control": {"type": "ephemeral"}
-                    }
+                    {"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}}
                 ],
                 "tools": tools or [],
-                "messages": [{"role": "user", "content": user_message}]
+                "messages": [{"role": "user", "content": user_message}],
             }
         else:
             # OpenAI / Generic format
@@ -71,44 +62,63 @@ class NaMoLLMOptimizer:
                 "max_tokens": budget_config["max_tokens"],
                 "messages": [
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_message}
+                    {"role": "user", "content": user_message},
                 ],
-                "prompt_cache_key": f"namo_cache_{hash(system_prompt) & 0xffffffff}"
+                "prompt_cache_key": f"namo_cache_{hash(system_prompt) & 0xffffffff}",
             }
 
         return formatted_payload
 
-    def validate_prefix_stability(self, system_prompt: str) -> Tuple[bool, List[str]]:
+    def validate_prefix_stability(self, system_prompt: str) -> tuple[bool, list[str]]:
         import re
+
         warnings = []
         is_stable = True
-        
+
         for pattern in self.DYNAMIC_PATTERNS:
             matches = re.findall(pattern, system_prompt)
             if matches:
                 is_stable = False
-                warnings.append(f"Dynamic value detected: '{matches[0]}'. Move out of system prompt.")
+                warnings.append(
+                    f"Dynamic value detected: '{matches[0]}'. Move out of system prompt."
+                )
 
         return is_stable, warnings
 
-    def get_thinking_budget(self, task_type: str) -> Dict[str, Any]:
+    def get_thinking_budget(self, task_type: str) -> dict[str, Any]:
         presets = {
-            "qa": {"model": "claude-3-7-sonnet-20250219", "max_tokens": 2048, "budget_tokens": 1024},
-            "dialogue": {"model": "claude-3-7-sonnet-20250219", "max_tokens": 4096, "budget_tokens": 2048},
-            "emotion_fusion": {"model": "claude-3-7-sonnet-20250219", "max_tokens": 4096, "budget_tokens": 2048},
-            "deep_reasoning": {"model": "claude-3-7-sonnet-20250219", "max_tokens": 8192, "budget_tokens": 4096},
+            "qa": {
+                "model": "claude-3-7-sonnet-20250219",
+                "max_tokens": 2048,
+                "budget_tokens": 1024,
+            },
+            "dialogue": {
+                "model": "claude-3-7-sonnet-20250219",
+                "max_tokens": 4096,
+                "budget_tokens": 2048,
+            },
+            "emotion_fusion": {
+                "model": "claude-3-7-sonnet-20250219",
+                "max_tokens": 4096,
+                "budget_tokens": 2048,
+            },
+            "deep_reasoning": {
+                "model": "claude-3-7-sonnet-20250219",
+                "max_tokens": 8192,
+                "budget_tokens": 4096,
+            },
         }
         return presets.get(task_type.lower(), presets["qa"])
 
-    def audit_cache_response(self, usage: Dict[str, int]) -> Dict[str, Any]:
+    def audit_cache_response(self, usage: dict[str, int]) -> dict[str, Any]:
         cache_read = usage.get("cache_read_input_tokens", 0) or usage.get("cached_tokens", 0)
         cache_created = usage.get("cache_creation_input_tokens", 0)
-        
+
         hit = cache_read > 0
         return {
             "cache_hit": hit,
             "status": "CACHE HIT (SAVINGS ACTIVE)" if hit else "CACHE MISS",
             "cache_read_input_tokens": cache_read,
             "cache_creation_input_tokens": cache_created,
-            "savings_estimate": "90-95%" if hit else "0%"
+            "savings_estimate": "90-95%" if hit else "0%",
         }

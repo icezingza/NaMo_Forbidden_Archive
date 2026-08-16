@@ -1,34 +1,36 @@
-import os
-from fastapi import FastAPI, HTTPException, Body
-from pydantic import BaseModel
-from typing import Dict, Any, Optional
+from fastapi import FastAPI, HTTPException
 from llm_provider_v2 import LLMProvider
 from memory_service_v2 import MemoryService
+from pydantic import BaseModel
 
 app = FastAPI(
     title="NaMo Forbidden Archive (ACC) API",
     description="Virtual ACC Server running on Gemini 1.5 Flash Brain",
-    version="2.0.0"
+    version="2.0.0",
 )
 
 # Initialize Providers
 llm_provider = LLMProvider()
 memory_service = MemoryService()
 
+
 class ChatRequest(BaseModel):
     session_id: str
     text: str
 
+
 class ResetRequest(BaseModel):
     session_id: str
+
 
 @app.get("/")
 def read_root():
     return {
         "status": "online",
         "system": "NaMo Forbidden Archive (ACC) Virtual Server",
-        "brain": "Gemini 1.5 Flash (Context Few-Shot Mode)"
+        "brain": "Gemini 1.5 Flash (Context Few-Shot Mode)",
     }
+
 
 @app.post("/session/chat")
 async def chat_endpoint(payload: ChatRequest):
@@ -53,13 +55,13 @@ async def chat_endpoint(payload: ChatRequest):
         response_data = await llm_provider.generate_response(user_message, session_state)
 
         if "error_code" in response_data:
-            raise HTTPException(status_code=response_data["error_code"], detail=response_data["message"])
+            raise HTTPException(
+                status_code=response_data["error_code"], detail=response_data["message"]
+            )
 
         # 4. Save interaction and update 5D state in GCS / Local Memory
         await memory_service.save_interaction(
-            session_id=session_id,
-            user_message=user_message,
-            response_data=response_data
+            session_id=session_id, user_message=user_message, response_data=response_data
         )
 
         return response_data
@@ -68,6 +70,7 @@ async def chat_endpoint(payload: ChatRequest):
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+
 
 @app.get("/session/{session_id}")
 async def get_session(session_id: str):
@@ -79,6 +82,7 @@ async def get_session(session_id: str):
         return state
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/session/reset")
 async def reset_session(payload: ResetRequest):

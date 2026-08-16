@@ -1,6 +1,7 @@
 # NOTE: Contains Experimental Logic - Requires Compliance Review before commercial deployment.
 
 import random
+
 import requests
 
 
@@ -57,16 +58,15 @@ class DarkDialogueEngine:
         """
         # Recall a relevant response from the Memory Service (BEFORE storing the new one)
         try:
-            recall_payload = {
-                "query": user_text,
-                "limit": 1
-            }
-            response = requests.post(f"{self.memory_service_url}/recall", json=recall_payload, timeout=2)
+            recall_payload = {"query": user_text, "limit": 1}
+            response = requests.post(
+                f"{self.memory_service_url}/recall", json=recall_payload, timeout=2
+            )
             response.raise_for_status()
 
             recalled_memories = response.json()
             if recalled_memories:
-                final_response = recalled_memories[0].get('content', "...")
+                final_response = recalled_memories[0].get("content", "...")
             else:
                 final_response = "(หนูยังไม่เคยเรียนรู้เรื่องนี้... สอนหนูหน่อยสิคะ)"
         except requests.exceptions.RequestException as e:
@@ -81,8 +81,8 @@ class DarkDialogueEngine:
                 "session_id": session_id,
                 "emotion_context": {
                     "sentiment_score": arousal_level,
-                    "intensity": int(arousal_level * 10)
-                }
+                    "intensity": int(arousal_level * 10),
+                },
             }
             requests.post(f"{self.memory_service_url}/store", json=store_payload, timeout=2)
         except requests.exceptions.RequestException as e:
@@ -91,5 +91,5 @@ class DarkDialogueEngine:
         return {
             "response": final_response,
             "arousal_level": arousal_level,
-            "intensity_category": intensity
+            "intensity_category": intensity,
         }
