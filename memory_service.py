@@ -128,77 +128,28 @@ class MemoryManager:
             json.dump(self.memory, f, indent=2, ensure_ascii=False, cls=DateTimeEncoder)
 
     def store_record(self, memory_request: MemoryStorageRequest) -> MemoryRecord:
-        """
-        Stores a new memory record.
+        new_id = f"mem_{int(datetime.now().timestamp())}_{len(self.memory['records'])}"
+        record_data = memory_request.dict()
+        record_data['id'] = new_id
+        record_data['created_at'] = datetime.now()
+        
+        # Thematic Re-mapping
+        if record_data.get('dharma_tags'):
+            record_data['dark_concepts'] = self.remap_to_dark(record_data.pop('dharma_tags'))
 
-        Assigns a unique ID and timestamp, performs thematic re-mapping, and
-        saves the new record to the memory file.
+        new_record = MemoryRecord(**record_data)
+        self.memory['records'].append(new_record.dict())
+        self.save_memory()
+        return new_record
 
-        Args:
-            memory_request: The request object containing the memory data.
+    def recall_records(self, query: MemoryQuery) -> List[MemoryRecord]:
+        # This is a simple, non-optimized search for demonstration.
+        # To prevent parroting, we recall from all memories *except* the most recent one.
+        # A more sophisticated approach would filter by recency or content similarity.
+        
+        searchable_records = self.memory['records'][:-1] # Exclude the last element
 
-        Returns:
-            The newly created MemoryRecord object.
-        """
-        with self._lock:
-            new_id = f"mem_{int(datetime.now().timestamp())}_{len(self.memory['records'])}"
-            record_data = memory_request.model_dump()
-            record_data["id"] = new_id
-            record_data["created_at"] = datetime.now()
-
-            # Thematic Re-mapping
-            if record_data.get("dharma_tags"):
-                record_data["dark_concepts"] = self.remap_to_dark(record_data.pop("dharma_tags"))
-
-            new_record = MemoryRecord(**record_data)
-            self.memory["records"].append(new_record.model_dump())
-            self.save_memory()
-            return new_record
-
-    def recall_records(self, query: MemoryQuery) -> list[MemoryRecord]:
-        """
-        Recalls memory records based on a query.
-
-        Filters records based on the provided criteria in the MemoryQuery object.
-        This implementation provides filtering by memory types and dark concepts.
-
-        Args:
-            query: The query object specifying recall parameters.
-
-        Returns:
-            A list of MemoryRecord objects.
-        """
-        with self._lock:
-            # To prevent parroting, we recall from all memories *except* the most recent one.
-            # A more sophisticated approach would filter by recency or content similarity.
-            searchable_records = self.memory["records"][:-1]  # Exclude the last element
-
-        # In a real-world scenario, this filtering would be done by a database or a search engine for performance.  # noqa: E501
-        # This is a demonstration of in-memory filtering.
-        filtered_records = searchable_records
-
-        # Filter by memory_types
-        if query.memory_types:
-            filtered_records = [
-                rec for rec in filtered_records if rec.get("type") in query.memory_types
-            ]
-
-        # Filter by dark_concepts (which were remapped from dharma_tags)
-        if query.dark_concepts_filter:
-            filtered_records = [
-                rec
-                for rec in filtered_records
-                if rec.get("dark_concepts")
-                and any(
-                    concept in rec["dark_concepts"] for concept in query.dark_concepts_filter
-                )  # noqa: E501
-            ]
-
-        # NOTE: Full-text search on 'query.query', emotion filtering, and time range filtering are not implemented here for brevity.  # noqa: E501
-        # A production system would use a search library like Whoosh, Elasticsearch, or a vector database.  # noqa: E501
-
-        # Apply limit and return
-        records_to_return = filtered_records[-query.limit :]
+        records_to_return = searchable_records[-query.limit:]
         return [MemoryRecord(**rec) for rec in records_to_return]
 
     def remap_to_dark(self, dharma_tags: list[str]) -> list[str]:

@@ -58,6 +58,10 @@ Referencing `.env.example`:
 - `OPENAI_API_KEY`: API key for vector embedding/querying (Knowledge Base).
 - `NAMO_LLM_ENABLED`: Enables NaMo to respond with contextual memory (requires OpenAI).
 - `NAMO_LLM_MODEL`, `NAMO_LLM_TEMPERATURE`, `NAMO_LLM_MAX_TOKENS`, `NAMO_LLM_MEMORY_TURNS`: Configures the LLM behavior.
+- `NAMO_LLM_CONTEXT_WINDOW`: Total model context window used to budget Omega system, memory,
+  history, and response tokens. The default is `8192`.
+- `tiktoken`: Optional local plain-text tokenizer used only for recognized OpenAI models on the
+  official OpenAI endpoint. Custom providers fall back to conservative Unicode estimation.
 - `TELEGRAM_TOKEN`: Bot token for the Telegram bot interface.
 - `ELEVENLABS_API_KEY` and `ELEVENLABS_VOICE_ID`: Configures ElevenLabs TTS.
 - `EMOTION_API_URL`: Connection settings for external emotion analytics engines (if applicable).

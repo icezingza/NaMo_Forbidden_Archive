@@ -5,6 +5,7 @@ pydantic-settings
 zstandard==0.24.0
 requests
 openai
+tiktoken
 faiss-cpu
 numpy
 elevenlabs

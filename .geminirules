@@ -1,0 +1,16 @@
+# NaMo Forbidden Archive — Workspace & Agent Rules
+
+## 1. Core Architecture Principles
+* **Continuous 5D Emotion Engine**: Always preserve temporal momentum and decay for Arousal, Trust, Passion, Temperament, and Resonance.
+* **Cognitive Stream FIFO Queue**: Keep thoughts structured in sequence (`Impulse` → `Reflection` → `Conflict`) before appending final prompt response.
+* **Semantic RAG Memory**: Micro-chunk memory entries into 100-150 token snippets for optimal vector retrieval.
+
+## 2. LLM Cost & Token Optimization Guidelines
+* **Prefix Stability**: Keep all persona system prompts, 5D emotion parameters, and tool definitions static at the top of prompt requests.
+* **Prompt Caching**: Always apply `cache_control: {"type": "ephemeral"}` for Anthropic/Claude calls to ensure ~90% cost savings.
+* **Thinking Budget**: Set `reasoning_effort` dynamically: `low` for direct Q&A, `medium` for dialogue manager & emotion fusion, and `high` for deep reasoning tasks.
+* **No Dynamic Variables in Prefix**: Timestamps, session UUIDs, and current user IDs must be placed in the user message body, NOT in system prompt prefix.
+
+## 3. Code Standards & Git Workflow
+* Follow Conventional Commits format (`feat:`, `fix:`, `refactor:`, `docs:`, `test:`).
+* Never return silent fallbacks or swallow exceptions in `core/` modules.

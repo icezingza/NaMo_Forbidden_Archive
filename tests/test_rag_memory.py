@@ -28,40 +28,29 @@ def _make_memory(tmp_path=None):
 
 
 class TestRetrieveContext:
-    async def test_returns_string_when_no_files(self, tmp_path):
+    async def test_returns_none_when_index_is_missing(self, tmp_path):
         mem = _make_memory(tmp_path)
         result = await mem.retrieve_context("test query")
-        assert isinstance(result, str)
-        assert len(result) > 0
+        assert result is None
 
-    async def test_loads_data_on_first_call(self, tmp_path):
+    async def test_initializes_once_on_first_call(self, tmp_path):
         mem = _make_memory(tmp_path)
         assert mem.is_loaded is False
         await mem.retrieve_context("anything")
-        # After retrieve_context, ingest_data() is called which sets fallback memories
-        assert len(mem.memories) > 0
+        assert mem.is_loaded is True
 
-    async def test_uses_loaded_memories_for_fallback(self, tmp_path):
+    async def test_no_match_returns_none(self, tmp_path):
         mem = _make_memory(tmp_path)
-        mem.memories = ["fragment A", "fragment B", "fragment C"]
         mem.is_loaded = True
         result = await mem.retrieve_context("test")
-        assert result in ["fragment A", "fragment B", "fragment C"]
+        assert result is None
 
-    async def test_fallback_when_no_vector_index(self, tmp_path):
+    async def test_missing_vector_index_returns_none(self, tmp_path):
         mem = _make_memory(tmp_path)
-        mem.memories = ["test memory"]
         mem.is_loaded = True
         mem._faiss_index = None
         result = await mem.retrieve_context("query")
-        assert result == "test memory"
-
-    async def test_returns_ellipsis_when_memories_empty(self, tmp_path):
-        mem = _make_memory(tmp_path)
-        mem.is_loaded = True
-        mem.memories = []
-        result = await mem.retrieve_context("query")
-        assert result == "..."
+        assert result is None
 
 
 # ===========================================================================
@@ -70,25 +59,12 @@ class TestRetrieveContext:
 
 
 class TestIngestData:
-    def test_ingest_no_files_sets_fallback_memories(self, tmp_path):
-        mem = _make_memory(tmp_path)
-        mem.ingest_data()
-        assert len(mem.memories) > 0
-
-    def test_ingest_with_txt_files(self, tmp_path):
-        # Create a sample text file in the dataset path
-        txt_file = tmp_path / "sample.txt"
-        txt_file.write_text("This is a sample story for testing.\n" * 20, encoding="utf-8")
-        mem = _make_memory(tmp_path)
-        mem.ingest_data()
-        assert len(mem.memories) > 0
-
-    def test_ingest_sets_is_loaded_when_files_found(self, tmp_path):
-        txt_file = tmp_path / "data.txt"
-        txt_file.write_text("content " * 50, encoding="utf-8")
+    def test_ingest_missing_index_is_deterministic(self, tmp_path):
         mem = _make_memory(tmp_path)
         mem.ingest_data()
         assert mem.is_loaded is True
+        assert mem._faiss_index is None
+        assert mem._faiss_meta == []
 
 
 # ===========================================================================
