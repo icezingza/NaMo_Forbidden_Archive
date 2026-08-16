@@ -26,6 +26,8 @@ Request:
 `engine` — optional; selects the persona engine for this request.
 Defaults to `DEFAULT_ENGINE` env var (default `omega`).
 
+`/session/chat` is supported as a backward-compatible alias for older clients.
+
 Response:
 ```json
 {

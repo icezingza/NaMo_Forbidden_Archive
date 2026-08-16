@@ -24,9 +24,8 @@ class AllocatorConfig:
             raise ValueError("context_window must be positive")
         if self.response_reserve < 0 or self.response_reserve >= self.context_window:
             raise ValueError("response_reserve must be non-negative and below context_window")
-        if (
-            isinstance(self.message_overhead_tokens, bool)
-            or not isinstance(self.message_overhead_tokens, int)
+        if isinstance(self.message_overhead_tokens, bool) or not isinstance(
+            self.message_overhead_tokens, int
         ):
             raise TypeError("message_overhead_tokens must be an integer")
         if self.message_overhead_tokens < 0:
@@ -206,11 +205,7 @@ class ContextAllocator:
         system_overhead = self.config.message_overhead_tokens if final_system else 0
         memory_overhead = self.config.message_overhead_tokens if final_memory else 0
         total_prompt_tokens = (
-            system_tokens
-            + memory_tokens
-            + history_tokens
-            + system_overhead
-            + memory_overhead
+            system_tokens + memory_tokens + history_tokens + system_overhead + memory_overhead
         )
 
         return {

@@ -33,4 +33,3 @@ def build_model_token_counter(
         return len(encoding.encode(text, disallowed_special=()))
 
     return count_tokens, f"tiktoken:{encoding.name}"
-

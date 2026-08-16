@@ -7,7 +7,11 @@ from collections import defaultdict
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ImportError:  # pragma: no cover - optional in minimal environments
+    def load_dotenv() -> None:
+        return None
 
 load_dotenv()
 
@@ -325,6 +329,7 @@ def _resolve_engine_from_payload(payload: ChatInput) -> BasePersonaEngine:
 
 
 @app.post("/chat")
+@app.post("/session/chat")
 async def chat_with_namo(payload: ChatInput, request: Request):
     active_engine = _resolve_engine_from_payload(payload)
     session_id = payload.session_id or str(uuid.uuid4())
