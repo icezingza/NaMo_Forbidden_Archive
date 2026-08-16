@@ -11,7 +11,7 @@ class DialogueManager:
         Args:
             character_file_path: The path to the character's JSON file.
         """
-        with open(character_file_path, encoding="utf-8") as f:
+        with open(character_file_path) as f:
             self.character_data = json.load(f)
 
         self.dialogue_templates = self._extract_dialogues()

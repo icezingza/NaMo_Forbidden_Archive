@@ -3,6 +3,7 @@ import logging
 import os
 from datetime import datetime
 from threading import Lock
+from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -104,7 +105,7 @@ class MemoryManager:
             logger.info("[MemoryService]: creating new memory file: %s", self.file_path)
             # Added a top-level key to store records
             return {"records": [], "protocol_metadata": {}}
-        with open(self.file_path, encoding="utf-8") as f:
+        with open(self.file_path) as f:
             try:
                 return json.load(f)
             except json.JSONDecodeError:
@@ -124,21 +125,21 @@ class MemoryManager:
                     return o.isoformat()
                 return json.JSONEncoder.default(self, o)
 
-        with open(self.file_path, "w", encoding="utf-8") as f:
+        with open(self.file_path, "w") as f:
             json.dump(self.memory, f, indent=2, ensure_ascii=False, cls=DateTimeEncoder)
 
     def store_record(self, memory_request: MemoryStorageRequest) -> MemoryRecord:
         new_id = f"mem_{int(datetime.now().timestamp())}_{len(self.memory['records'])}"
         record_data = memory_request.dict()
-        record_data['id'] = new_id
-        record_data['created_at'] = datetime.now()
-        
+        record_data["id"] = new_id
+        record_data["created_at"] = datetime.now()
+
         # Thematic Re-mapping
-        if record_data.get('dharma_tags'):
-            record_data['dark_concepts'] = self.remap_to_dark(record_data.pop('dharma_tags'))
+        if record_data.get("dharma_tags"):
+            record_data["dark_concepts"] = self.remap_to_dark(record_data.pop("dharma_tags"))
 
         new_record = MemoryRecord(**record_data)
-        self.memory['records'].append(new_record.dict())
+        self.memory["records"].append(new_record.dict())
         self.save_memory()
         return new_record
 
@@ -146,10 +147,10 @@ class MemoryManager:
         # This is a simple, non-optimized search for demonstration.
         # To prevent parroting, we recall from all memories *except* the most recent one.
         # A more sophisticated approach would filter by recency or content similarity.
-        
-        searchable_records = self.memory['records'][:-1] # Exclude the last element
 
-        records_to_return = searchable_records[-query.limit:]
+        searchable_records = self.memory["records"][:-1]  # Exclude the last element
+
+        records_to_return = searchable_records[-query.limit :]
         return [MemoryRecord(**rec) for rec in records_to_return]
 
     def remap_to_dark(self, dharma_tags: list[str]) -> list[str]:

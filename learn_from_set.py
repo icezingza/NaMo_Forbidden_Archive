@@ -75,10 +75,12 @@ for root, _, files in os.walk(extract_dir):
     for f in files:
         p = os.path.join(root, f)
         try:
-            text = open(p, encoding="utf-8").read()
+            with open(p) as file:
+                text = file.read()
         except Exception:
             try:
-                text = open(p, encoding="latin1").read()
+                with open(p, encoding="latin1") as file:
+                    text = file.read()
             except Exception as e:
                 print(f"[skip] อ่านไฟล์ {p} ไม่ได้: {e}")
                 continue
@@ -113,7 +115,8 @@ index.add(embeddings)
 faiss.write_index(index, DB_PATH)
 
 # Step 5: Save metadata
-json.dump(metadata, open(META_PATH, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+with open(META_PATH, "w") as f:
+    json.dump(metadata, f, ensure_ascii=False, indent=2)
 
 print(
     f"✅ Dark Knowledge base created with {len(docs)} chunks from {len(set(m['file'] for m in metadata))} files."  # noqa: E501

@@ -37,7 +37,8 @@ def query_knowledge(question, top_k=3):
     q_emb = np.array([q_emb]).astype("float32")
     index = faiss.read_index(DB_PATH)
     distances, indices = index.search(q_emb, top_k)
-    meta = json.load(open(META_PATH, encoding="utf-8"))
+    with open(META_PATH) as f:
+        meta = json.load(f)
     results = []
     for i, dist in zip(indices[0], distances[0], strict=False):
         if i < len(meta):

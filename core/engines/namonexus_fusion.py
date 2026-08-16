@@ -39,7 +39,7 @@ class NamoNexusEngine:
             with self._state_lock:
                 if not path.exists():
                     return
-                data = json.loads(path.read_text(encoding="utf-8"))
+                data = json.loads(path.read_text())
             self.fused_score = float(data.get("fused_score", self.fused_score))
             self.confidence = float(data.get("confidence", self.confidence))
             self.has_drift_alarm = bool(data.get("has_drift_alarm", self.has_drift_alarm))
@@ -64,7 +64,7 @@ class NamoNexusEngine:
         try:
             with self._state_lock:
                 path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+                path.write_text(json.dumps(payload, ensure_ascii=False, indent=2))
         except Exception:
             pass
 

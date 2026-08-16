@@ -27,7 +27,7 @@ class MediaCacheManager:
     def _load_index(self) -> Dict[str, Dict[str, Any]]:
         if os.path.exists(self.index_file):
             try:
-                with open(self.index_file, "r", encoding="utf-8") as f:
+                with open(self.index_file) as f:
                     return json.load(f)
             except Exception as e:
                 logger.error(f"Error loading media index: {e}")
@@ -35,7 +35,7 @@ class MediaCacheManager:
 
     def _save_index(self) -> None:
         try:
-            with open(self.index_file, "w", encoding="utf-8") as f:
+            with open(self.index_file, "w") as f:
                 json.dump(self._index, f, indent=2, ensure_ascii=False)
         except Exception as e:
             logger.error(f"Error saving media index: {e}")
