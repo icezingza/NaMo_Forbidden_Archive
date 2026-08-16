@@ -132,6 +132,7 @@ class MemoryManager:
             os.replace(temp_path, self.file_path)
         except Exception:
             logger.exception("Failed to save memory to disk.")
+            raise
 
     def store_record(self, memory_request: MemoryStorageRequest) -> MemoryRecord:
         """
