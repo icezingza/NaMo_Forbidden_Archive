@@ -6,21 +6,17 @@ files_to_merge = [
     "README.md",
     "system.yaml",
     "docs/ARCHITECTURE.md",
-    "docs/NamoNexus_Integration_Handbook.md"
+    "docs/NamoNexus_Integration_Handbook.md",
 ]
 
 output_filename = "NaMo_Integrated_Knowledge_Base.md"
 
-with open(output_filename, "w", encoding="utf-8") as outfile:
+with open(output_filename, "w") as outfile:
     for filename in files_to_merge:
         if os.path.exists(filename):
-            with open(filename, "r", encoding="utf-8") as infile:
-                outfile.write("
-# Source: " + filename + "
-")
+            with open(filename) as infile:
+                outfile.write("\n# Source: " + filename + "\n")
                 outfile.write(infile.read())
-                outfile.write("
----
-")
+                outfile.write("\n---\n")
 
 print(f"รวมไฟล์เสร็จสิ้น: {output_filename}")

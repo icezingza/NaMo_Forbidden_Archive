@@ -1,0 +1,127 @@
+{
+  "fused_score": 0.15000267028808595,
+  "confidence": 0.5,
+  "has_drift_alarm": false,
+  "last_drift_at": null,
+  "history": [
+    {
+      "timestamp": 1784637742.136454,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.325
+    },
+    {
+      "timestamp": 1784637929.6912136,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.2375
+    },
+    {
+      "timestamp": 1786918930.6832492,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.19374999999999998
+    },
+    {
+      "timestamp": 1786918930.7479763,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.171875
+    },
+    {
+      "timestamp": 1786918930.792293,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.1609375
+    },
+    {
+      "timestamp": 1786918996.7611072,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15546875
+    },
+    {
+      "timestamp": 1786918996.8067677,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15273437499999998
+    },
+    {
+      "timestamp": 1786918996.8529303,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.1513671875
+    },
+    {
+      "timestamp": 1786919025.3060899,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15068359375
+    },
+    {
+      "timestamp": 1786919025.349535,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.150341796875
+    },
+    {
+      "timestamp": 1786919025.3862984,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15017089843749998
+    },
+    {
+      "timestamp": 1786922012.8335555,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15008544921875
+    },
+    {
+      "timestamp": 1786922012.8419042,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.150042724609375
+    },
+    {
+      "timestamp": 1786922012.8492184,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.1500213623046875
+    },
+    {
+      "timestamp": 1786922031.1935914,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15001068115234373
+    },
+    {
+      "timestamp": 1786922031.2012339,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15000534057617188
+    },
+    {
+      "timestamp": 1786922031.2084253,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15000267028808595
+    }
+  ]
+}

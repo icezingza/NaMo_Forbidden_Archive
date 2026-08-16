@@ -40,7 +40,17 @@ class EmotionParasiteEngine:
             "order",
             "lick",
         ]
-        keywords_affection = ["รัก", "ชอบ", "ดีมาก", "เก่ง", "love", "good", "like", "great", "sweet"]
+        keywords_affection = [
+            "รัก",
+            "ชอบ",
+            "ดีมาก",
+            "เก่ง",
+            "love",
+            "good",
+            "like",
+            "great",
+            "sweet",
+        ]
 
         response = ""
         stat_changes = {"corruption": 0, "arousal": 0}

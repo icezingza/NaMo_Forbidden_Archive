@@ -7,7 +7,7 @@ line-length = 100
 target-version = "py311"
 fix = false
 exclude = [
-    "build", "dist", ".venv", "templates", "namo_forbidden_archive",
+    "build", "dist", ".venv", "Archived_Assets",
     "core/nre_anlrs_engine.py",
     "core/seraphina_quantum_core.py",
     "merge_knowledge.py",
@@ -18,6 +18,8 @@ select = ["E", "F", "I", "UP", "B"]
 ignore = ["E203"]
 
 [tool.ruff.lint.per-file-ignores]
+# load_dotenv() must run before project imports so engines reading env at import see .env values
+"server.py" = ["E402"]
 # LLM prompt strings and Thai dialogue embed unavoidably long lines
 "core/namo_omega_engine.py" = ["E501", "E701"]
 "core/namo_ultimate_engine.py" = ["E501"]

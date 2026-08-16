@@ -1,20 +1,14 @@
 @echo off
-echo [Sovereign System] Awakening All ASI Modules...
+echo [NamoNexus Sovereign System] Awakening All Modules...
 
-:: 1. เปิด Terminal สำหรับ API Server
-start "NaMo Core Server" cmd /k "python server.py"
+cd /d "%~dp0"
+echo Running from: %cd%
 
-:: 2. เปิด Terminal สำหรับ Memory Service (Assuming it's a separate process as per architecture)
-start "Memory Service" cmd /k "python memory_service.py"
+echo [NamoNexus] Stopping existing services...
+docker compose down
 
-:: 3. เปิด Terminal สำหรับ Ingestion Pipeline (Dream Loop)
-start "Dream Loop" cmd /k "python core/memory/ingestion_pipeline.py"
+echo [NamoNexus] Building and starting all services...
+docker compose up --build -d
 
-:: 4. เปิด Terminal สำหรับ Telegram Bot
-start "NaMo Telegram Bot" cmd /k "python Core_Scripts/namo_auto_AI_reply.py"
-
-:: 5. เปิด Terminal สำหรับ Behavioral Analytics Service (NEW)
-start "Behavioral Analytics" cmd /k "python behavioral_analytics_service.py"
-
-echo [System] All ASI engines and sensors are ONLINE.
+echo [System] All NamoNexus services are running in Docker. Use 'docker compose logs -f' to view logs.
 pause

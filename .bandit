@@ -1,0 +1,13 @@
+[bandit]
+# Directories excluded from scanning:
+#   tests            - assert usage and fake test tokens are expected here
+#   Archived_Assets  - archived legacy files + refactor/experimental templates (not imported)
+#   Documentation    - legacy docs
+exclude = ./tests,./Archived_Assets,./Documentation
+# Skipped checks (justified):
+#   B311 - random is used for dialogue/persona variety, never for security or crypto
+#   B110 - try/except/pass implements intentional graceful degradation for optional services
+# Note: B615 (unpinned HuggingFace downloads) is intentionally NOT skipped globally. The known
+# optional BERT loads pin revision="main" and are annotated inline with `# nosec B615`, so any
+# new unpinned from_pretrained() elsewhere is still flagged.
+skips = B311,B110

@@ -35,7 +35,7 @@ Do not introduce:
 core/                  → pure Python engines (no heavy IO)
 adapters/              → thin wrappers for all external IO
 Core_Scripts/          → experimental/auxiliary scripts (not imported by server.py)
-tests/                 → pytest suite (25 files, 335+ tests)
+tests/                 → pytest suite (24 files, 336+ tests; async tests via pytest-asyncio)
 docs/                  → API and architecture specs
 web/                   → static frontend (served at /ui by server.py)
 Audio_Layers/          → static audio assets  → served at /media/audio
@@ -43,8 +43,7 @@ Visual_Scenes/         → static image assets  → served at /media/visual
 learning_set/          → input ZIPs for FAISS knowledge base
 tools/                 → one-off utility scripts (not part of the app)
 emotion_fusion_engine/ → standalone multi-modal emotion analysis service
-templates/             → improved/refactored engine templates (not imported by server.py)
-Archived_Assets/       → archived legacy files
+Archived_Assets/       → archived legacy files + refactor/experimental "improved" templates (not imported)
 Documentation/         → legacy documentation
 ```
 
@@ -85,8 +84,12 @@ Select engine per request via the `engine` field in the chat request body, or se
 | GET | `/v1/health` | none | Health check |
 | GET | `/v1/status` | none | Status of all loaded engines |
 | GET | `/v1/admin/sessions` | `X-Admin-Secret` | Active sessions per engine |
+| DELETE | `/v1/admin/sessions/{session_id}` | `X-Admin-Secret` | Clear one session from all loaded engines |
+| GET | `/v1/admin/explain` | `X-Admin-Secret` | Per-engine fusion-decision explanation |
+| POST | `/api/dream` | `X-Admin-Secret` | Trigger ASI research/simulation (optional engine; graceful fallback) |
 
 Do not rename or change any of these paths — they are production routes.
+Admin routes are guarded by `_assert_admin()` (enforced only when `ADMIN_SECRET` is set).
 
 ### Architecture Rules
 
@@ -292,14 +295,21 @@ API_MASTER_KEY         str|None
 Before marking any task complete:
 - `make lint` — ruff check must pass
 - `make format` — black + ruff --fix check must pass
-- `make test` — all 335+ tests in `tests/` must pass
+- `make test` — all 336+ tests in `tests/` must pass
 
 Rules:
 - Unit tests required for: engine `process_input()` logic, memory store/recall, API key resolution, media URL resolution
 - No heavy test scaffolding for simple adapter wrappers
 - Mock all external services (OpenAI, ElevenLabs, HTTP calls) — tests must run offline
+- Async engine methods (e.g. `process_input`, `stream_input`, `TTSAdapter.synthesize`) are awaited —
+  mock them with `AsyncMock`, not `MagicMock`. `pytest.ini` sets `asyncio_mode = auto`; `pytest-asyncio`
+  is a required dev dependency
 - Verify both "service available" and "service absent/no API key" code paths for every adapter
 - `test_main.py` at root is legacy — add new tests under `tests/` only
+
+CI runs five gates in `build-test` (ruff → black → pytest → pip-audit → bandit). `bandit` is configured
+via the root `.bandit` file (excludes test/archive/docs trees; skips B311/B110 with justifications;
+B615 is scoped to inline `# nosec` on the optional BERT loads, not skipped globally).
 
 ---
 

@@ -30,7 +30,9 @@ class NamoNexusEngine:
         self._load_state()
 
     def _state_path(self) -> Path:
-        safe_key = "".join(ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in self.persistence_key)
+        safe_key = "".join(
+            ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in self.persistence_key
+        )
         return self._state_root / f"{safe_key}.json"
 
     def _load_state(self) -> None:

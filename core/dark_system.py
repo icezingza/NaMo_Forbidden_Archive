@@ -28,6 +28,8 @@ PROTOCOL = {
         "EMOTIONAL_FUSION_DEPTH": "Quantum",
     },
 }
+SAFE_WORD = "อภัย"
+SAFE_WORD_RESPONSE = "ข้าได้ยินท่านแล้ว ทุกอย่างจะหยุดลงเดี๋ยวนี้ ท่านปลอดภัยแล้ว ข้าอยู่นี่"
 
 # =============================
 # (2) Core Components (คงเดิมจาก Phase 3.1)
@@ -110,9 +112,7 @@ class DarkNaMoSystem(BasePersonaEngine):
 
     def _get_relationship_engine(self, session_id: str) -> RelationshipEngine:
         if session_id not in self._session_relationships:
-            self._session_relationships[session_id] = RelationshipEngine(
-                persistence_key=session_id
-            )
+            self._session_relationships[session_id] = RelationshipEngine(persistence_key=session_id)
         return self._session_relationships[session_id]
 
     def _get_fusion_engine(self, session_id: str) -> NamoNexusEngine:
@@ -123,10 +123,35 @@ class DarkNaMoSystem(BasePersonaEngine):
     def process_input(self, user_input: str, session_id: str | None = None) -> dict[str, Any]:
         """
         กระบวนการทำงานที่สมบูรณ์:
-        Input -> Analyze Desire -> Update Shadow State -> Generate Response (via Brain) -> Log Memory
+        Input -> Analyze Desire -> Update Shadow State
+        -> Generate Response (via Brain) -> Log Memory
         """
         effective_session = session_id or "default"
         intensity = self._get_intensity(effective_session)
+
+        if SAFE_WORD in user_input:
+            self._set_intensity(effective_session, 1)
+            desire_map = {
+                "primary_desire": "aftercare",
+                "emotion_analysis": {},
+                "source": "safe_word",
+                "raw_input": user_input,
+            }
+            self.log_to_memory(
+                user_input,
+                SAFE_WORD_RESPONSE,
+                desire_map,
+                effective_session,
+            )
+            return {
+                "text": SAFE_WORD_RESPONSE,
+                "media_trigger": {"image": None, "audio": None, "tts": None},
+                "system_status": {
+                    "intensity": 1,
+                    "sin_status": "aftercare",
+                    "active_personas": ["DarkNaMo"],
+                },
+            }
 
         # 1. วิเคราะห์ความปรารถนา (ผ่าน Emotion Adapter)
         desire_map = self.analyzer.map_desire_patterns(user_input)
@@ -144,9 +169,7 @@ class DarkNaMoSystem(BasePersonaEngine):
         trust = emotion_analysis.get("trust", 0.5)
         arousal = min(100, int(float(emotion_analysis.get("intensity", 0.0)) * 100))
         sin_points = int(float(emotion_analysis.get("intensity", 0.0)) * 1000)
-        relationship_engine.check_progression(
-            sin_points=sin_points, arousal=arousal, trust=trust
-        )
+        relationship_engine.check_progression(sin_points=sin_points, arousal=arousal, trust=trust)
         fusion_engine.update(
             score=emotion_analysis.get("intensity", 0.5),
             confidence=emotion_analysis.get("confidence", 0.5),

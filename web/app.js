@@ -11,7 +11,11 @@ const STORAGE_KEYS = {
   sessionId: "namo_session_id",
   messages: "namo_messages",
   streamMode: "namo_stream_mode",
+  ageConfirmed: "namo_age_confirmed",
+  engine: "namo_engine",
 };
+
+const DEFAULT_ENGINE = "omega";
 
 const state = {
   baseUrl: "",
@@ -19,25 +23,8 @@ const state = {
   messages: [],
   loading: false,
   streamMode: true,
-  selectedEngine: "omega",
+  engine: DEFAULT_ENGINE,
 };
-
-const CLASS_TO_ENGINE = {
-  "NaMoOmegaEngine": "omega",
-  "RinladaAI": "rinlada",
-  "SeraphinaAI": "seraphina",
-  "DarkNaMoSystem": "dark",
-  "NaMoUltimateBrain": "ultimate"
-};
-
-const ENGINE_DISPLAY_NAMES = {
-  omega: "NaMo Omega",
-  rinlada: "Rinlada AI",
-  seraphina: "Seraphina AI",
-  dark: "Dark NaMo",
-  ultimate: "NaMo Ultimate"
-};
-
 
 const dom = {
   chat: document.getElementById("chat"),
@@ -66,6 +53,7 @@ const dom = {
   statusStageDesc: document.getElementById("status-stage-desc"),
   emotionProse: document.getElementById("emotion-prose"),
   streamToggle: document.getElementById("stream-toggle"),
+  personaSelect: document.getElementById("persona-select"),
   ebarJoy: document.getElementById("ebar-joy"),
   ebarArousal: document.getElementById("ebar-arousal"),
   ebarTrust: document.getElementById("ebar-trust"),
@@ -121,6 +109,9 @@ function loadState() {
 
   const storedStream = localStorage.getItem(STORAGE_KEYS.streamMode);
   state.streamMode = storedStream === null ? true : storedStream === "1";
+
+  const storedEngine = localStorage.getItem(STORAGE_KEYS.engine);
+  state.engine = storedEngine || DEFAULT_ENGINE;
 }
 
 function saveMessages() {
@@ -147,57 +138,10 @@ function updateStreamToggleUI() {
   dom.streamToggle.textContent = state.streamMode ? "Stream ◈" : "Stream ○";
 }
 
-function updateActiveEngineUI(engineKey) {
-  state.selectedEngine = engineKey;
-  const displayName = ENGINE_DISPLAY_NAMES[engineKey] || engineKey;
-  dom.statusEngine.textContent = displayName;
-  
-  document.querySelectorAll(".fab-menu-item").forEach((btn) => {
-    if (btn.dataset.engine === engineKey) {
-      btn.classList.add("active");
-    } else {
-      btn.classList.remove("active");
-    }
-  });
-}
-
-function resolveAndSyncEngine(engineClassName) {
-  if (!engineClassName) return;
-  const engineKey = CLASS_TO_ENGINE[engineClassName] || engineClassName.toLowerCase();
-  updateActiveEngineUI(engineKey);
-}
-
-function switchEngine(engineKey) {
-  if (state.selectedEngine === engineKey) return;
-  
-  updateActiveEngineUI(engineKey);
-  
-  // Play energy line animation
-  const chatArea = document.querySelector(".chat-area");
-  const energy = document.createElement("div");
-  energy.className = "energy-line";
-  chatArea.appendChild(energy);
-  setTimeout(() => energy.remove(), 1000);
-  
-  // Add system message
-  const displayName = ENGINE_DISPLAY_NAMES[engineKey] || engineKey;
-  addSystemMessage(`System: ${displayName} is now online.`);
-}
-
-function addSystemMessage(text) {
-  addMessage({
-    role: "system",
-    text: text,
-    timestamp: Date.now()
-  });
-}
-
 function setStatusFromRoot(payload) {
   if (!payload) return;
   if (payload.engine) {
-    resolveAndSyncEngine(payload.engine);
-  } else if (payload.default_engine) {
-    resolveAndSyncEngine(payload.default_engine);
+    dom.statusEngine.textContent = payload.engine;
   }
   if (payload.sin) {
     dom.statusSin.textContent = payload.sin;
@@ -227,7 +171,7 @@ function setStatusFromChat(payload) {
     updateEmotionBars(status.emotion);
   }
   if (payload.engine) {
-    resolveAndSyncEngine(payload.engine);
+    dom.statusEngine.textContent = payload.engine;
   }
 }
 
@@ -271,7 +215,7 @@ async function fetchAndApplyStatus() {
     const engineData = Object.values(payload)[0];
     if (!engineData) return;
     if (engineData.emotion) updateEmotionBars(engineData.emotion);
-    if (engineData.engine) resolveAndSyncEngine(engineData.engine);
+    if (engineData.engine) dom.statusEngine.textContent = engineData.engine;
   } catch {
     // silent
   }
@@ -336,13 +280,11 @@ function renderMessage(message) {
     }
   }
 
-  if (message.role !== "system") {
-    const meta = document.createElement("div");
-    meta.className = "message__meta";
-    const stamp = new Date(message.timestamp || Date.now());
-    meta.textContent = stamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    wrapper.appendChild(meta);
-  }
+  const meta = document.createElement("div");
+  meta.className = "message__meta";
+  const stamp = new Date(message.timestamp || Date.now());
+  meta.textContent = stamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  wrapper.appendChild(meta);
 
   return wrapper;
 }
@@ -412,7 +354,7 @@ async function sendMessagePlain(text) {
     const response = await fetch(`${state.baseUrl}/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, session_id: state.sessionId, engine: state.selectedEngine }),
+      body: JSON.stringify({ text, session_id: state.sessionId, engine: state.engine }),
     });
 
     if (!response.ok) throw new Error(`API error: ${response.status}`);
@@ -462,7 +404,7 @@ async function sendMessageStream(text) {
     const response = await fetch(`${state.baseUrl}/v1/chat/stream`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, session_id: state.sessionId, engine: state.selectedEngine }),
+      body: JSON.stringify({ text, session_id: state.sessionId, engine: state.engine }),
     });
 
     if (!response.ok) throw new Error(`API error: ${response.status}`);
@@ -503,7 +445,7 @@ async function sendMessageStream(text) {
           localStorage.setItem(STORAGE_KEYS.sessionId, state.sessionId);
         }
         if (event.engine) {
-          resolveAndSyncEngine(event.engine);
+          dom.statusEngine.textContent = event.engine;
         }
       }
     }
@@ -615,6 +557,13 @@ function bindEvents() {
     updateStreamToggleUI();
   });
 
+  if (dom.personaSelect) {
+    dom.personaSelect.addEventListener("change", () => {
+      state.engine = dom.personaSelect.value || DEFAULT_ENGINE;
+      localStorage.setItem(STORAGE_KEYS.engine, state.engine);
+    });
+  }
+
   dom.saveSettings.addEventListener("click", () => {
     const value = dom.baseUrlInput.value.trim();
     if (value) {
@@ -627,49 +576,74 @@ function bindEvents() {
   dom.settingsModal.addEventListener("click", (event) => {
     if (event.target.dataset.close === "true") closeSettings();
   });
+}
 
-  // FAB Toggle for touch/mobile
-  const fabContainer = document.getElementById("persona-fab-container");
-  const fabTrigger = document.getElementById("fab-trigger");
-  if (fabTrigger && fabContainer) {
-    fabTrigger.addEventListener("click", (event) => {
-      event.stopPropagation();
-      fabContainer.classList.toggle("active");
-    });
+// ---------------------------------------------------------------------------
+// Age gate (18+) — mandatory front-door confirmation
+// ---------------------------------------------------------------------------
+// Returns true when the app may boot now (gate absent or already confirmed).
+// Returns false while the gate is blocking; boot() is deferred until confirm.
+function enforceAgeGate() {
+  const gate = document.getElementById("age-gate");
+  if (!gate) {
+    return true;
+  }
+  if (localStorage.getItem(STORAGE_KEYS.ageConfirmed) === "1") {
+    gate.classList.add("hidden");
+    return true;
   }
 
-  // FAB Menu Item Selection
-  document.querySelectorAll(".fab-menu-item").forEach((btn) => {
-    btn.addEventListener("click", (event) => {
-      event.stopPropagation();
-      const engineKey = btn.dataset.engine;
-      if (engineKey) {
-        switchEngine(engineKey);
-      }
-      if (fabContainer) {
-        fabContainer.classList.remove("active");
-      }
-    });
-  });
+  // Block the background app: no NSFW history render, no network, no focus escape.
+  const appEl = document.querySelector(".app");
+  if (appEl) {
+    appEl.setAttribute("inert", "");
+  }
 
-  // Close FAB menu when clicking outside
-  document.addEventListener("click", () => {
-    if (fabContainer) {
-      fabContainer.classList.remove("active");
-    }
-  });
+  const confirmBtn = document.getElementById("age-confirm");
+  const leaveBtn = document.getElementById("age-leave");
+  if (confirmBtn) {
+    confirmBtn.focus();
+    confirmBtn.addEventListener("click", () => {
+      localStorage.setItem(STORAGE_KEYS.ageConfirmed, "1");
+      gate.classList.add("hidden");
+      if (appEl) {
+        appEl.removeAttribute("inert");
+      }
+      boot();
+    });
+  }
+  if (leaveBtn) {
+    leaveBtn.addEventListener("click", () => {
+      // Do not enter the app; replace the gate with a farewell that stays blocking.
+      gate.innerHTML =
+        '<div class="agegate__card"><div class="agegate__sigil"></div>' +
+        "<h2>ขอบคุณที่แวะมา</h2><p>เนื้อหานี้สำหรับผู้ที่มีอายุ 18 ปีขึ้นไปเท่านั้น</p></div>";
+    });
+  }
+  return false;
 }
 
 // ---------------------------------------------------------------------------
 // Boot
 // ---------------------------------------------------------------------------
-function init() {
+// Full application boot — runs exactly once, only after the age gate is passed.
+function boot() {
   loadState();
   updateSessionUI();
   updateStreamToggleUI();
+  if (dom.personaSelect) {
+    dom.personaSelect.value = state.engine;
+  }
   renderMessages();
   bindEvents();
   pingServer();
+}
+
+function init() {
+  if (!enforceAgeGate()) {
+    return; // gate is blocking; boot() will run when the user confirms 18+
+  }
+  boot();
 }
 
 init();

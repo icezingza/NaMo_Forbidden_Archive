@@ -1,12 +1,19 @@
 import json
+import logging
 import os
 from datetime import datetime
 from threading import Lock
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from config import settings
+from config import settings, setup_logging
+from core.exceptions import NamoAPIError, error_payload
+
+setup_logging()
+logger = logging.getLogger("namo.memory")
 
 # --- Pydantic Models based on OpenAPI Spec ---
 
@@ -94,9 +101,9 @@ class MemoryManager:
             A dictionary containing the loaded memory data.
         """
         if not os.path.exists(self.file_path):
-            print(f"[!] Memory file not found, creating new one: {self.file_path}")
+            logger.info("[MemoryService]: creating new memory file: %s", self.file_path)
             # Added a top-level key to store records
-            return {"records": [], "protocol_metadata": {}}
+            return {"records": [], "protocol_metadata": {}}  # noqa: B909
         with open(self.file_path, encoding="utf-8") as f:
             try:
                 return json.load(f)
@@ -117,8 +124,15 @@ class MemoryManager:
                     return o.isoformat()
                 return json.JSONEncoder.default(self, o)
 
-        with open(self.file_path, "w", encoding="utf-8") as f:
-            json.dump(self.memory, f, indent=2, ensure_ascii=False, cls=DateTimeEncoder)
+        # Atomic write: write to a temporary file then rename
+        temp_path = self.file_path + ".tmp"
+        try:
+            with open(temp_path, "w", encoding="utf-8") as f:
+                json.dump(self.memory, f, indent=2, ensure_ascii=False, cls=DateTimeEncoder)
+            os.replace(temp_path, self.file_path)
+        except Exception:
+            logger.exception("Failed to save memory to disk.")
+            raise
 
     def store_record(self, memory_request: MemoryStorageRequest) -> MemoryRecord:
         """
@@ -162,13 +176,13 @@ class MemoryManager:
             A list of MemoryRecord objects.
         """
         with self._lock:
-            # To prevent parroting, we recall from all memories *except* the most recent one.
+            # To prevent parroting and ensure thread safety, we copy the list inside the lock.
             # A more sophisticated approach would filter by recency or content similarity.
-            searchable_records = self.memory["records"][:-1]  # Exclude the last element
+            searchable_records = list(self.memory.get("records", []))
 
         # In a real-world scenario, this filtering would be done by a database or a search engine for performance.  # noqa: E501
         # This is a demonstration of in-memory filtering.
-        filtered_records = searchable_records
+        filtered_records = searchable_records[:-1]  # Exclude the last element from the copy
 
         # Filter by memory_types
         if query.memory_types:
@@ -218,6 +232,36 @@ class MemoryManager:
 
 app = FastAPI(title="Infinity Awareness Engine - Memory Service")
 memory_manager = MemoryManager()  # Will now respect the MEMORY_FILE_PATH env var
+
+
+# --- Global error handlers: consistent, client-safe JSON; no stack traces in prod ---
+@app.exception_handler(NamoAPIError)
+async def _handle_namo_error(request: Request, exc: NamoAPIError) -> JSONResponse:
+    logger.warning("[MemoryService]: %s (%s)", exc.error_code, exc.message)
+    detail = exc.detail if settings.debug else None
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=error_payload(exc.message, exc.error_code, detail),
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def _handle_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
+    detail = str(exc.errors()) if settings.debug else None
+    return JSONResponse(
+        status_code=422,
+        content=error_payload("Invalid request", "VALIDATION_ERROR", detail),
+    )
+
+
+@app.exception_handler(Exception)
+async def _handle_unexpected_error(request: Request, exc: Exception) -> JSONResponse:
+    logger.exception("[MemoryService]: unhandled error: %s", type(exc).__name__)
+    detail = f"{type(exc).__name__}: {exc}" if settings.debug else None
+    return JSONResponse(
+        status_code=500,
+        content=error_payload("Internal server error", "INTERNAL_ERROR", detail),
+    )
 
 
 def get_memory_manager() -> MemoryManager:
@@ -284,4 +328,4 @@ async def health_check(manager: MemoryManager = Depends(get_memory_manager)):  #
     return {"status": "ok", "memory_records": len(manager.memory.get("records", []))}
 
 
-print("Memory Service script created. Ready to be run with Uvicorn.")
+logger.info("[MemoryService]: module loaded; ready to run with Uvicorn.")

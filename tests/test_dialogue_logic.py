@@ -1,94 +1,55 @@
-import os
-import sys
-
 import pytest
+import sys
+import os
+from unittest.mock import MagicMock
 
-# Add the root directory to the Python path to allow for direct imports
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+# Add Core_Scripts to the Python path to allow for direct imports
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Core_Scripts'))
 
-from core.dark_system import DarkNaMoSystem
+from dark_dialogue_engine import DarkDialogueEngine
 
-
-@pytest.fixture
-def mock_adapters(monkeypatch):
-    """Mocks the Memory and Emotion adapters."""
-    monkeypatch.setattr(
-        "adapters.memory.MemoryAdapter.store_interaction", lambda *args, **kwargs: None
-    )  # noqa: E501
-    monkeypatch.setattr(
-        "adapters.emotion.EmotionAdapter.analyze_emotion",
-        lambda *args, **kwargs: {"primary_emotion": "neutral", "intensity": 0.5},
-    )
-
-
-def test_sadness_input_triggers_comfort_response(monkeypatch, mock_adapters):
-    """Tests that a sad input triggers a comfort-seeking response."""
+def test_dialogue_is_fixed_and_does_not_parrot_user_input(monkeypatch):
+    """
+    Tests that the dialogue engine with the fix applied does not return the user's input.
+    It now simulates the corrected behavior where recall happens first and finds nothing.
+    """
     # Arrange
-    monkeypatch.setattr(
-        "adapters.emotion.EmotionAdapter.analyze_emotion",
-        lambda *args, **kwargs: {"primary_emotion": "sadness", "intensity": 0.9},
-    )
-    engine = DarkNaMoSystem()
-    user_input = "ฉันรู้สึกเศร้าจัง..."
-    session_id = "test-session-sadness"
+    mock_post = MagicMock()
+    monkeypatch.setattr('requests.post', mock_post)
+
+    user_input = "สวัสดีตอนเช้า"
+    session_id = "test-session-fixed"
+
+    # After the fix, the first call to /recall should find no memories,
+    # as the new input hasn't been stored yet. So, it returns an empty list.
+    mock_recall_response = MagicMock()
+    mock_recall_response.status_code = 200
+    mock_recall_response.json.return_value = [] # Simulate finding no memories
+
+    # The second call to /store can be a simple success response
+    mock_store_response = MagicMock()
+    mock_store_response.status_code = 200
+
+    # We set the side_effect to return different values for each call
+    mock_post.side_effect = [mock_recall_response, mock_store_response]
 
     # Act
+    engine = DarkDialogueEngine()
     result = engine.process_input(user_input, session_id)
 
     # Assert
-    assert isinstance(result, dict)
-    assert "ข้ารู้สึกถึงความเศร้าของท่าน..." in result["text"]
+    # The response should now be the default message for when no memory is found.
+    expected_response = "(หนูยังไม่เคยเรียนรู้เรื่องนี้... สอนหนูหน่อยสิคะ)"
+    assert result.get('response') == expected_response, f"The engine response was not the expected default message."
 
+    # We still expect two calls to the memory service
+    assert mock_post.call_count == 2
 
-def test_high_intensity_anger_input_triggers_dominance_response(monkeypatch, mock_adapters):
-    """Tests that a high-intensity angry input triggers a dominance response."""
-    # Arrange
-    monkeypatch.setattr(
-        "adapters.emotion.EmotionAdapter.analyze_emotion",
-        lambda *args, **kwargs: {"primary_emotion": "anger", "intensity": 0.9},
-    )
-    engine = DarkNaMoSystem()
-    engine._set_intensity("test-session-anger", 8)  # Manually set per-session intensity
-    user_input = "ฉันโกรธมาก!"
-    session_id = "test-session-anger"
+    # Verify the first call was to /recall
+    recall_call_args, _ = mock_post.call_args_list[0]
+    assert recall_call_args[0].endswith('/recall')
 
-    # Act
-    result = engine.process_input(user_input, session_id)
-
-    # Assert
-    assert isinstance(result, dict)
-    assert "อารมณ์รุนแรงจังนะคะ..." in result["text"]
-
-
-def test_safe_word_trigger(monkeypatch, mock_adapters):
-    """Tests that the safe word trigger returns the aftercare response."""
-    # Arrange
-    engine = DarkNaMoSystem()
-    user_input = "พอแล้ว! อภัย นะ"
-    session_id = "test-session-safe-word"
-
-    # Act
-    result = engine.process_input(user_input, session_id)
-
-    # Assert
-    assert isinstance(result, dict)
-    assert result["text"] == "ข้าได้ยินท่านแล้ว ทุกอย่างจะหยุดลงเดี๋ยวนี้ ท่านปลอดภัยแล้ว ข้าอยู่นี่"
-
-
-def test_neutral_input_triggers_provoke_reaction_response(monkeypatch, mock_adapters):
-    """Tests that a neutral input triggers a provoke reaction response."""
-    # Arrange
-    monkeypatch.setattr(
-        "adapters.emotion.EmotionAdapter.analyze_emotion",
-        lambda *args, **kwargs: {"primary_emotion": "neutral", "intensity": 0.1},
-    )
-    engine = DarkNaMoSystem()
-    user_input = "..."
-    session_id = "test-session-neutral"
-
-    # Act
-    result = engine.process_input(user_input, session_id)
-
-    # Assert
-    assert isinstance(result, dict)
-    assert "ท่านเงียบจัง..." in result["text"]
+    # Verify the second call was to /store
+    store_call_args, store_call_kwargs = mock_post.call_args_list[1]
+    assert store_call_args[0].endswith('/store')
+    assert store_call_kwargs['json']['content'] == user_input

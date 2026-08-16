@@ -1,28 +1,42 @@
 import asyncio
 import json
+import logging
 import time
 import uuid
 from collections import defaultdict
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
+from threading import Lock
+
+try:
+    from dotenv import load_dotenv
+except ImportError:  # pragma: no cover - optional in minimal environments
+
+    def load_dotenv() -> None:
+        return None
+
+
+load_dotenv()
 
 import requests
-from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from config import settings
+from config import settings, setup_logging
+from core.exceptions import NamoAPIError, error_payload
+
+setup_logging()
+logger = logging.getLogger("namo.server")
 from core.base_persona import BasePersonaEngine
 from core.dark_system import DarkNaMoSystem
 from core.namo_omega_engine import NaMoOmegaEngine
 from core.namo_ultimate_engine import NaMoUltimateBrain
 from rinlada_fusion import RinladaAI
 from seraphina_ai_complete import SeraphinaAI
-
-load_dotenv()
 
 
 # ---------------------------------------------------------------------------
@@ -47,10 +61,12 @@ class _RateLimiter:
 # Session TTL — track last-active timestamp and evict stale sessions
 # ---------------------------------------------------------------------------
 _session_timestamps: dict[str, float] = {}
+_session_lock = Lock()
 
 
 def _touch_session(session_id: str) -> None:
-    _session_timestamps[session_id] = time.time()
+    with _session_lock:
+        _session_timestamps[session_id] = time.time()
 
 
 def cleanup_expired_sessions(ttl_seconds: float | None = None) -> int:
@@ -60,9 +76,10 @@ def cleanup_expired_sessions(ttl_seconds: float | None = None) -> int:
     """
     effective_ttl = ttl_seconds if ttl_seconds is not None else float(settings.session_ttl_seconds)
     now = time.time()
-    expired = [sid for sid, ts in list(_session_timestamps.items()) if now - ts > effective_ttl]
+    with _session_lock:
+        expired = [sid for sid, ts in list(_session_timestamps.items()) if now - ts > effective_ttl]
     for sid in expired:
-        _session_timestamps.pop(sid, None)
+        _session_timestamps.pop(sid, None)  # This might need locking if called concurrently
         for inst in _EngineRegistry._instances.values():
             for attr in _STATE_ATTRS:
                 store = getattr(inst, attr, None)
@@ -89,6 +106,37 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="NaMo Forbidden Archive v9.0 (Omega Sensory)", lifespan=lifespan)
+
+
+# --- Global error handlers: consistent, client-safe JSON; no stack traces in prod ---
+@app.exception_handler(NamoAPIError)
+async def _handle_namo_error(request: Request, exc: NamoAPIError) -> JSONResponse:
+    logger.warning("[API]: %s (%s)", exc.error_code, exc.message)
+    detail = exc.detail if settings.debug else None
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=error_payload(exc.message, exc.error_code, detail),
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def _handle_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
+    detail = str(exc.errors()) if settings.debug else None
+    return JSONResponse(
+        status_code=422,
+        content=error_payload("Invalid request", "VALIDATION_ERROR", detail),
+    )
+
+
+@app.exception_handler(Exception)
+async def _handle_unexpected_error(request: Request, exc: Exception) -> JSONResponse:
+    logger.exception("[API]: unhandled error: %s", type(exc).__name__)
+    detail = f"{type(exc).__name__}: {exc}" if settings.debug else None
+    return JSONResponse(
+        status_code=500,
+        content=error_payload("Internal server error", "INTERNAL_ERROR", detail),
+    )
+
 
 # --- CORS + Static Media ---
 cors_origins = [o.strip() for o in settings.cors_allow_origins.split(",") if o.strip()]
@@ -126,7 +174,7 @@ class _EngineRegistry:
                 detail=f"unknown_engine '{name}'. available: {cls.available()}",
             )
         if name not in cls._instances:
-            print(f"[EngineRegistry]: loading '{name}'...")
+            logger.info(f"[EngineRegistry]: loading '{name}'...")
             cls._instances[name] = cls._constructors[name]()
         return cls._instances[name]
 
@@ -143,7 +191,7 @@ _EngineRegistry.register("dark", DarkNaMoSystem)
 _EngineRegistry.register("ultimate", NaMoUltimateBrain)
 
 # Pre-load default engine at startup
-print("[System]: Awakening NaMo Omega...")
+logger.info("[System]: Awakening NaMo Omega...")
 engine = _EngineRegistry.get(settings.default_engine)
 
 # Optional: ASI Simulation Engine (graceful fallback if dependencies missing)
@@ -151,7 +199,7 @@ asi_engine = None
 try:
     from core.engines.asi_simulation_engine import asi_engine
 except ImportError as err:
-    print(f"[Warning]: ASI Simulation Engine not available ({err})")
+    logger.warning(f"[Warning]: ASI Simulation Engine not available ({err})")
 
 
 @app.post("/api/dream")
@@ -167,7 +215,7 @@ async def trigger_dream(x_admin_secret: str | None = Header(default=None)):
         asyncio.create_task(asi_engine.generate_hypothesis())
         return {"status": "NaMo is dreaming and researching..."}
     except Exception as exc:
-        print(f"[Dream]: Error: {exc}")
+        logger.error(f"[Dream]: Error: {exc}")
         return {"status": "error", "detail": str(exc)}
 
 
@@ -232,7 +280,7 @@ def _store_memory_if_enabled(
     try:
         requests.post(memory_url, json=payload, headers=headers, timeout=2)
     except requests.RequestException as exc:
-        print(f"[MemoryLog]: Failed to store memory: {exc}")
+        logger.warning(f"[MemoryLog]: Failed to store memory: {exc}")
 
 
 def _parse_api_key_map(raw: str | None) -> dict[str, str]:
@@ -268,12 +316,12 @@ def _log_usage(event: dict) -> None:
     if not path:
         return
     payload = dict(event)
-    payload["timestamp"] = datetime.utcnow().isoformat() + "Z"
+    payload["timestamp"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     try:
         with open(path, "a", encoding="utf-8") as handle:
             handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
     except OSError as exc:
-        print(f"[UsageLog]: Failed to write usage event: {exc}")
+        logger.warning(f"[UsageLog]: Failed to write usage event: {exc}")
 
 
 def _get_base_url(request: Request) -> str:
@@ -287,6 +335,7 @@ def _resolve_engine_from_payload(payload: ChatInput) -> BasePersonaEngine:
 
 
 @app.post("/chat")
+@app.post("/session/chat")
 async def chat_with_namo(payload: ChatInput, request: Request):
     active_engine = _resolve_engine_from_payload(payload)
     session_id = payload.session_id or str(uuid.uuid4())
@@ -330,15 +379,23 @@ async def chat_with_namo_v1(
 
     media = _normalize_media(result["media_trigger"], _get_base_url(request))
     _store_memory_if_enabled(session_id, payload.text, result["text"], result["system_status"])
-    _log_usage(
-        {
-            "endpoint": "/v1/chat",
-            "session_id": session_id,
-            "plan": plan,
-            "engine": active_engine.__class__.__name__,
-            "text_length": len(payload.text),
-        }
-    )
+    usage_event = {
+        "endpoint": "/v1/chat",
+        "session_id": session_id,
+        "plan": plan,
+        "engine": active_engine.__class__.__name__,
+        "text_length": len(payload.text),
+    }
+    allocation_status = result["system_status"].get("context_allocation")
+    if allocation_status is not None:
+        usage_event["context_allocation"] = allocation_status
+    model_route = result["system_status"].get("model_route")
+    if isinstance(model_route, dict):
+        usage_event["model_route"] = model_route
+    state_ledger = result["system_status"].get("state_ledger")
+    if isinstance(state_ledger, dict):
+        usage_event["state_ledger"] = state_ledger
+    _log_usage(usage_event)
 
     return {
         "response": result["text"],
@@ -400,21 +457,51 @@ async def chat_stream(
                     )
                     yield f"data: {data}\n\n"
         except Exception as exc:
-            err = json.dumps({"error": str(exc)}, ensure_ascii=False)
+            logger.error(f"[StreamError]: Exception during stream for session {session_id}: {exc}")
+            error_payload = {"error": "stream_failed", "detail": str(exc)}
+            err = json.dumps(error_payload, ensure_ascii=False)
             yield f"data: {err}\n\n"
         finally:
             assembled = "".join(full_text)
             _store_memory_if_enabled(session_id, payload.text, assembled)
-            _log_usage(
-                {
-                    "endpoint": "/v1/chat/stream",
-                    "session_id": session_id,
-                    "plan": plan,
-                    "engine": engine_name,
-                    "text_length": len(payload.text),
-                }
-            )
-            done_msg = json.dumps({"done": True, "session_id": session_id, "engine": engine_name})
+            allocation_status = None
+            allocation_getter = getattr(active_engine, "get_context_allocation_status", None)
+            if callable(allocation_getter):
+                allocation_status = allocation_getter(session_id)
+            model_route_status = None
+            route_getter = getattr(active_engine, "get_model_route_status", None)
+            if callable(route_getter):
+                candidate = route_getter(session_id)
+                if isinstance(candidate, dict):
+                    model_route_status = candidate
+            state_ledger_status = None
+            ledger_getter = getattr(active_engine, "get_state_ledger_status", None)
+            if callable(ledger_getter):
+                candidate = ledger_getter(session_id)
+                if isinstance(candidate, dict):
+                    state_ledger_status = candidate
+            usage_event = {
+                "endpoint": "/v1/chat/stream",
+                "session_id": session_id,
+                "plan": plan,
+                "engine": engine_name,
+                "text_length": len(payload.text),
+            }
+            if allocation_status is not None:
+                usage_event["context_allocation"] = allocation_status
+            if model_route_status is not None:
+                usage_event["model_route"] = model_route_status
+            if state_ledger_status is not None:
+                usage_event["state_ledger"] = state_ledger_status
+            _log_usage(usage_event)
+            done_payload = {"done": True, "session_id": session_id, "engine": engine_name}
+            if allocation_status is not None:
+                done_payload["context_allocation"] = allocation_status
+            if model_route_status is not None:
+                done_payload["model_route"] = model_route_status
+            if state_ledger_status is not None:
+                done_payload["state_ledger"] = state_ledger_status
+            done_msg = json.dumps(done_payload)
             yield f"data: {done_msg}\n\n"
 
     return StreamingResponse(_event_stream(), media_type="text/event-stream")
@@ -505,9 +592,11 @@ def explain_decision(x_admin_secret: str | None = Header(default=None)):
     _assert_admin(x_admin_secret)
     return {
         "explanation": {
-            name: inst.fusion_engine.explain()
-            if hasattr(inst, "fusion_engine")
-            else "No fusion engine"  # noqa: E501
+            name: (
+                inst.fusion_engine.explain()
+                if hasattr(inst, "fusion_engine")
+                else "No fusion engine"
+            )  # noqa: E501
             for name, inst in _EngineRegistry._instances.items()
         }
     }

@@ -1,23 +1,17 @@
 @echo off
-echo [Sovereign System] Awakening All Modules...
+echo [NamoNexus Sovereign System] Awakening All Modules...
 
-:: 1. สตาร์ท Database ผ่าน Docker Compose
-echo Starting Database Containers...
-docker compose up -d
-timeout /t 10
+:: Change directory to the script's location to ensure all paths are correct
+cd /d "%~dp0"
+echo Running from: %cd%
 
-:: 2. รันการดูดซับความรู้ (Ingestion Pipeline)
-echo Ingesting Knowledge...
-python core/memory/ingestion_pipeline.py --mode dream_loop
+:: Stop any existing containers to ensure a clean start
+echo [NamoNexus] Stopping existing services...
+docker compose down
 
-:: 3. เปิด Terminal สำหรับ API Server
-start "NaMo Core Server" cmd /k "python server.py"
+:: Build and start all services in the background
+echo [NamoNexus] Building and starting all services...
+docker compose up --build -d
 
-:: 4. เปิด Terminal สำหรับ Web UI
-start "Web UI" cmd /k "cd web && python -m http.server 5173"
-
-:: 5. เปิด Terminal สำหรับ Telegram Bot
-start "NaMo Telegram Bot" cmd /k "python Core_Scripts/namo_auto_AI_reply.py"
-
-echo [System] All engines online. Sovereign NaMo is listening...
+echo [System] All NamoNexus services are running in Docker. Use 'docker compose logs -f' to view logs.
 pause

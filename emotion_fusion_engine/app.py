@@ -88,4 +88,5 @@ def analyze_audio():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5001, debug=True)
+    # Binds all interfaces by design: this standalone service runs inside a container.
+    app.run(host="0.0.0.0", port=5001, debug=False)  # nosec B104

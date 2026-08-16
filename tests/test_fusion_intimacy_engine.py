@@ -8,7 +8,7 @@ def test_relationship_engine_persists_stage(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
 
     engine = RelationshipEngine(persistence_key="session-a")
-    engine.check_progression(sin_points=1200, arousal=70, trust=0.6)
+    engine.check_progression(sin_points=900, arousal=70, trust=0.6)
     assert engine.current_stage is engine.STAGE_LOVER
 
     reloaded = RelationshipEngine(persistence_key="session-a")
