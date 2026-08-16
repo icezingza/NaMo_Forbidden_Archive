@@ -87,7 +87,7 @@ There is no dedicated HTTP endpoint for building or directly querying the semant
 
 ### 4.1 Omega FAISS retrieval
 
-1. `NaMoInfiniteMemory` is constructed during Omega engine initialization even when FAISS is disabled. `AsyncOpenAI()` is also constructed at that time.
+1. `NaMoInfiniteMemory` is constructed during Omega engine initialization even when FAISS is disabled. An `AsyncOpenAI` client is constructed only when `OPENAI_API_KEY` is configured; otherwise retrieval remains unavailable without preventing engine startup.
 2. FAISS import occurs only when the process environment contains `NAMO_RAG_ENABLED=1`. This flag is read at module import time.
 3. The FAISS index loads only when both `vector_db/meta.json` and `vector_db/knowledge.index` exist and FAISS imported successfully.
 4. The first `retrieve_context()` call acquires an async load lock and runs `ingest_data()` through `asyncio.to_thread()` when `is_loaded` is false. Concurrent first calls serialize on the same lock.
@@ -122,7 +122,7 @@ There is no dedicated HTTP endpoint for building or directly querying the semant
 - **RAG disabled:** when `NAMO_RAG_ENABLED` is not exactly `1`, FAISS is not imported and index loading is skipped; retrieval still returns `None` instead of any generated fallback.
 - **No source files or invalid artifacts:** `ingest_data()` now only attempts to load persisted FAISS artifacts. It no longer installs hard-coded memories, and `is_loaded` still becomes `True` after the load attempt completes.
 - **Source files but no semantic match:** retrieval returns `None`. There is no random selection from runtime chunks and no placeholder string such as `"..."`.
-- **Embedding failure:** Omega logs the error and returns no vector hit. The standalone builder/query retries and then propagates the final exception.
+- **Embedding failure or missing API key:** Omega logs the error and returns no vector hit. The standalone builder/query retries and then propagates the final exception.
 - **Distance boundary:** Omega accepts a hit when distance equals `0.45` and rejects only values greater than `0.45`.
 - **Invalid FAISS index value:** negative/out-of-range result indices produce no vector hit; standalone `query_knowledge()` checks only `i < len(meta)`, so a negative index would index from the end of the Python list.
 - **Metadata mutation:** standalone queries add `score` to dictionaries loaded from JSON in memory; the JSON file is not rewritten.

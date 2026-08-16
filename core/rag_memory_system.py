@@ -29,7 +29,11 @@ class NaMoInfiniteMemory:
         self.index_path = self.vector_db / "knowledge.index"
         self._faiss_index = None
         self._faiss_meta: list[dict] = []
-        self.client = AsyncOpenAI()
+        # Retrieval is optional. Do not require a production credential just to
+        # construct an engine when semantic retrieval cannot run.
+        self.client: AsyncOpenAI | None = None
+        if os.getenv("OPENAI_API_KEY"):
+            self.client = AsyncOpenAI()
         self.is_loaded = False
         self._load_lock = asyncio.Lock()
 
@@ -77,6 +81,9 @@ class NaMoInfiniteMemory:
 
     async def _embed_with_retry(self, text: str, attempts: int = 3, delay: float = 1.0):
         """Async embedding generation with retry logic"""
+        if self.client is None:
+            raise RuntimeError("OpenAI embeddings are unavailable: OPENAI_API_KEY is not set")
+
         for attempt in range(1, attempts + 1):
             try:
                 response = await self.client.embeddings.create(
