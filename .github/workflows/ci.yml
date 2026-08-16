@@ -37,9 +37,9 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           files: ./coverage.xml
-        # This token is not a secret, it's a public identifier for the repo on Codecov
-        # Replace with your actual token if you have one.
-        token: ${{ secrets.CODECOV_TOKEN }}
+          # This token is not a secret, it's a public identifier for the repo on Codecov
+          # Replace with your actual token if you have one.
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   validate-compose:
     runs-on: ubuntu-latest
