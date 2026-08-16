@@ -1,3 +1,8 @@
+"""Memory Adapter — interface for storing interaction history.
+
+Supports both local JSON persistence and optional remote memory service API.
+"""
+
 import json
 import os
 from datetime import UTC, datetime
@@ -9,11 +14,9 @@ from config import settings
 
 
 class MemoryAdapter:
-    """Adapter สำหรับบันทึกความทรงจำระยะยาว
-
-    เขียนลงไฟล์ JSON เสมอ (local store).
-    ถ้า MEMORY_API_URL ถูกตั้งค่าไว้ จะ forward ไปยัง memory service ด้วย
-    เพื่อให้ทุก engine ใช้ store เดียวกัน (unified memory).
+    """
+    Wrapper for interaction history (user queries + bot responses + metadata).
+    Integrates local JSON storage with optional remote memory service.
     """
 
     def __init__(self, db_file: str = "memory_history.json") -> None:
@@ -22,7 +25,7 @@ class MemoryAdapter:
         self._memory_key: str | None = settings.memory_api_key
 
         if not os.path.exists(self.db_file):
-            with open(self.db_file, "w", encoding="utf-8") as f:
+            with open(self.db_file, "w") as f:
                 json.dump([], f)
 
         remote = f" + remote({self._memory_url})" if self._memory_url else ""
@@ -55,7 +58,7 @@ class MemoryAdapter:
 
         # 1. Local JSON store
         try:
-            with open(self.db_file, "r+", encoding="utf-8") as f:
+            with open(self.db_file, "r+") as f:
                 history: list = json.load(f)
                 history.append(entry)
                 f.seek(0)
@@ -91,7 +94,7 @@ class MemoryAdapter:
     def get_last_conversation(self) -> dict | None:
         """ดึงบทสนทนาล่าสุดมาดูบริบท"""
         try:
-            with open(self.db_file, encoding="utf-8") as f:
+            with open(self.db_file) as f:
                 history: list = json.load(f)
                 return history[-1] if history else None
         except Exception:
