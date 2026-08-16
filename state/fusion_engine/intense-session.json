@@ -1,5 +1,5 @@
 {
-  "fused_score": 0.4515625,
+  "fused_score": 0.45009765625,
   "confidence": 0.5,
   "has_drift_alarm": false,
   "last_drift_at": null,
@@ -38,6 +38,34 @@
       "score": 0.9,
       "confidence": 0.5,
       "fused_score": 0.4515625
+    },
+    {
+      "timestamp": 1786922812.6176622,
+      "modality": "text",
+      "score": 0.9,
+      "confidence": 0.5,
+      "fused_score": 0.45078125
+    },
+    {
+      "timestamp": 1786922843.3792367,
+      "modality": "text",
+      "score": 0.9,
+      "confidence": 0.5,
+      "fused_score": 0.45039062500000004
+    },
+    {
+      "timestamp": 1786922866.1426013,
+      "modality": "text",
+      "score": 0.9,
+      "confidence": 0.5,
+      "fused_score": 0.4501953125
+    },
+    {
+      "timestamp": 1786922957.0774522,
+      "modality": "text",
+      "score": 0.9,
+      "confidence": 0.5,
+      "fused_score": 0.45009765625
     }
   ]
 }

@@ -1,5 +1,5 @@
 {
-  "fused_score": 0.15000267028808595,
+  "fused_score": 0.1500000006519258,
   "confidence": 0.5,
   "has_drift_alarm": false,
   "last_drift_at": null,
@@ -122,6 +122,90 @@
       "score": 0.3,
       "confidence": 0.5,
       "fused_score": 0.15000267028808595
+    },
+    {
+      "timestamp": 1786922812.587067,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15000133514404296
+    },
+    {
+      "timestamp": 1786922812.5974832,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15000066757202146
+    },
+    {
+      "timestamp": 1786922812.6069639,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15000033378601074
+    },
+    {
+      "timestamp": 1786922843.3467178,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15000016689300538
+    },
+    {
+      "timestamp": 1786922843.3566797,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15000008344650267
+    },
+    {
+      "timestamp": 1786922843.3667915,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15000004172325132
+    },
+    {
+      "timestamp": 1786922866.1082993,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15000002086162567
+    },
+    {
+      "timestamp": 1786922866.1207745,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15000001043081285
+    },
+    {
+      "timestamp": 1786922866.131878,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.1500000052154064
+    },
+    {
+      "timestamp": 1786922957.054507,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.1500000026077032
+    },
+    {
+      "timestamp": 1786922957.0621426,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.1500000013038516
+    },
+    {
+      "timestamp": 1786922957.0690804,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.1500000006519258
     }
   ]
 }
