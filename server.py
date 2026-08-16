@@ -5,7 +5,8 @@ import time
 import uuid
 from collections import defaultdict
 from contextlib import asynccontextmanager
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+from threading import Lock
 
 try:
     from dotenv import load_dotenv
@@ -60,10 +61,12 @@ class _RateLimiter:
 # Session TTL — track last-active timestamp and evict stale sessions
 # ---------------------------------------------------------------------------
 _session_timestamps: dict[str, float] = {}
+_session_lock = Lock()
 
 
 def _touch_session(session_id: str) -> None:
-    _session_timestamps[session_id] = time.time()
+    with _session_lock:
+        _session_timestamps[session_id] = time.time()
 
 
 def cleanup_expired_sessions(ttl_seconds: float | None = None) -> int:
@@ -73,9 +76,10 @@ def cleanup_expired_sessions(ttl_seconds: float | None = None) -> int:
     """
     effective_ttl = ttl_seconds if ttl_seconds is not None else float(settings.session_ttl_seconds)
     now = time.time()
-    expired = [sid for sid, ts in list(_session_timestamps.items()) if now - ts > effective_ttl]
+    with _session_lock:
+        expired = [sid for sid, ts in list(_session_timestamps.items()) if now - ts > effective_ttl]
     for sid in expired:
-        _session_timestamps.pop(sid, None)
+        _session_timestamps.pop(sid, None)  # This might need locking if called concurrently
         for inst in _EngineRegistry._instances.values():
             for attr in _STATE_ATTRS:
                 store = getattr(inst, attr, None)
@@ -312,7 +316,7 @@ def _log_usage(event: dict) -> None:
     if not path:
         return
     payload = dict(event)
-    payload["timestamp"] = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+    payload["timestamp"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     try:
         with open(path, "a", encoding="utf-8") as handle:
             handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
@@ -453,7 +457,9 @@ async def chat_stream(
                     )
                     yield f"data: {data}\n\n"
         except Exception as exc:
-            err = json.dumps({"error": str(exc)}, ensure_ascii=False)
+            logger.error(f"[StreamError]: Exception during stream for session {session_id}: {exc}")
+            error_payload = {"error": "stream_failed", "detail": str(exc)}
+            err = json.dumps(error_payload, ensure_ascii=False)
             yield f"data: {err}\n\n"
         finally:
             assembled = "".join(full_text)

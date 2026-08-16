@@ -103,7 +103,7 @@ class MemoryManager:
         if not os.path.exists(self.file_path):
             logger.info("[MemoryService]: creating new memory file: %s", self.file_path)
             # Added a top-level key to store records
-            return {"records": [], "protocol_metadata": {}}
+            return {"records": [], "protocol_metadata": {}}  # noqa: B909
         with open(self.file_path, encoding="utf-8") as f:
             try:
                 return json.load(f)
@@ -124,8 +124,14 @@ class MemoryManager:
                     return o.isoformat()
                 return json.JSONEncoder.default(self, o)
 
-        with open(self.file_path, "w", encoding="utf-8") as f:
-            json.dump(self.memory, f, indent=2, ensure_ascii=False, cls=DateTimeEncoder)
+        # Atomic write: write to a temporary file then rename
+        temp_path = self.file_path + ".tmp"
+        try:
+            with open(temp_path, "w", encoding="utf-8") as f:
+                json.dump(self.memory, f, indent=2, ensure_ascii=False, cls=DateTimeEncoder)
+            os.replace(temp_path, self.file_path)
+        except Exception:
+            logger.exception("Failed to save memory to disk.")
 
     def store_record(self, memory_request: MemoryStorageRequest) -> MemoryRecord:
         """
@@ -169,13 +175,13 @@ class MemoryManager:
             A list of MemoryRecord objects.
         """
         with self._lock:
-            # To prevent parroting, we recall from all memories *except* the most recent one.
+            # To prevent parroting and ensure thread safety, we copy the list inside the lock.
             # A more sophisticated approach would filter by recency or content similarity.
-            searchable_records = self.memory["records"][:-1]  # Exclude the last element
+            searchable_records = list(self.memory.get("records", []))
 
         # In a real-world scenario, this filtering would be done by a database or a search engine for performance.  # noqa: E501
         # This is a demonstration of in-memory filtering.
-        filtered_records = searchable_records
+        filtered_records = searchable_records[:-1]  # Exclude the last element from the copy
 
         # Filter by memory_types
         if query.memory_types:
