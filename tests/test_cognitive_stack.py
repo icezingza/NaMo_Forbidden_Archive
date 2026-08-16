@@ -411,7 +411,7 @@ class TestBehavioralAnalyticsService:
 
     def test_init_creates_driver(self):
         with patch("behavioral_analytics_service.GraphDatabase.driver") as mock_driver:
-            svc = BehavioralAnalyticsService("bolt://localhost:7687", "neo4j", "test")
+            BehavioralAnalyticsService("bolt://localhost:7687", "neo4j", "test")
             mock_driver.assert_called_once_with("bolt://localhost:7687", auth=("neo4j", "test"))
 
     def test_close_calls_driver_close(self, service):

@@ -113,18 +113,18 @@ async def chat_endpoint(payload: ChatRequest):
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 
-@app.get("/health")
-async def health():
+@app.get("/health/status")
+async def health_status():
     return {"status": "healthy", "service": "namo-acc", "version": "2.0.0"}
 
 
-@app.get("/live")
-async def live():
+@app.get("/live/status")
+async def live_status():
     return {"status": "alive"}
 
 
-@app.get("/ready")
-async def ready():
+@app.get("/ready/status")
+async def ready_status():
     return {"status": "ready"}
 
 
@@ -256,7 +256,7 @@ async def telegram_webhook(
             await send_telegram_message(
                 message.get("chat", {}).get("id", ""), f"❌ Error: {str(e)[:100]}"
             )
-        except:
+        except Exception:
             pass
         return {"ok": False, "error": str(e)}
 
