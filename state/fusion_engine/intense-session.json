@@ -1,5 +1,5 @@
 {
-  "fused_score": 0.45625000000000004,
+  "fused_score": 0.4515625,
   "confidence": 0.5,
   "has_drift_alarm": false,
   "last_drift_at": null,
@@ -24,6 +24,20 @@
       "score": 0.9,
       "confidence": 0.5,
       "fused_score": 0.45625000000000004
+    },
+    {
+      "timestamp": 1786922012.856146,
+      "modality": "text",
+      "score": 0.9,
+      "confidence": 0.5,
+      "fused_score": 0.453125
+    },
+    {
+      "timestamp": 1786922031.2159302,
+      "modality": "text",
+      "score": 0.9,
+      "confidence": 0.5,
+      "fused_score": 0.4515625
     }
   ]
 }
