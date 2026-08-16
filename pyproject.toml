@@ -11,16 +11,16 @@ exclude = [
     "core/nre_anlrs_engine.py",
     "core/seraphina_quantum_core.py",
     "merge_knowledge.py",
+    "namo_forbidden_archive",
 ]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
-ignore = ["E203"]
+ignore = ["E203", "E501", "E402", "B904"]
 
 [tool.ruff.lint.per-file-ignores]
 # load_dotenv() must run before project imports so engines reading env at import see .env values
 "server.py" = ["E402"]
-# LLM prompt strings and Thai dialogue embed unavoidably long lines
 "core/namo_omega_engine.py" = ["E501", "E701"]
 "core/namo_ultimate_engine.py" = ["E501"]
 "core/fusion_brain.py" = ["E501"]

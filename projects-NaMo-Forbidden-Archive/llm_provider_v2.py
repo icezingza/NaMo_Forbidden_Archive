@@ -1,10 +1,12 @@
-import os
 import json
+import os
+from typing import Any
+
 import google.generativeai as genai
-from typing import Dict, Any, List, Optional
+
 
 class LLMProviderV2:
-    def __init__(self, dataset_path: Optional[str] = None):
+    def __init__(self, dataset_path: str | None = None):
         """
         Initialize the Gemini 1.5 Flash provider.
         If dataset_path is provided, it will load the few-shot training pairs
@@ -54,7 +56,7 @@ JSON Schema:
   "hook": "unresolved question, command, or stare to prompt the next turn"
 }
         """
-        
+
         # Load few-shot examples if dataset is present to align tone and format
         few_shots = ""
         if dataset_path and os.path.exists(dataset_path):
@@ -68,18 +70,20 @@ JSON Schema:
         # Combine base prompt with few-shot training data (Gemini's massive context window cheat)
         system_instruction = self.base_prompt
         if few_shots:
-            system_instruction += "\n\nUSE THE FOLLOWING FEW-SHOT EXAMPLES TO ALIGN YOUR VOICE, STYLE, AND LOGIC PERFECTLY:\n" + few_shots
+            system_instruction += (
+                "\n\nUSE THE FOLLOWING FEW-SHOT EXAMPLES TO ALIGN YOUR VOICE, STYLE, AND LOGIC PERFECTLY:\n"
+                + few_shots
+            )
 
         # Initialize the model with system instruction
         self.model = genai.GenerativeModel(
-            model_name='gemini-1.5-flash',
-            system_instruction=system_instruction
+            model_name="gemini-1.5-flash", system_instruction=system_instruction
         )
 
     def _load_few_shots(self, path: str, limit: int = 20) -> str:
         """Loads and formats JSONL training pairs as plain text context."""
         examples = []
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(path, encoding="utf-8") as f:
             for idx, line in enumerate(f):
                 if limit and idx >= limit:
                     break
@@ -90,12 +94,16 @@ JSON Schema:
                     # Clean response meta to keep it concise
                     if "meta" in resp:
                         resp.pop("meta")
-                    examples.append(f"### Example {idx+1}\nUser: {req}\nACC JSON Response:\n{json.dumps(resp, ensure_ascii=False, indent=2)}")
+                    examples.append(
+                        f"### Example {idx+1}\nUser: {req}\nACC JSON Response:\n{json.dumps(resp, ensure_ascii=False, indent=2)}"
+                    )
                 except Exception:
                     continue
         return "\n\n".join(examples)
 
-    async def generate_response(self, user_message: str, session_state: Dict[str, Any]) -> Dict[str, Any]:
+    async def generate_response(
+        self, user_message: str, session_state: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Generate a response based on user message and current session state.
         """
@@ -103,16 +111,23 @@ JSON Schema:
             # Construct a comprehensive payload that feeds state directly to Gemini
             payload = {
                 "user_message": user_message,
-                "current_emotion_state": session_state.get("emotion_state", {
-                    "arousal": 0.2, "trust": 0.4, "passion": 0.1, "temperament": 0.7, "resonance": 0.3
-                }),
+                "current_emotion_state": session_state.get(
+                    "emotion_state",
+                    {
+                        "arousal": 0.2,
+                        "trust": 0.4,
+                        "passion": 0.1,
+                        "temperament": 0.7,
+                        "resonance": 0.3,
+                    },
+                ),
                 "current_relationship_stage": session_state.get("relationship_stage", 1),
-                "context_history": session_state.get("rag_context", "")
+                "context_history": session_state.get("rag_context", ""),
             }
 
             # Generate content from the API
             response = await self.model.generate_content_async(json.dumps(payload))
-            
+
             # Clean response text and parse JSON
             response_text = response.text.strip()
             # If wrapped in markdown json block, unwrap it
@@ -129,7 +144,7 @@ JSON Schema:
             return {
                 "error_code": 500,
                 "message": f"LLM Generation failed: {str(e)}",
-                "status": "failed"
+                "status": "failed",
             }
 
 

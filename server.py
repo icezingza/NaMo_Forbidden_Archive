@@ -5,7 +5,7 @@ import time
 import uuid
 from collections import defaultdict
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from threading import Lock
 
 try:
@@ -316,7 +316,7 @@ def _log_usage(event: dict) -> None:
     if not path:
         return
     payload = dict(event)
-    payload["timestamp"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    payload["timestamp"] = datetime.now(UTC).isoformat().replace("+00:00", "Z")
     try:
         with open(path, "a", encoding="utf-8") as handle:
             handle.write(json.dumps(payload, ensure_ascii=False) + "\n")

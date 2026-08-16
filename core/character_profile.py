@@ -13,19 +13,13 @@ class CharacterProfile:
         self.arousal_level = 0  # 0-100 (ระดับความเงี่ยน)
         self.load_state()
 
-    def update_state(
-        self, mood_change=None, corruption_delta=0, arousal_delta=0
-    ):
+    def update_state(self, mood_change=None, corruption_delta=0, arousal_delta=0):
         """อัปเดตสถานะตัวละครและบันทึกลงไฟล์"""
         if mood_change:
             self.mood = mood_change
 
-        self.corruption_level = max(
-            0, min(100, self.corruption_level + corruption_delta)
-        )
-        self.arousal_level = max(
-            0, min(100, self.arousal_level + arousal_delta)
-        )
+        self.corruption_level = max(0, min(100, self.corruption_level + corruption_delta))
+        self.arousal_level = max(0, min(100, self.arousal_level + arousal_delta))
 
         # Logic การเปลี่ยน Mood อัตโนมัติเมื่อค่าถึงกำหนด
         if self.arousal_level > 80:

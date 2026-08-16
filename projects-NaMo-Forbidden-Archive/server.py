@@ -1,20 +1,20 @@
 import os
-import logging
-from fastapi import FastAPI, HTTPException, Body, Header
-from pydantic import BaseModel
-from typing import Dict, Any, Optional
+from typing import Any
+
 import httpx
-from llm_provider_v2 import LLMProvider
-from memory_service_v2 import MemoryService
-from telegram_security import validate_telegram_update, get_user_session_id
-from rate_limiter import rate_limiter
+from fastapi import FastAPI, Header, HTTPException
 from health_check import health_check, liveness_probe, readiness_probe
+from llm_provider_v2 import LLMProvider
 from logger_config import logger
+from memory_service_v2 import MemoryService
+from pydantic import BaseModel
+from rate_limiter import rate_limiter
+from telegram_security import get_user_session_id, validate_telegram_update
 
 app = FastAPI(
     title="NaMo Forbidden Archive (ACC) + Telegram",
     description="Virtual ACC Server with Telegram Bot Integration",
-    version="2.0.0"
+    version="2.0.0",
 )
 
 # Initialize Providers
@@ -27,31 +27,39 @@ TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 
 # ============= REST API MODELS =============
 
+
 class ChatRequest(BaseModel):
     session_id: str
     text: str
 
+
 class ResetRequest(BaseModel):
     session_id: str
 
+
 # ============= HEALTH CHECK ENDPOINTS =============
+
 
 @app.get("/health")
 async def health():
     """Detailed health check."""
     return await health_check()
 
+
 @app.get("/live")
 async def live():
     """Kubernetes liveness probe."""
     return await liveness_probe()
+
 
 @app.get("/ready")
 async def ready():
     """Kubernetes readiness probe."""
     return await readiness_probe()
 
+
 # ============= REST API ENDPOINTS =============
+
 
 @app.get("/")
 def read_root():
@@ -60,8 +68,9 @@ def read_root():
         "system": "NaMo Forbidden Archive (ACC) Virtual Server",
         "brain": "Gemini 1.5 Flash (Context Few-Shot Mode)",
         "telegram": "enabled",
-        "version": "2.0.0"
+        "version": "2.0.0",
     }
+
 
 @app.post("/chat")
 @app.post("/session/chat")
@@ -76,28 +85,22 @@ async def chat_endpoint(payload: ChatRequest):
         # Check rate limit
         if not rate_limiter.is_allowed(session_id):
             logger.warning(f"Rate limit exceeded for user {session_id}")
-            raise HTTPException(
-                status_code=429,
-                detail="Too many requests. Please wait a moment."
-            )
+            raise HTTPException(status_code=429, detail="Too many requests. Please wait a moment.")
 
         # Fetch current session state
         session_state = await memory_service.get_session_state(session_id)
-        
+
         # Generate response via Gemini Flash
         response_data = await llm_provider.generate_response(user_message, session_state)
 
         if "error_code" in response_data:
             raise HTTPException(
-                status_code=response_data["error_code"],
-                detail=response_data["message"]
+                status_code=response_data["error_code"], detail=response_data["message"]
             )
 
         # Save interaction
         await memory_service.save_interaction(
-            session_id=session_id,
-            user_message=user_message,
-            response_data=response_data
+            session_id=session_id, user_message=user_message, response_data=response_data
         )
 
         logger.info(f"Chat completed for user {session_id}")
@@ -109,21 +112,21 @@ async def chat_endpoint(payload: ChatRequest):
         logger.error(f"Error in chat_endpoint: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
-@app.get("/health")
-async def health():
-    return {
-        "status": "healthy",
-        "service": "namo-acc",
-        "version": "2.0.0"
-    }
 
-@app.get("/live")
-async def live():
+@app.get("/health/status")
+async def health_status():
+    return {"status": "healthy", "service": "namo-acc", "version": "2.0.0"}
+
+
+@app.get("/live/status")
+async def live_status():
     return {"status": "alive"}
 
-@app.get("/ready")
-async def ready():
+
+@app.get("/ready/status")
+async def ready_status():
     return {"status": "ready"}
+
 
 @app.get("/session/{session_id}")
 async def get_session(session_id: str):
@@ -134,6 +137,7 @@ async def get_session(session_id: str):
     except Exception as e:
         logger.error(f"Error in get_session: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/session/reset")
 async def reset_session(payload: ResetRequest):
@@ -147,28 +151,27 @@ async def reset_session(payload: ResetRequest):
             "trust": 0.4,
             "passion": 0.1,
             "temperament": 0.7,
-            "resonance": 0.3
+            "resonance": 0.3,
         }
         state["history"] = []
-        
+
         await memory_service.save_interaction(
-            session_id=payload.session_id,
-            user_message="[SYSTEM RESET]",
-            response_data=state
+            session_id=payload.session_id, user_message="[SYSTEM RESET]", response_data=state
         )
-        
+
         logger.info(f"Session reset for user {payload.session_id}")
         return {"status": "success", "message": f"Session {payload.session_id} has been reset."}
     except Exception as e:
         logger.error(f"Error in reset_session: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 # ============= TELEGRAM WEBHOOK ENDPOINTS =============
+
 
 @app.post("/webhook/telegram")
 async def telegram_webhook(
-    update: Dict[str, Any],
-    x_telegram_bot_api_secret_hash: str = Header(None)
+    update: dict[str, Any], x_telegram_bot_api_secret_hash: str = Header(None)
 ):
     """
     Telegram webhook endpoint - receives messages and forwards to ACC brain.
@@ -177,15 +180,15 @@ async def telegram_webhook(
     try:
         # Validate webhook
         if not validate_telegram_update(update, x_telegram_bot_api_secret_hash):
-            logger.warning(f"Invalid Telegram update received")
+            logger.warning("Invalid Telegram update received")
             return {"ok": False, "error": "Invalid signature"}
-        
+
         logger.info(f"Telegram update received: {update.get('update_id')}")
-        
+
         # Extract message data
         if "message" not in update:
             return {"ok": True}
-        
+
         message = update["message"]
         user_id = get_user_session_id(update)
         chat_id = message["chat"]["id"]
@@ -251,30 +254,28 @@ async def telegram_webhook(
         logger.error(f"Error in telegram_webhook: {e}", exc_info=True)
         try:
             await send_telegram_message(
-                message.get("chat", {}).get("id", ""),
-                f"❌ Error: {str(e)[:100]}"
+                message.get("chat", {}).get("id", ""), f"❌ Error: {str(e)[:100]}"
             )
-        except:
+        except Exception:
             pass
         return {"ok": False, "error": str(e)}
 
+
 # ============= TELEGRAM API HELPERS =============
+
 
 async def send_telegram_message(chat_id: int, text: str):
     """Send a message to Telegram chat."""
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             url = f"{TELEGRAM_API_URL}/sendMessage"
-            payload = {
-                "chat_id": chat_id,
-                "text": text,
-                "parse_mode": "Markdown"
-            }
+            payload = {"chat_id": chat_id, "text": text, "parse_mode": "Markdown"}
             response = await client.post(url, json=payload)
             if response.status_code != 200:
                 logger.error(f"Failed to send Telegram message: {response.text}")
     except Exception as e:
         logger.error(f"Error sending Telegram message: {e}")
+
 
 async def register_telegram_webhook(webhook_url: str):
     """Register webhook with Telegram."""
@@ -289,11 +290,13 @@ async def register_telegram_webhook(webhook_url: str):
         logger.error(f"Error registering webhook: {e}")
         raise
 
+
 @app.post("/telegram/register-webhook")
 async def register_webhook(webhook_url: str):
     """Endpoint to manually register Telegram webhook."""
     result = await register_telegram_webhook(webhook_url)
     return result
+
 
 @app.get("/telegram/webhook-info")
 async def get_webhook_info():
@@ -307,7 +310,9 @@ async def get_webhook_info():
         logger.error(f"Error getting webhook info: {e}")
         raise
 
+
 # ============= STARTUP =============
+
 
 @app.on_event("startup")
 async def startup():
@@ -315,9 +320,10 @@ async def startup():
     logger.info("=" * 60)
     logger.info("✨ NaMo Forbidden Archive (ACC) + Telegram Bot Starting...")
     logger.info(f"Bot Token: {'✅ Set' if TELEGRAM_BOT_TOKEN else '❌ Not set'}")
-    logger.info(f"Version: 2.0.0")
+    logger.info("Version: 2.0.0")
     logger.info(f"Debug Mode: {os.getenv('DEBUG', 'false')}")
     logger.info("=" * 60)
+
 
 @app.on_event("shutdown")
 async def shutdown():

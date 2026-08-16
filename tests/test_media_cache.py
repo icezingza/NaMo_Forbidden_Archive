@@ -3,7 +3,9 @@ Unit Test for Media Cache Manager
 """
 
 import os
+
 from core.media_cache import MediaCacheManager
+
 
 def test_media_cache():
     cache_mgr = MediaCacheManager(cache_dir="/tmp/test_namo_media_cache")
@@ -26,6 +28,7 @@ def test_media_cache():
     assert miss_path is None
 
     print("✅ MediaCacheManager Unit Tests Passed!")
+
 
 if __name__ == "__main__":
     test_media_cache()
