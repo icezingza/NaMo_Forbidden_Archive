@@ -140,7 +140,8 @@ Full API specification: [`docs/API_SPEC.md`](docs/API_SPEC.md)
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/chat` | POST | Send a message and receive a streamed response |
+| `/chat` | POST | Send a message and receive a response |
+| `/session/chat` | POST | Backward-compatible alias for `/chat` |
 | `/health` | GET | System health check |
 | `/media/visual` | GET | Serve generated visual assets |
 | `/media/audio` | GET | Serve generated audio assets |

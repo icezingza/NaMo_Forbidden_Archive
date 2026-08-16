@@ -74,9 +74,7 @@ def test_route_copies_mutable_stop_sequence() -> None:
 def test_route_with_metadata_reports_explicit_fallback() -> None:
     router = ModelRouter({"primary": FailingProvider(), "mock": MockProvider("offline")})
 
-    result = router.route_with_metadata(
-        "primary", "model-x", "rules", [], fallback_provider="mock"
-    )
+    result = router.route_with_metadata("primary", "model-x", "rules", [], fallback_provider="mock")
 
     assert result.text == "offline"
     assert result.metadata.requested_provider == "primary"
@@ -137,9 +135,7 @@ def test_duplicate_registration_requires_explicit_replace() -> None:
 
 def test_openai_compatible_provider_builds_expected_request() -> None:
     session = Mock()
-    session.post.return_value = _response(
-        body={"choices": [{"message": {"content": "generated"}}]}
-    )
+    session.post.return_value = _response(body={"choices": [{"message": {"content": "generated"}}]})
     provider = OpenAICompatibleProvider(
         api_key="secret", base_url="https://llm.example/v1/", session=session
     )

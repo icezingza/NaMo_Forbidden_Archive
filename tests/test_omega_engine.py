@@ -30,9 +30,7 @@ def _make_engine():
         mock_tts_cls.return_value = MagicMock(_client=None, synthesize=AsyncMock(return_value=None))
         from core.namo_omega_engine import NaMoOmegaEngine
 
-        engine = NaMoOmegaEngine(
-            state_ledger=StateLedger(Path(temp_dir.name) / "namo_state.json")
-        )
+        engine = NaMoOmegaEngine(state_ledger=StateLedger(Path(temp_dir.name) / "namo_state.json"))
     engine._test_state_temp_dir = temp_dir
     return engine
 
@@ -321,9 +319,7 @@ def _make_engine_with_llm():
         mock_openai_cls.return_value = MagicMock()
         from core.namo_omega_engine import NaMoOmegaEngine
 
-        engine = NaMoOmegaEngine(
-            state_ledger=StateLedger(Path(temp_dir.name) / "namo_state.json")
-        )
+        engine = NaMoOmegaEngine(state_ledger=StateLedger(Path(temp_dir.name) / "namo_state.json"))
     engine._test_state_temp_dir = temp_dir
     return engine
 

@@ -112,9 +112,7 @@ class DarkNaMoSystem(BasePersonaEngine):
 
     def _get_relationship_engine(self, session_id: str) -> RelationshipEngine:
         if session_id not in self._session_relationships:
-            self._session_relationships[session_id] = RelationshipEngine(
-                persistence_key=session_id
-            )
+            self._session_relationships[session_id] = RelationshipEngine(persistence_key=session_id)
         return self._session_relationships[session_id]
 
     def _get_fusion_engine(self, session_id: str) -> NamoNexusEngine:
@@ -171,9 +169,7 @@ class DarkNaMoSystem(BasePersonaEngine):
         trust = emotion_analysis.get("trust", 0.5)
         arousal = min(100, int(float(emotion_analysis.get("intensity", 0.0)) * 100))
         sin_points = int(float(emotion_analysis.get("intensity", 0.0)) * 1000)
-        relationship_engine.check_progression(
-            sin_points=sin_points, arousal=arousal, trust=trust
-        )
+        relationship_engine.check_progression(sin_points=sin_points, arousal=arousal, trust=trust)
         fusion_engine.update(
             score=emotion_analysis.get("intensity", 0.5),
             confidence=emotion_analysis.get("confidence", 0.5),

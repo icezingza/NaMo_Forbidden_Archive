@@ -193,7 +193,10 @@ def test_chat_v1_endpoint_success_with_key(
 
     mock_process_input.assert_called_once_with("Hello", session_id="test-session-123")
     mock_store_memory.assert_called_once_with(
-        "test-session-123", "Hello", "This is the response.", mock_process_input.return_value["system_status"]
+        "test-session-123",
+        "Hello",
+        "This is the response.",
+        mock_process_input.return_value["system_status"],
     )
     mock_log_usage.assert_called_once()
     log_call_args = mock_log_usage.call_args[0][0]

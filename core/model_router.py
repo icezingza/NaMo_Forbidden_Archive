@@ -119,17 +119,16 @@ class OpenAICompatibleProvider(BaseProvider):
         session: requests.Session | None = None,
         timeout: tuple[float, float] = (5.0, 30.0),
     ) -> None:
-        resolved_url = (base_url or os.getenv("OPENAI_BASE_URL") or "https://api.openai.com/v1").rstrip(
-            "/"
-        )
+        resolved_url = (
+            base_url or os.getenv("OPENAI_BASE_URL") or "https://api.openai.com/v1"
+        ).rstrip("/")
         if not resolved_url.startswith(("http://", "https://")):
             raise ModelRouterValidationError("base_url must use http or https.")
         if (
             not isinstance(timeout, tuple)
             or len(timeout) != 2
             or any(
-                isinstance(value, bool) or not isinstance(value, (int, float))
-                for value in timeout
+                isinstance(value, bool) or not isinstance(value, (int, float)) for value in timeout
             )
             or any(not math.isfinite(value) or value <= 0 for value in timeout)
         ):

@@ -349,9 +349,7 @@ class NaMoOmegaEngine(BasePersonaEngine):
                     yield delta
         except Exception as exc:
             print(f"[OMEGA ENGINE]: LLM stream failed: {exc}")
-            full_text = state["personas"].generate_dialogue(
-                user_input, state["sin_system"].rank
-            )
+            full_text = state["personas"].generate_dialogue(user_input, state["sin_system"].rank)
             yield full_text
 
         if full_text:
@@ -449,9 +447,7 @@ class NaMoOmegaEngine(BasePersonaEngine):
         key = self._history_key(session_id)
         target_score, confidence = self._calculate_resonance_signal(cog_output)
         emotion = (cog_output or {}).get("emotion") or {}
-        relationship_status = state["relationship"].get_status(
-            trust=emotion.get("trust", 0.5)
-        )
+        relationship_status = state["relationship"].get_status(trust=emotion.get("trust", 0.5))
 
         def commit(current: SessionState) -> SessionState:
             prepared = replace(

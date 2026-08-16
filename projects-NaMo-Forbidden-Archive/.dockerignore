@@ -8,13 +8,8 @@ venv
 .venv/
 .pytest_cache/
 .ruff_cache/
-
-# Version control & CI/CD
 .git/
 .github/
-.gitignore
-
-# Documentation, scripts, and tests
 *.md
 *.sh
 tests/

@@ -27,7 +27,7 @@ try:
 except ImportError:
     print("[app.py ERROR] Failed to import DarkNaMoSystem.")
     print("Ensure 'core/dark_system.py' and 'core/metaphysical_engines.py' exist.")
-    sys.exit(1)
+    DarkNaMoSystem = None
 # --- สิ้นสุดการนำเข้า ---
 
 
@@ -46,6 +46,10 @@ def main_loop():
     # 1. ปลุก "จิตวิญญาณ"
     #
     try:
+        if DarkNaMoSystem is None:
+            print("[app.py CRITICAL ERROR] DarkNaMoSystem is unavailable.")
+            print("Please check all core files and adapters.")
+            return
         system = DarkNaMoSystem()
         session_id = f"cli_session_{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}"
         print(f"\n[app.py] System Initialized. Session ID: {session_id}")
