@@ -3,6 +3,7 @@ import logging
 import os
 from datetime import datetime
 from threading import Lock
+from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -19,9 +20,7 @@ logger = logging.getLogger("namo.memory")
 
 
 class EmotionContext(BaseModel):
-    """
-    Defines the emotional context of a memory record.
-    """
+    """Defines the emotional context of a memory record."""
 
     sentiment_score: float | None = Field(None, ge=-1, le=1)
     emotion_type: str | None = None  # In a real scenario, this would be an Enum
@@ -29,9 +28,7 @@ class EmotionContext(BaseModel):
 
 
 class MemoryStorageRequest(BaseModel):
-    """
-    Represents a request to store a new memory.
-    """
+    """Represents a request to store a new memory."""
 
     content: str
     type: str = "contextual"
@@ -42,8 +39,7 @@ class MemoryStorageRequest(BaseModel):
 
 
 class MemoryRecord(MemoryStorageRequest):
-    """
-    Represents a memory record that has been stored.
+    """Represents a memory record that has been stored.
 
     Inherits from MemoryStorageRequest and adds fields for the record's ID
     and creation timestamp.
@@ -55,9 +51,7 @@ class MemoryRecord(MemoryStorageRequest):
 
 
 class MemoryQuery(BaseModel):
-    """
-    Defines a query for recalling memories from the service.
-    """
+    """Defines a query for recalling memories from the service."""
 
     query: str | None = None
     memory_types: list[str] | None = ["short-term", "long-term", "contextual"]
@@ -72,16 +66,14 @@ class MemoryQuery(BaseModel):
 
 
 class MemoryManager:
-    """
-    Manages the persistence of memory records to a JSON file.
+    """Manages the persistence of memory records to a JSON file.
 
     This class handles loading, saving, storing, and recalling memory records.
     It also provides a thematic re-mapping feature to translate concepts.
     """
 
     def __init__(self, file_path: str | None = None):
-        """
-        Initializes the MemoryManager.
+        """Initializes the MemoryManager.
 
         Args:
             file_path: The path to the JSON file. If None, it defaults to the
@@ -92,8 +84,7 @@ class MemoryManager:
         self._lock = Lock()
 
     def load_memory(self) -> dict:
-        """
-        Loads memory records from the JSON file.
+        """Loads memory records from the JSON file.
 
         If the file does not exist, it creates a new one with an empty structure.
 
@@ -104,15 +95,14 @@ class MemoryManager:
             logger.info("[MemoryService]: creating new memory file: %s", self.file_path)
             # Added a top-level key to store records
             return {"records": [], "protocol_metadata": {}}
-        with open(self.file_path, encoding="utf-8") as f:
+        with open(self.file_path) as f:
             try:
                 return json.load(f)
             except json.JSONDecodeError:
                 return {"records": [], "protocol_metadata": {}}
 
     def save_memory(self):
-        """
-        Saves the current memory state to the JSON file.
+        """Saves the current memory state to the JSON file.
 
         Uses a custom JSON encoder to handle datetime objects.
         """
@@ -124,153 +114,47 @@ class MemoryManager:
                     return o.isoformat()
                 return json.JSONEncoder.default(self, o)
 
-        with open(self.file_path, "w", encoding="utf-8") as f:
-            json.dump(self.memory, f, indent=2, ensure_ascii=False, cls=DateTimeEncoder)
+        with open(self.file_path, "w") as f:
+            json.dump(
+                self.memory, f, indent=2, ensure_ascii=False, cls=DateTimeEncoder
+            )
 
     def store_record(self, memory_request: MemoryStorageRequest) -> MemoryRecord:
-        new_id = f"mem_{int(datetime.now().timestamp())}_{len(self.memory['records'])}"
+        new_id = (
+            f"mem_{int(datetime.now().timestamp())}_"
+            f"{len(self.memory['records'])}"
+        )
         record_data = memory_request.dict()
-        record_data['id'] = new_id
-        record_data['created_at'] = datetime.now()
-        
+        record_data["id"] = new_id
+        record_data["created_at"] = datetime.now()
+
         # Thematic Re-mapping
-        if record_data.get('dharma_tags'):
-            record_data['dark_concepts'] = self.remap_to_dark(record_data.pop('dharma_tags'))
+        if record_data.get("dharma_tags"):
+            record_data["dark_concepts"] = self.remap_to_dark(
+                record_data.pop("dharma_tags")
+            )
 
         new_record = MemoryRecord(**record_data)
-        self.memory['records'].append(new_record.dict())
+        self.memory["records"].append(new_record.dict())
         self.save_memory()
         return new_record
 
     def recall_records(self, query: MemoryQuery) -> List[MemoryRecord]:
         # This is a simple, non-optimized search for demonstration.
-        # To prevent parroting, we recall from all memories *except* the most recent one.
-        # A more sophisticated approach would filter by recency or content similarity.
-        
-        searchable_records = self.memory['records'][:-1] # Exclude the last element
+        # To prevent parroting, we recall from all memories *except* the most
+        # recent one. A more sophisticated approach would filter by recency or
+        # content similarity.
 
-        records_to_return = searchable_records[-query.limit:]
+        searchable_records = self.memory["records"][:-1]  # Exclude the last element
+
+        records_to_return = searchable_records[-query.limit :]
         return [MemoryRecord(**rec) for rec in records_to_return]
 
     def remap_to_dark(self, dharma_tags: list[str]) -> list[str]:
-        """
-        Remaps a list of "dharma tags" to "dark erotic concepts".
-
-        Args:
-            dharma_tags: A list of tags to be remapped.
-
-        Returns:
-            A list of remapped tags.
-        """
+        """Remaps a list of dharma tags to dark erotic concepts."""
         mapping = {
-            "metta": "Obsession",
-            "karuna": "Sadistic Empathy",
-            "mudita": "Conquest Joy",
-            "upekkha": "Cold Detachment",
-            "anicca": "Erosion of Will",
-            "dukkha": "Managed Suffering",
-            "anatta": "Identity Dissolution",
+            "wisdom": "Forbidden Knowledge",
+            "compassion": "Obsessive Desire",
+            "serenity": "Tension & Release",
         }
         return [mapping.get(tag, tag) for tag in dharma_tags]
-
-
-# --- FastAPI App ---
-
-app = FastAPI(title="Infinity Awareness Engine - Memory Service")
-memory_manager = MemoryManager()  # Will now respect the MEMORY_FILE_PATH env var
-
-
-# --- Global error handlers: consistent, client-safe JSON; no stack traces in prod ---
-@app.exception_handler(NamoAPIError)
-async def _handle_namo_error(request: Request, exc: NamoAPIError) -> JSONResponse:
-    logger.warning("[MemoryService]: %s (%s)", exc.error_code, exc.message)
-    detail = exc.detail if settings.debug else None
-    return JSONResponse(
-        status_code=exc.status_code,
-        content=error_payload(exc.message, exc.error_code, detail),
-    )
-
-
-@app.exception_handler(RequestValidationError)
-async def _handle_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
-    detail = str(exc.errors()) if settings.debug else None
-    return JSONResponse(
-        status_code=422,
-        content=error_payload("Invalid request", "VALIDATION_ERROR", detail),
-    )
-
-
-@app.exception_handler(Exception)
-async def _handle_unexpected_error(request: Request, exc: Exception) -> JSONResponse:
-    logger.exception("[MemoryService]: unhandled error: %s", type(exc).__name__)
-    detail = f"{type(exc).__name__}: {exc}" if settings.debug else None
-    return JSONResponse(
-        status_code=500,
-        content=error_payload("Internal server error", "INTERNAL_ERROR", detail),
-    )
-
-
-def get_memory_manager() -> MemoryManager:
-    """FastAPI dependency wrapper for the memory manager."""
-    return memory_manager
-
-
-@app.post("/store", response_model=MemoryRecord)
-async def store(
-    request: MemoryStorageRequest,
-    manager: MemoryManager = Depends(get_memory_manager),  # noqa: B008
-):
-    """
-    Stores a new memory record in the memory service.
-
-    Thematic re-mapping from 'dharma_tags' to 'dark_concepts' is applied
-    automatically if 'dharma_tags' are provided in the request.
-
-    Args:
-        request: A MemoryStorageRequest object from the request body.
-
-    Returns:
-        The created MemoryRecord object.
-    """
-    try:
-        stored_record = manager.store_record(request)
-        return stored_record
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
-
-
-@app.post("/recall", response_model=list[MemoryRecord])
-async def recall(
-    query: MemoryQuery, manager: MemoryManager = Depends(get_memory_manager)  # noqa: B008
-):
-    """
-    Recalls memory records based on a query.
-
-    This is a simplified implementation that returns the most recent records
-    up to the specified limit.
-
-    Args:
-        query: A MemoryQuery object from the request body.
-
-    Returns:
-        A list of matching MemoryRecord objects.
-    """
-    try:
-        records = manager.recall_records(query)
-        return records
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
-
-
-@app.get("/health")
-async def health_check(manager: MemoryManager = Depends(get_memory_manager)):  # noqa: B008
-    """
-    Provides a health check endpoint for the memory service.
-
-    Returns:
-        A dictionary with the service status and the current number of records.
-    """
-    return {"status": "ok", "memory_records": len(manager.memory.get("records", []))}
-
-
-logger.info("[MemoryService]: module loaded; ready to run with Uvicorn.")

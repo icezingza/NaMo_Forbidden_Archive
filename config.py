@@ -82,7 +82,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        extra="ignore",  # สำคัญ: ถ้ามีตัวแปรเกินมา ไม่ต้อง Error ให้ข้ามไปเลย
+        extra="ignore",  # ถ้ามีตัวแปรเกินมา ไม่ต้อง Error ให้ข้ามไปเลย
         case_sensitive=False,
     )
 

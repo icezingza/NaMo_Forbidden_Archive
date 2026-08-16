@@ -11,10 +11,10 @@ files_to_merge = [
 
 output_filename = "NaMo_Integrated_Knowledge_Base.md"
 
-with open(output_filename, "w", encoding="utf-8") as outfile:
+with open(output_filename, "w") as outfile:
     for filename in files_to_merge:
         if os.path.exists(filename):
-            with open(filename, "r", encoding="utf-8") as infile:
+            with open(filename) as infile:
                 outfile.write("\n# Source: " + filename + "\n")
                 outfile.write(infile.read())
                 outfile.write("\n---\n")
