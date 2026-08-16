@@ -38,9 +38,6 @@ jobs:
                 && bandit -r . \
                 && pip-audit -r requirements.txt"
 
-      - name: Delete ci.yml to remove redundancy
-        run: rm .github/workflows/ci.yml || true
-
       - name: Security scan with Docker Scout
         # Non-blocking: Docker Scout needs an entitled account to authenticate.
         # Report findings when available, but never fail the build on scan access.
