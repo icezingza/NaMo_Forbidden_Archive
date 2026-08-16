@@ -1,35 +1,41 @@
-# Build stage: install dependencies
-FROM python:3.12-slim AS builder
+# --- Builder Stage ---
+# This stage installs dependencies and builds wheels.
+FROM python:3.12-slim-bookworm as builder
+
+# Set environment variables for a clean build
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
-RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel
+
+# Install dependencies into a virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
 COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Runtime stage: minimal production image
-FROM python:3.12-slim
+# --- Final Stage ---
+# This stage copies the built dependencies and application code.
+FROM python:3.12-slim-bookworm as final
 
-# Create non-root user for security
-RUN useradd -m -u 1000 appuser
-
+# Set the working directory in the container
 WORKDIR /app
 
-# Copy only installed packages from builder
-COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
+# Create a non-root user to run the application
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
 
-# Copy application code
-COPY --chown=appuser:appuser . .
+# Copy the virtual environment from the builder stage
+COPY --from=builder /opt/venv /opt/venv
 
-# Set environment variables
-ENV PATH=/home/appuser/.local/bin:$PATH \
-    PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+# Copy the rest of the application's code
+COPY --chown=appuser:appgroup . .
 
-# Switch to non-root user
+# Switch to the non-root user
 USER appuser
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:${PORT:-8080}/health')"
+# Set the path to include the virtual environment
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Run application
+# Command to run the application (Cloud Run sets the PORT env var)
 CMD ["sh", "-c", "uvicorn server:app --host 0.0.0.0 --port ${PORT:-8080}"]
