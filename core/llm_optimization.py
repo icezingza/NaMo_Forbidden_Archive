@@ -64,7 +64,7 @@ class NaMoLLMOptimizer:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_message},
                 ],
-                "prompt_cache_key": f"namo_cache_{hash(system_prompt) & 0xffffffff}",
+                "prompt_cache_key": f"namo_cache_{hash(system_prompt) & 0xFFFFFFFF}",
             }
 
         return formatted_payload

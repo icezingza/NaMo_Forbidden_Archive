@@ -95,7 +95,7 @@ JSON Schema:
                     if "meta" in resp:
                         resp.pop("meta")
                     examples.append(
-                        f"### Example {idx+1}\nUser: {req}\nACC JSON Response:\n{json.dumps(resp, ensure_ascii=False, indent=2)}"
+                        f"### Example {idx + 1}\nUser: {req}\nACC JSON Response:\n{json.dumps(resp, ensure_ascii=False, indent=2)}"
                     )
                 except Exception:
                     continue
