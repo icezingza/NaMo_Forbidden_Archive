@@ -1,6 +1,8 @@
 # NOTE: Contains Experimental Logic - Requires Compliance Review before commercial deployment.
 
+import json
 import random
+from pathlib import Path
 from typing import Any
 
 
@@ -9,6 +11,24 @@ class EmotionParasiteEngine:
     Analyzes user inputs to evaluate emotional parasite metrics (arousal, corruption)
     and returns contextually appropriate responses based on the character's current mood.
     """
+
+    def _match_lorebook(self, text: str) -> str | None:
+        """Helper to match input against slow-burn lorebook entries."""
+        try:
+            lb_path = Path(
+                ".agents/skills/slow-burn-thai-erotic/references/lorebook-positions.json"
+            )
+            if not lb_path.exists():
+                return None
+            with open(lb_path, encoding="utf-8") as f:
+                entries = json.load(f)
+            for entry in entries:
+                keys = entry.get("key", [])
+                if any(k.lower() in text for k in keys if len(k) > 2):
+                    return entry.get("content")
+        except Exception:
+            pass
+        return None
 
     def analyze_and_react(
         self, user_input: str, character_profile: Any
@@ -22,7 +42,7 @@ class EmotionParasiteEngine:
 
         Returns:
             A tuple containing:
-                - The response string (in English).
+                - The response string (in English or Thai).
                 - A dictionary indicating changes to 'corruption' and 'arousal'.
         """
         input_lower = user_input.lower()
@@ -64,8 +84,14 @@ class EmotionParasiteEngine:
             arousal_raw = getattr(character_profile, "arousal_level", 0.0)
             arousal = arousal_raw / 100.0 if arousal_raw > 1 else arousal_raw
 
-        # Core logic branching based on character state
-        if mood == "Horny" or arousal > 0.7:
+        # Check for Slow-Burn Erotic Lorebook Triggers first
+        lorebook_hit = self._match_lorebook(input_lower)
+        if lorebook_hit:
+            stat_changes["arousal"] = 10
+            stat_changes["corruption"] = 5
+            response = f"NaMo: {lorebook_hit}"
+
+        elif mood == "Horny" or arousal > 0.7:
             if any(word in input_lower for word in keywords_dominance):
                 response = "Ahhh... Master... Command me more... I'm completely wet... 💦"
                 stat_changes["arousal"] = 10

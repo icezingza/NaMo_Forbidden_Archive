@@ -1,5 +1,5 @@
 {
-  "fused_score": 0.15000000008149073,
+  "fused_score": 0.15000000000015917,
   "confidence": 0.5,
   "has_drift_alarm": false,
   "last_drift_at": null,
@@ -227,6 +227,69 @@
       "score": 0.3,
       "confidence": 0.5,
       "fused_score": 0.15000000008149073
+    },
+    {
+      "timestamp": 1786927664.5670228,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15000000004074537
+    },
+    {
+      "timestamp": 1786927664.6436043,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15000000002037267
+    },
+    {
+      "timestamp": 1786927664.7157395,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15000000001018632
+    },
+    {
+      "timestamp": 1786927701.5997467,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15000000000509317
+    },
+    {
+      "timestamp": 1786927701.6279175,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.1500000000025466
+    },
+    {
+      "timestamp": 1786927701.6557202,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15000000000127328
+    },
+    {
+      "timestamp": 1786927771.8074176,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15000000000063662
+    },
+    {
+      "timestamp": 1786927771.8187933,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15000000000031832
+    },
+    {
+      "timestamp": 1786927771.834309,
+      "modality": "text",
+      "score": 0.3,
+      "confidence": 0.5,
+      "fused_score": 0.15000000000015917
     }
   ]
 }

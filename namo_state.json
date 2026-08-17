@@ -1,6 +1,6 @@
 {
     "mood": "Neutral",
-    "corruption": 0,
+    "corruption": 10,
     "obedience": 50,
-    "arousal": 5
+    "arousal": 25
 }
