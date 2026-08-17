@@ -8,6 +8,7 @@ target-version = "py311"
 fix = false
 exclude = [
     "build", "dist", ".venv", "Archived_Assets",
+    "scratch",
     "core/nre_anlrs_engine.py",
     "core/seraphina_quantum_core.py",
     "merge_knowledge.py",
