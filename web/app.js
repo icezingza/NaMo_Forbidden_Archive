@@ -13,9 +13,11 @@ const STORAGE_KEYS = {
   streamMode: "namo_stream_mode",
   ageConfirmed: "namo_age_confirmed",
   engine: "namo_engine",
+  apiKey: "namo_api_key",
 };
 
 const DEFAULT_ENGINE = "omega";
+const DEFAULT_API_KEY = "key-vip-999";
 
 const state = {
   baseUrl: "",
@@ -24,6 +26,7 @@ const state = {
   loading: false,
   streamMode: true,
   engine: DEFAULT_ENGINE,
+  apiKey: DEFAULT_API_KEY,
 };
 
 const dom = {
@@ -41,6 +44,7 @@ const dom = {
   confirmModal: document.getElementById("confirm-modal"),
   confirmNewSession: document.getElementById("confirm-new-session"),
   baseUrlInput: document.getElementById("base-url-input"),
+  apiKeyInput: document.getElementById("api-key-input"),
   saveSettings: document.getElementById("save-settings"),
   baseUrlLabel: document.getElementById("base-url-label"),
   sessionIdLabel: document.getElementById("session-id-label"),
@@ -112,6 +116,9 @@ function loadState() {
 
   const storedEngine = localStorage.getItem(STORAGE_KEYS.engine);
   state.engine = storedEngine || DEFAULT_ENGINE;
+
+  const storedApiKey = localStorage.getItem(STORAGE_KEYS.apiKey);
+  state.apiKey = storedApiKey !== null ? storedApiKey : DEFAULT_API_KEY;
 }
 
 function saveMessages() {
@@ -122,6 +129,14 @@ function setBaseUrl(value) {
   state.baseUrl = normalizeBaseUrl(value);
   localStorage.setItem(STORAGE_KEYS.baseUrl, state.baseUrl);
   updateSessionUI();
+}
+
+function getHeaders(extra = {}) {
+  const headers = { "Content-Type": "application/json", ...extra };
+  if (state.apiKey) {
+    headers["X-API-Key"] = state.apiKey;
+  }
+  return headers;
 }
 
 // ---------------------------------------------------------------------------
@@ -208,7 +223,9 @@ function updateEmotionBars(emotion) {
 // Called after a stream completes — refreshes emotion from the global status endpoint.
 async function fetchAndApplyStatus() {
   try {
-    const res = await fetch(`${state.baseUrl}/v1/status`);
+    const res = await fetch(`${state.baseUrl}/v1/status`, {
+      headers: getHeaders(),
+    });
     if (!res.ok) return;
     const payload = await res.json();
     // payload shape: { EngineName: { emotion, traits, ... } }
@@ -353,7 +370,7 @@ async function sendMessagePlain(text) {
   try {
     const response = await fetch(`${state.baseUrl}/chat`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getHeaders(),
       body: JSON.stringify({ text, session_id: state.sessionId, engine: state.engine }),
     });
 
@@ -403,7 +420,7 @@ async function sendMessageStream(text) {
   try {
     const response = await fetch(`${state.baseUrl}/v1/chat/stream`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getHeaders(),
       body: JSON.stringify({ text, session_id: state.sessionId, engine: state.engine }),
     });
 
@@ -478,7 +495,10 @@ function sendMessage(text) {
 async function pingServer() {
   setError("");
   try {
-    const response = await fetch(`${state.baseUrl}/`, { method: "GET" });
+    const response = await fetch(`${state.baseUrl}/`, {
+      method: "GET",
+      headers: getHeaders(),
+    });
     if (!response.ok) throw new Error(`Ping failed: ${response.status}`);
     const payload = await response.json();
     setStatusFromRoot(payload);
@@ -504,6 +524,9 @@ function startNewSession() {
 // ---------------------------------------------------------------------------
 function openSettings() {
   dom.baseUrlInput.value = state.baseUrl;
+  if (dom.apiKeyInput) {
+    dom.apiKeyInput.value = state.apiKey;
+  }
   dom.settingsModal.classList.remove("hidden");
   dom.settingsModal.setAttribute("aria-hidden", "false");
 }
@@ -566,10 +589,13 @@ function bindEvents() {
 
   dom.saveSettings.addEventListener("click", () => {
     const value = dom.baseUrlInput.value.trim();
+    const keyVal = dom.apiKeyInput ? dom.apiKeyInput.value.trim() : "";
     if (value) {
       setBaseUrl(value);
-      pingServer();
     }
+    state.apiKey = keyVal;
+    localStorage.setItem(STORAGE_KEYS.apiKey, state.apiKey);
+    pingServer();
     closeSettings();
   });
 
