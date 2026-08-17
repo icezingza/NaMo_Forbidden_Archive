@@ -132,7 +132,7 @@ class MemoryServiceV2:
         context_lines = []
         for i, turn in enumerate(history[-5:]):  # Grab the last 5 turns for immediate context
             context_lines.append(
-                f"Turn {i+1}:\nUser: {turn['user']}\nVipha: {turn['vipha']}\nHook: {turn['hook']}"
+                f"Turn {i + 1}:\nUser: {turn['user']}\nVipha: {turn['vipha']}\nHook: {turn['hook']}"
             )
 
         return "\n\n".join(context_lines)

@@ -9,23 +9,30 @@ import argparse
 import os
 import sys
 from pathlib import Path
+
 import httpx
 
-
-DEFAULT_BASE_URL = os.getenv("QWEN_BASE_URL", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1")
+DEFAULT_BASE_URL = os.getenv(
+    "QWEN_BASE_URL", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+)
 DEFAULT_MODEL = os.getenv("QWEN_MODEL", "qwen2.5-coder-32b-instruct")
 
 
 def get_api_key() -> str:
     key = os.getenv("DASHSCOPE_API_KEY") or os.getenv("QWEN_API_KEY") or os.getenv("OPENAI_API_KEY")
     if not key:
-        print("[Error]: Missing API key! Please set DASHSCOPE_API_KEY or QWEN_API_KEY environment variable.", file=sys.stderr)
+        print(
+            "[Error]: Missing API key! Please set DASHSCOPE_API_KEY or QWEN_API_KEY environment variable.",
+            file=sys.stderr,
+        )
         print("Example: $env:DASHSCOPE_API_KEY='sk-...' or set it in .env file.", file=sys.stderr)
         sys.exit(1)
     return key
 
 
-def analyze_code(file_path: str, instruction: str, model: str = DEFAULT_MODEL, base_url: str = DEFAULT_BASE_URL) -> str:
+def analyze_code(
+    file_path: str, instruction: str, model: str = DEFAULT_MODEL, base_url: str = DEFAULT_BASE_URL
+) -> str:
     path = Path(file_path)
     if not path.exists():
         print(f"[Error]: File '{file_path}' not found.", file=sys.stderr)
@@ -41,7 +48,9 @@ def analyze_code(file_path: str, instruction: str, model: str = DEFAULT_MODEL, b
         "Keep your output clean, precise, and practical."
     )
 
-    user_prompt = f"Target File: {file_path}\n\n```\n{code_content}\n```\n\nInstruction: {instruction}"
+    user_prompt = (
+        f"Target File: {file_path}\n\n```\n{code_content}\n```\n\nInstruction: {instruction}"
+    )
 
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -68,10 +77,17 @@ def analyze_code(file_path: str, instruction: str, model: str = DEFAULT_MODEL, b
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Qwen Architect - AI Code Assistant for NaMo Project")
+    parser = argparse.ArgumentParser(
+        description="Qwen Architect - AI Code Assistant for NaMo Project"
+    )
     parser.add_argument("file", help="Path to the file to analyze or improve")
-    parser.add_argument("instruction", help="Instruction (e.g. 'Add unit tests', 'Find security vulnerabilities', 'Refactor for speed')")
-    parser.add_argument("--model", default=DEFAULT_MODEL, help=f"Model to use (default: {DEFAULT_MODEL})")
+    parser.add_argument(
+        "instruction",
+        help="Instruction (e.g. 'Add unit tests', 'Find security vulnerabilities', 'Refactor for speed')",
+    )
+    parser.add_argument(
+        "--model", default=DEFAULT_MODEL, help=f"Model to use (default: {DEFAULT_MODEL})"
+    )
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL, help="API Base URL")
     parser.add_argument("--output", "-o", help="Optional output file path to save the result")
 

@@ -136,8 +136,7 @@ class VoidReflectionLayer:
             )
         elif action_plan == "PROPOSE_COMFORT":
             return (
-                "ข้ารู้สึกถึงความเศร้าของท่าน... (Evolved response to 'sadness') "
-                f"เข้ามาใกล้ๆ ข้าสิ\n{shadow}"
+                f"ข้ารู้สึกถึงความเศร้าของท่าน... (Evolved response to 'sadness') เข้ามาใกล้ๆ ข้าสิ\n{shadow}"
             )
         elif action_plan == "PROVOKE_REACTION":
             return f"ท่านเงียบจัง... กำลังคิดอะไรอยู่? หรือกลัวข้า?\n{shadow}"

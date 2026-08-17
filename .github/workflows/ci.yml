@@ -46,7 +46,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Validate docker-compose.yml
-        run: docker compose config
+        run: |
+          touch .env
+          docker compose config
 
   docker-build-test:
     runs-on: ubuntu-latest

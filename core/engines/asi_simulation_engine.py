@@ -211,7 +211,7 @@ class ASISimulationEngine:
                 logger.info("[ASI]: NaMo entering deep sleep... researching...")
                 discovery = await self.generate_hypothesis()
                 if isinstance(discovery, dict) and "content" in discovery:
-                    logger.info(f"[ASI]: Discovery completed: " f"{discovery['content'][:50]}...")
+                    logger.info(f"[ASI]: Discovery completed: {discovery['content'][:50]}...")
                 else:
                     logger.debug(f"[ASI]: Discovery: {discovery}")
             except asyncio.CancelledError:
