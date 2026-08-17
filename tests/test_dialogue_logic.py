@@ -40,9 +40,9 @@ def test_dialogue_is_fixed_and_does_not_parrot_user_input(monkeypatch):
     # Assert
     # The response should now be the default message for when no memory is found.
     expected_response = "(หนูยังไม่เคยเรียนรู้เรื่องนี้... สอนหนูหน่อยสิคะ)"
-    assert result.get("response") == expected_response, (
-        "The engine response was not the expected default message."
-    )
+    assert (
+        result.get("response") == expected_response
+    ), "The engine response was not the expected default message."
 
     # We still expect two calls to the memory service
     assert mock_post.call_count == 2
