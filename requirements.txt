@@ -9,3 +9,5 @@ tiktoken
 faiss-cpu
 numpy
 elevenlabs
+pandas
+neo4j

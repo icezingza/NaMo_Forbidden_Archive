@@ -43,23 +43,26 @@ jobs:
 
       - name: Build services
         run: |
-          docker compose build
+          # The production compose file requires .env, but this smoke test does
+          # not need credentials because it starts only the local API services.
+          touch .env
+          docker compose build api memory
 
       - name: Start services
         run: |
-          docker compose up -d --wait
+          docker compose up -d --wait api memory
 
       - name: Check API health
         run: |
           for i in {1..30}; do
-            curl -f http://localhost:8000/health && break
+            curl -f http://localhost:8005/v1/health && break
             sleep 1
           done || exit 1
 
       - name: Check memory service health
         run: |
           for i in {1..30}; do
-            curl -f http://localhost:8081/health && break
+            curl -f http://localhost:8085/health && break
             sleep 1
           done || exit 1
 
@@ -69,4 +72,4 @@ jobs:
 
       - name: Tear down
         if: always()
-        run: docker compose down
+        run: docker compose down --volumes
