@@ -76,23 +76,37 @@ def promote_to_golden(hitl_file: str, golden_file: str, min_confidence: float = 
 
     print(f"✅ Generated ChatML format: {chatml_file}")
 
-    # แยก DPO pairs
+    # Build DPO pairs
     dpo_file = golden_file.replace(".jsonl", "_dpo.jsonl")
-    chosen_records = [r for r in golden_records if r.get("dpo_preference") == "chosen"]
+    chosen_records = [r for r in golden_records if r.get("dpo_preference") == "chosen" or r.get("safety_classification") == "approved"]
     rejected_records = [r for r in golden_records if r.get("dpo_preference") == "rejected"]
 
+    REJECTED_TEMPLATES = {
+        "tease": "เอาเลย เร็วๆ ยัดเข้าไปเลย ไม่ต้องพูดมาก",
+        "resistance": "ไม่ต้องมาเล่นตัว ยอมๆ ไปเถอะ รีบๆ ทำ",
+        "escalation": "กระแทกเข้าไปแรงๆ เร็วๆ ให้เสร็จๆ ไปเลย",
+        "resolution": "เสร็จแล้ว ปล่อยออกมาเลย สั้นๆ จบๆ",
+        "recovery": "เสร็จแล้วก็ลุกไป ไม่ต้องมากอด ลุกขึ้นเดี๋ยวนี้",
+    }
+
+    dpo_pairs = []
     with open(dpo_file, "w", encoding="utf-8") as f:
         for chosen in chosen_records:
-            for rejected in rejected_records:
-                if chosen.get("beat_classification") == rejected.get("beat_classification"):
-                    dpo_pair = {
-                        "prompt": f"จงเขียนฉากในจังหวะ '{chosen.get('beat_classification')}':",
-                        "chosen": chosen.get("content", ""),
-                        "rejected": rejected.get("content", ""),
-                    }
-                    f.write(json.dumps(dpo_pair, ensure_ascii=False) + "\n")
+            beat = chosen.get("beat_classification", "escalation")
+            # If explicit rejected record exists with same beat
+            matching_rejected = [r for r in rejected_records if r.get("beat_classification") == beat]
+            rejected_text = matching_rejected[0].get("content") if matching_rejected else REJECTED_TEMPLATES.get(beat, "เอาเลย เร็วๆ ทำๆ ไป")
 
-    print(f"✅ Generated DPO pairs: {dpo_file}")
+            pair = {
+                "prompt": f"จงเขียนฉากในจังหวะ '{beat}' โดยเน้นอารมณ์และวรรณศิลป์:",
+                "chosen": chosen.get("content", ""),
+                "rejected": rejected_text,
+                "metadata": {"beat": beat},
+            }
+            f.write(json.dumps(pair, ensure_ascii=False) + "\n")
+            dpo_pairs.append(pair)
+
+    print(f"✅ Generated DPO pairs ({len(dpo_pairs)} pairs): {dpo_file}")
 
 
 if __name__ == "__main__":
