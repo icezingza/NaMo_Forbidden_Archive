@@ -23,7 +23,12 @@
     "matchWholeWords": true,
     "priority": 1,
     "probability": 100,
-    "keywordsRaw": "titfucking, tittyfuck, fuck her tits, titjob, fuck my tits, เย็ดนม, นมหนีบ, ใช้หนม"
+    "keywordsRaw": "titfucking, tittyfuck, fuck her tits, titjob, fuck my tits, เย็ดนม, นมหนีบ, ใช้หนม",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -57,7 +62,12 @@
     "matchWholeWords": true,
     "priority": 2,
     "probability": 100,
-    "keywordsRaw": "oral, blowjob, suck me, suck it, give head, โม๊ก, ดูด, อมควย, ให้หัว, โม๊ค, ดูดควย"
+    "keywordsRaw": "oral, blowjob, suck me, suck it, give head, โม๊ก, ดูด, อมควย, ให้หัว, โม๊ค, ดูดควย",
+    "beat": "tease",
+    "tension_threshold": [
+      10,
+      50
+    ]
   },
   {
     "activationMode": "standard",
@@ -81,7 +91,12 @@
     "matchWholeWords": true,
     "priority": 3,
     "probability": 100,
-    "keywordsRaw": "handjob, jerk, jerk me off, ชักว่าว, ใช้มือ, จับควย"
+    "keywordsRaw": "handjob, jerk, jerk me off, ชักว่าว, ใช้มือ, จับควย",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -106,7 +121,12 @@
     "matchWholeWords": true,
     "priority": 4,
     "probability": 100,
-    "keywordsRaw": "talk dirty, talk filthy, dirty talk, filth talk, พูดหยาบ, พูดเสียว, คุยเสียว"
+    "keywordsRaw": "talk dirty, talk filthy, dirty talk, filth talk, พูดหยาบ, พูดเสียว, คุยเสียว",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -131,7 +151,12 @@
     "matchWholeWords": true,
     "priority": 5,
     "probability": 100,
-    "keywordsRaw": "climax, cum, finish, น้ำแตก, เสร็จ, ถึงจุดสุดยอด, แตก"
+    "keywordsRaw": "climax, cum, finish, น้ำแตก, เสร็จ, ถึงจุดสุดยอด, แตก",
+    "beat": "resolution",
+    "tension_threshold": [
+      80,
+      100
+    ]
   },
   {
     "activationMode": "standard",
@@ -158,7 +183,12 @@
     "matchWholeWords": true,
     "priority": 6,
     "probability": 100,
-    "keywordsRaw": "face fuck, facefuck, fuck her face, เย็ดปาก, กระแทกปาก, ใช้ปากแรง"
+    "keywordsRaw": "face fuck, facefuck, fuck her face, เย็ดปาก, กระแทกปาก, ใช้ปากแรง",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -177,7 +207,12 @@
     "matchWholeWords": true,
     "priority": 7,
     "probability": 100,
-    "keywordsRaw": "debug"
+    "keywordsRaw": "debug",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -204,7 +239,12 @@
     "matchWholeWords": true,
     "priority": 8,
     "probability": 100,
-    "keywordsRaw": "face fuck, oral sex, blowing, blow me, facefucking, blowjob, suck me, facefuck, suck my cock"
+    "keywordsRaw": "face fuck, oral sex, blowing, blow me, facefucking, blowjob, suck me, facefuck, suck my cock",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -233,7 +273,12 @@
     "matchWholeWords": true,
     "priority": 9,
     "probability": 100,
-    "keywordsRaw": "missionary, fuck me normally, ท่าปกติ, หงาย, นอนหงาย, ท่าทหาร, เย็ดแบบหงาย"
+    "keywordsRaw": "missionary, fuck me normally, ท่าปกติ, หงาย, นอนหงาย, ท่าทหาร, เย็ดแบบหงาย",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -270,7 +315,12 @@
     "matchWholeWords": true,
     "priority": 10,
     "probability": 100,
-    "keywordsRaw": "doggy style, doggystyle, from behind, on all fours, ท่าหมา, จากด้านหลัง, สี่ขา, เย็ดจากหลัง, ท่าหมาเย็ด, หันหลังให้"
+    "keywordsRaw": "doggy style, doggystyle, from behind, on all fours, ท่าหมา, จากด้านหลัง, สี่ขา, เย็ดจากหลัง, ท่าหมาเย็ด, หันหลังให้",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -301,7 +351,12 @@
     "matchWholeWords": true,
     "priority": 11,
     "probability": 100,
-    "keywordsRaw": "cowgirl, ride me, get on top, ขี่, คร่อม, อยู่ข้างบน, ผู้หญิงอยู่บน, ขี่ควย, นั่งคร่อม"
+    "keywordsRaw": "cowgirl, ride me, get on top, ขี่, คร่อม, อยู่ข้างบน, ผู้หญิงอยู่บน, ขี่ควย, นั่งคร่อม",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -327,7 +382,12 @@
     "matchWholeWords": true,
     "priority": 12,
     "probability": 100,
-    "keywordsRaw": "reverse cowgirl, ขี่หันหลัง, คร่อมหันหลัง"
+    "keywordsRaw": "reverse cowgirl, ขี่หันหลัง, คร่อมหันหลัง",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -353,7 +413,12 @@
     "matchWholeWords": true,
     "priority": 13,
     "probability": 100,
-    "keywordsRaw": "69, sixty-nine, หกเก้า, สลับกันอม"
+    "keywordsRaw": "69, sixty-nine, หกเก้า, สลับกันอม",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -376,7 +441,12 @@
     "priority": 14,
     "probability": 100,
     "keysRaw": "kiss me, kissing, จูบ, หอม, จูบปาก",
-    "keywordsRaw": "kiss me, kissing, จูบ, หอม, จูบปาก"
+    "keywordsRaw": "kiss me, kissing, จูบ, หอม, จูบปาก",
+    "beat": "tease",
+    "tension_threshold": [
+      10,
+      50
+    ]
   },
   {
     "activationMode": "standard",
@@ -400,7 +470,12 @@
     "priority": 15,
     "probability": 100,
     "keysRaw": "cuddle, hold me, aftercare, กอด, อยู่ด้วย, หลังเสร็จ",
-    "keywordsRaw": "cuddle, hold me, aftercare, กอด, อยู่ด้วย, หลังเสร็จ"
+    "keywordsRaw": "cuddle, hold me, aftercare, กอด, อยู่ด้วย, หลังเสร็จ",
+    "beat": "recovery",
+    "tension_threshold": [
+      0,
+      40
+    ]
   },
   {
     "activationMode": "standard",
@@ -430,7 +505,12 @@
     "matchWholeWords": true,
     "priority": 16,
     "probability": 100,
-    "keywordsRaw": "anal, ass fuck, in the ass, ตูด, เย็ดตูด, ทางหลัง, ใช้ตูด, ทางก้น"
+    "keywordsRaw": "anal, ass fuck, in the ass, ตูด, เย็ดตูด, ทางหลัง, ใช้ตูด, ทางก้น",
+    "beat": "resistance",
+    "tension_threshold": [
+      20,
+      60
+    ]
   },
   {
     "activationMode": "standard",
@@ -458,7 +538,12 @@
     "matchWholeWords": true,
     "priority": 17,
     "probability": 100,
-    "keywordsRaw": "rimming, eat my ass, rimjob, analingus, เลียตูด, กินตูด"
+    "keywordsRaw": "rimming, eat my ass, rimjob, analingus, เลียตูด, กินตูด",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -481,7 +566,12 @@
     "priority": 18,
     "probability": 100,
     "keysRaw": "fingering, finger me, ใช้นิ้ว, นิ้ว, แหย่",
-    "keywordsRaw": "fingering, finger me, ใช้นิ้ว, นิ้ว, แหย่"
+    "keywordsRaw": "fingering, finger me, ใช้นิ้ว, นิ้ว, แหย่",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -508,7 +598,12 @@
     "matchWholeWords": true,
     "priority": 19,
     "probability": 100,
-    "keywordsRaw": "spooning fuck, spoon sex, ท่าซ้อน, นอนตะแคงเย็ด"
+    "keywordsRaw": "spooning fuck, spoon sex, ท่าซ้อน, นอนตะแคงเย็ด",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -536,7 +631,12 @@
     "matchWholeWords": true,
     "priority": 20,
     "probability": 100,
-    "keywordsRaw": "lotus, sitting fuck, lap dance fuck, ท่าบัว, นั่งคร่อม, ตัก"
+    "keywordsRaw": "lotus, sitting fuck, lap dance fuck, ท่าบัว, นั่งคร่อม, ตัก",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -562,7 +662,12 @@
     "matchWholeWords": true,
     "priority": 21,
     "probability": 100,
-    "keywordsRaw": "standing carry, lift and carry fuck, อุ้มเย็ด, ยืนอุ้ม"
+    "keywordsRaw": "standing carry, lift and carry fuck, อุ้มเย็ด, ยืนอุ้ม",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -587,7 +692,12 @@
     "matchWholeWords": true,
     "priority": 22,
     "probability": 100,
-    "keywordsRaw": "piledriver, ท่าตอกเสา, ยกสะโพกสูง"
+    "keywordsRaw": "piledriver, ท่าตอกเสา, ยกสะโพกสูง",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -612,7 +722,12 @@
     "matchWholeWords": true,
     "priority": 23,
     "probability": 100,
-    "keywordsRaw": "mating press, ท่ากดแน่น, พับขา"
+    "keywordsRaw": "mating press, ท่ากดแน่น, พับขา",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -638,7 +753,12 @@
     "matchWholeWords": true,
     "priority": 24,
     "probability": 100,
-    "keywordsRaw": "pretzel dip, pretzel, ท่าเพรทเซล, บิดตัว"
+    "keywordsRaw": "pretzel dip, pretzel, ท่าเพรทเซล, บิดตัว",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -663,7 +783,12 @@
     "matchWholeWords": true,
     "priority": 25,
     "probability": 100,
-    "keywordsRaw": "wheelbarrow, ท่ารถเข็น, ยกขา"
+    "keywordsRaw": "wheelbarrow, ท่ารถเข็น, ยกขา",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -688,7 +813,12 @@
     "matchWholeWords": true,
     "priority": 26,
     "probability": 100,
-    "keywordsRaw": "butter churner, butter churner position, ท่าคนปรุงเนย"
+    "keywordsRaw": "butter churner, butter churner position, ท่าคนปรุงเนย",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -714,7 +844,12 @@
     "matchWholeWords": true,
     "priority": 27,
     "probability": 100,
-    "keywordsRaw": "G-Whiz, g-whiz position, ท่าจีวิซ"
+    "keywordsRaw": "G-Whiz, g-whiz position, ท่าจีวิซ",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -741,7 +876,12 @@
     "matchWholeWords": true,
     "priority": 28,
     "probability": 100,
-    "keywordsRaw": "stand and deliver, wall fuck, ยืนพิงฝา, เย็ดกับฝา"
+    "keywordsRaw": "stand and deliver, wall fuck, ยืนพิงฝา, เย็ดกับฝา",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -768,7 +908,12 @@
     "matchWholeWords": true,
     "priority": 29,
     "probability": 100,
-    "keywordsRaw": "the eagle, spread eagle, ท่ากางขา, แยกขา"
+    "keywordsRaw": "the eagle, spread eagle, ท่ากางขา, แยกขา",
+    "beat": "tease",
+    "tension_threshold": [
+      10,
+      50
+    ]
   },
   {
     "activationMode": "standard",
@@ -796,7 +941,12 @@
     "matchWholeWords": true,
     "priority": 30,
     "probability": 100,
-    "keywordsRaw": "prone bone, pronebone, นอนคว่ำ, ท่าคว่ำ, เย็ดตอนนอนคว่ำ"
+    "keywordsRaw": "prone bone, pronebone, นอนคว่ำ, ท่าคว่ำ, เย็ดตอนนอนคว่ำ",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -824,7 +974,12 @@
     "matchWholeWords": true,
     "priority": 31,
     "probability": 100,
-    "keywordsRaw": "legs over shoulders, legs on shoulders, ขาพาดไหล่, ยกขาพาด, ขาพาดบ่า"
+    "keywordsRaw": "legs over shoulders, legs on shoulders, ขาพาดไหล่, ยกขาพาด, ขาพาดบ่า",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -850,7 +1005,12 @@
     "matchWholeWords": true,
     "priority": 32,
     "probability": 100,
-    "keywordsRaw": "anvil, anvil position, ท่าทั่ง, พับขาแน่น"
+    "keywordsRaw": "anvil, anvil position, ท่าทั่ง, พับขาแน่น",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -878,7 +1038,12 @@
     "matchWholeWords": true,
     "priority": 33,
     "probability": 100,
-    "keywordsRaw": "squat, cowboy, the cowboy, นั่งย่อ, ท่าคาวบอย"
+    "keywordsRaw": "squat, cowboy, the cowboy, นั่งย่อ, ท่าคาวบอย",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -904,7 +1069,12 @@
     "matchWholeWords": true,
     "priority": 34,
     "probability": 100,
-    "keywordsRaw": "table top, tabletop, บนโต๊ะ, เย็ดบนโต๊ะ"
+    "keywordsRaw": "table top, tabletop, บนโต๊ะ, เย็ดบนโต๊ะ",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -931,7 +1101,12 @@
     "matchWholeWords": true,
     "priority": 35,
     "probability": 100,
-    "keywordsRaw": "lazy dog, the lazy dog, ท่าหมาขี้เกียจ, โน้มตัว"
+    "keywordsRaw": "lazy dog, the lazy dog, ท่าหมาขี้เกียจ, โน้มตัว",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -958,7 +1133,12 @@
     "matchWholeWords": true,
     "priority": 36,
     "probability": 100,
-    "keywordsRaw": "seashell, the seashell, ท่าเปลือกหอย, ม้วนตัว, พับขาชิดอก"
+    "keywordsRaw": "seashell, the seashell, ท่าเปลือกหอย, ม้วนตัว, พับขาชิดอก",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -985,7 +1165,12 @@
     "matchWholeWords": true,
     "priority": 37,
     "probability": 100,
-    "keywordsRaw": "full nelson, fullnelson, ท่าฟูลเนลสัน, จับแขน, ล็อกแขน"
+    "keywordsRaw": "full nelson, fullnelson, ท่าฟูลเนลสัน, จับแขน, ล็อกแขน",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -1012,7 +1197,12 @@
     "matchWholeWords": true,
     "priority": 38,
     "probability": 100,
-    "keywordsRaw": "amazon, the amazon, ท่าอเมซอน, ผู้หญิงคุม"
+    "keywordsRaw": "amazon, the amazon, ท่าอเมซอน, ผู้หญิงคุม",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -1039,7 +1229,12 @@
     "matchWholeWords": true,
     "priority": 39,
     "probability": 100,
-    "keywordsRaw": "the bridge, bridge position, ท่าสะพาน, ยกสะโพกโค้ง, สะพานหลัง"
+    "keywordsRaw": "the bridge, bridge position, ท่าสะพาน, ยกสะโพกโค้ง, สะพานหลัง",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -1065,7 +1260,12 @@
     "matchWholeWords": true,
     "priority": 40,
     "probability": 100,
-    "keywordsRaw": "standing oral, standing oral female, ยืนเลีย, ยืนให้เลีย"
+    "keywordsRaw": "standing oral, standing oral female, ยืนเลีย, ยืนให้เลีย",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -1091,7 +1291,12 @@
     "matchWholeWords": true,
     "priority": 41,
     "probability": 100,
-    "keywordsRaw": "corkscrew, corkscrew position, ท่าเกลียว, บิดเกลียว"
+    "keywordsRaw": "corkscrew, corkscrew position, ท่าเกลียว, บิดเกลียว",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -1117,7 +1322,12 @@
     "matchWholeWords": true,
     "priority": 42,
     "probability": 100,
-    "keywordsRaw": "spork, spork position, ท่าสปอร์ค, ตะแคงยกขา"
+    "keywordsRaw": "spork, spork position, ท่าสปอร์ค, ตะแคงยกขา",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -1143,7 +1353,12 @@
     "matchWholeWords": true,
     "priority": 43,
     "probability": 100,
-    "keywordsRaw": "yin and yang, yin yang, ท่าหยินหยาง, ตะแคงหน้าเข้าหากัน"
+    "keywordsRaw": "yin and yang, yin yang, ท่าหยินหยาง, ตะแคงหน้าเข้าหากัน",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -1170,7 +1385,12 @@
     "matchWholeWords": true,
     "priority": 44,
     "probability": 100,
-    "keywordsRaw": "leap frog, leapfrog, ท่ากบกระโดด, โน้มต่ำ"
+    "keywordsRaw": "leap frog, leapfrog, ท่ากบกระโดด, โน้มต่ำ",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -1197,7 +1417,12 @@
     "matchWholeWords": true,
     "priority": 45,
     "probability": 100,
-    "keywordsRaw": "chairman, classic chairman, ท่าประธาน, นั่งเก้าอี้คร่อม"
+    "keywordsRaw": "chairman, classic chairman, ท่าประธาน, นั่งเก้าอี้คร่อม",
+    "beat": "escalation",
+    "tension_threshold": [
+      40,
+      85
+    ]
   },
   {
     "activationMode": "standard",
@@ -1224,7 +1449,12 @@
     "matchWholeWords": true,
     "priority": 46,
     "probability": 100,
-    "keywordsRaw": "doggy slow, deep doggy, ท่าหมาช้า, ท่าหมาลึก, เย็ดช้าจากหลัง"
+    "keywordsRaw": "doggy slow, deep doggy, ท่าหมาช้า, ท่าหมาลึก, เย็ดช้าจากหลัง",
+    "beat": "tease",
+    "tension_threshold": [
+      10,
+      50
+    ]
   },
   {
     "activationMode": "standard",
@@ -1251,7 +1481,12 @@
     "matchWholeWords": true,
     "priority": 47,
     "probability": 100,
-    "keywordsRaw": "doggy rough, rough doggy, ท่าหมาแรง, เย็ดแรงจากหลัง, กระแทกจากหลัง"
+    "keywordsRaw": "doggy rough, rough doggy, ท่าหมาแรง, เย็ดแรงจากหลัง, กระแทกจากหลัง",
+    "beat": "resolution",
+    "tension_threshold": [
+      80,
+      100
+    ]
   },
   {
     "activationMode": "standard",
@@ -1278,7 +1513,12 @@
     "matchWholeWords": true,
     "priority": 48,
     "probability": 100,
-    "keywordsRaw": "cowgirl grind, slow cowgirl, ขี่ช้า, ถูวน, คร่อมถู"
+    "keywordsRaw": "cowgirl grind, slow cowgirl, ขี่ช้า, ถูวน, คร่อมถู",
+    "beat": "resolution",
+    "tension_threshold": [
+      80,
+      100
+    ]
   },
   {
     "activationMode": "standard",
@@ -1301,7 +1541,12 @@
     "matchWholeWords": true,
     "priority": 49,
     "probability": 100,
-    "keywordsRaw": "aftercare, hold me after, กอดหลังเสร็จ, อยู่ด้วยหลังเสร็จ, หลังจบ"
+    "keywordsRaw": "aftercare, hold me after, กอดหลังเสร็จ, อยู่ด้วยหลังเสร็จ, หลังจบ",
+    "beat": "recovery",
+    "tension_threshold": [
+      0,
+      40
+    ]
   },
   {
     "activationMode": "standard",
@@ -1324,6 +1569,11 @@
     "matchWholeWords": true,
     "priority": 50,
     "probability": 100,
-    "keywordsRaw": "aftermath, after sex talk, คุยหลังเสร็จ, อารมณ์หลัง, เหลืออารมณ์"
+    "keywordsRaw": "aftermath, after sex talk, คุยหลังเสร็จ, อารมณ์หลัง, เหลืออารมณ์",
+    "beat": "recovery",
+    "tension_threshold": [
+      0,
+      40
+    ]
   }
 ]
