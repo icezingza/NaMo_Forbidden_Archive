@@ -37,18 +37,15 @@ with zipfile.ZipFile(ZIP_PATH, "r") as zip_ref:
     zip_ref.extractall(extract_dir)
 
 
-def chunk_text(text: str, chunk_size: int, overlap: int) -> list[str]:
-    """Split text into overlapping chunks to keep embeddings small and focused."""
-    if not text:
-        return []
-    chunks: list[str] = []
-    start = 0
-    text_length = len(text)
-    while start < text_length:
-        end = min(text_length, start + chunk_size)
-        chunks.append(text[start:end])
-        start += chunk_size - overlap
-    return chunks
+from core.rag_chunker import MicroChunker
+
+_chunker = MicroChunker(max_tokens=150, overlap_tokens=20)
+
+
+def chunk_text(text: str, chunk_size: int = 150, overlap: int = 20) -> list[str]:
+    """Split text into 100-150 token micro-chunks respecting sentence boundaries."""
+    return _chunker.chunk_text(text)
+
 
 
 def embed_with_retry(text: str, attempts: int = 3, delay: float = 1.0) -> list[float]:

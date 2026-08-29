@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎛️ NaMo Sovereign Control Room Dashboard (NRE v5.0.0)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0b0f19;
+      --card-bg: rgba(22, 30, 49, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent-purple: #8b5cf6;
+      --accent-blue: #3b82f6;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --accent-yellow: #f59e0b;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.12) 0px, transparent 50%);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--card-border);
+      margin-bottom: 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .badge-ver {
+      background: rgba(139, 92, 246, 0.2);
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      color: #c4b5fd;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      background: rgba(15, 23, 42, 0.6);
+      padding: 6px;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-btn.active {
+      background: var(--accent-purple);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+    }
+
+    .engine-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .engine-item {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .tag {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .btn-action {
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-action:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
+    }
+
+    .audit-item {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+    }
+
+    .audit-PASS { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #6ee7b7; }
+    .audit-MEDIUM { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #fcd34d; }
+    .audit-HIGH { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; }
+
+    textarea, input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      color: var(--text-main);
+      padding: 12px;
+      font-family: inherit;
+      margin-bottom: 12px;
+    }
+
+    .step-box {
+      border-left: 3px solid var(--accent-purple);
+      padding-left: 14px;
+      margin-bottom: 16px;
+    }
+
+    .step-title {
+      font-weight: 700;
+      color: #c4b5fd;
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <h1>🎛️ NaMo Sovereign Control Room</h1>
+        <span class="badge-ver">NRE v5.0.0</span>
+      </div>
+      <div>
+        <button class="btn-action" onclick="refreshStatus()">🔄 Refresh Telemetry</button>
+      </div>
+    </header>
+
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('registry')">📊 Agent Registry</button>
+      <button class="tab-btn" onclick="switchTab('security')">🛡️ Security Audit</button>
+      <button class="tab-btn" onclick="switchTab('backups')">💾 State Backups</button>
+      <button class="tab-btn" onclick="switchTab('analyzer')">🧠 7-Step Architecture Analyzer</button>
+    </div>
+
+    <!-- TAB 1: REGISTRY -->
+    <div id="tab-registry" class="tab-content active">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="status-dot"></span> Active Engine Registry
+            </div>
+            <span id="reg-count" class="tag">5 Engines Online</span>
+          </div>
+          <div id="engine-container" class="engine-list">
+            <p>Loading active engines...</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⚡ Fast Task Router Tester</div>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+            Test sub-millisecond intent routing rules.
+          </p>
+          <input type="text" id="route-input" placeholder="e.g. tell me a dark smut story" value="tell me a dark smut story">
+          <button class="btn-action" onclick="testRoute()">Test Route</button>
+          <pre id="route-output" style="margin-top: 12px; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; overflow-x: auto;"></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: SECURITY -->
+    <div id="tab-security" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🛡️ Security Posture Report</div>
+          <button class="btn-action" onclick="runSecurityAudit()">🔍 Re-Run Audit</button>
+        </div>
+        <div id="audit-container">
+          <p>Running security audit scan...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: BACKUPS -->
+    <div id="tab-backups" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">💾 System State Backups</div>
+          <button class="btn-action" onclick="triggerBackup()">⚡ Trigger Backup Now</button>
+        </div>
+        <div id="backups-container">
+          <p>Loading backup archives...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: ANALYZER -->
+    <div id="tab-analyzer" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🧠 7-Step Architecture Analyzer</div>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+          Runs the refined 7-step analysis pipeline: <code>STATE → PROBLEM → PRIORITY → SOLUTIONS → TRADE-OFF → PLAN → METRICS</code>
+        </p>
+        <input type="text" id="analyze-topic" placeholder="e.g. High-throughput FAISS Vector DB Caching System">
+        <button class="btn-action" onclick="runAnalyzer()">🚀 Analyze System Architecture</button>
+        
+        <div id="analyzer-output" style="margin-top: 20px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      
+      event.target.classList.add('active');
+      document.getElementById(`tab-${tabId}`).classList.add('active');
+    }
+
+    async function refreshStatus() {
+      try {
+        const res = await fetch('/v1/control-room/status');
+        if (!res.ok) throw new Error('API Error');
+        const data = await res.json();
+        renderRegistry(data.registry);
+        renderAudit(data.security);
+        renderBackups(data.backups);
+      } catch (e) {
+        console.error('Failed to fetch status:', e);
+      }
+    }
+
+    function renderRegistry(registry) {
+      if (!registry) return;
+      document.getElementById('reg-count').textContent = `${registry.online_engines}/${registry.total_engines} Engines Online`;
+      const container = document.getElementById('engine-container');
+      container.innerHTML = registry.engines.map(eng => `
+        <div class="engine-item">
+          <div>
+            <strong>${eng.name}</strong> <span class="tag">${eng.class_name}</span>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">${eng.description}</div>
+          </div>
+          <div>
+            <span class="tag" style="color: #6ee7b7;">${eng.status}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderAudit(security) {
+      if (!security) return;
+      const container = document.getElementById('audit-container');
+      container.innerHTML = `
+        <div style="margin-bottom: 16px;">
+          <strong>Overall Posture:</strong> <span class="tag">${security.overall_status}</span>
+        </div>
+        ${security.findings.map(f => `
+          <div class="audit-item audit-${f.severity}">
+            <div><strong>[${f.id}] ${f.category}:</strong> ${f.message}</div>
+            <span class="tag">${f.severity}</span>
+          </div>
+        `).join('')}
+      `;
+    }
+
+    function renderBackups(backups) {
+      const container = document.getElementById('backups-container');
+      if (!backups || backups.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted);">No backup archives found yet. Click "Trigger Backup Now" to create one.</p>';
+        return;
+      }
+      container.innerHTML = backups.map(b => `
+        <div class="engine-item" style="margin-bottom: 8px;">
+          <div>
+            <strong>${b.name}</strong>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">${b.created_at}</div>
+          </div>
+          <span class="tag">${(b.size_bytes / 1024).toFixed(1)} KB</span>
+        </div>
+      `).join('');
+    }
+
+    async function triggerBackup() {
+      try {
+        const res = await fetch('/v1/control-room/backup', { method: 'POST' });
+        const data = await res.json();
+        alert(`Backup Created: ${data.archive_name} (${(data.size_bytes/1024).toFixed(1)} KB)`);
+        refreshStatus();
+      } catch (e) {
+        alert('Failed to trigger backup');
+      }
+    }
+
+    async function testRoute() {
+      const text = document.getElementById('route-input').value;
+      const res = await fetch('/v1/control-room/route', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+      const data = await res.json();
+      document.getElementById('route-output').textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function runAnalyzer() {
+      const topic = document.getElementById('analyze-topic').value || 'System Architecture';
+      const container = document.getElementById('analyzer-output');
+      container.innerHTML = '<p>Analyzing architecture via 7-Step Pipeline...</p>';
+      
+      const res = await fetch('/v1/control-room/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic })
+      });
+      const data = await res.json();
+      
+      container.innerHTML = Object.values(data.steps).map(step => `
+        <div class="step-box">
+          <div class="step-title">${step.step_name}</div>
+          <div style="font-size: 0.9rem; color: var(--text-muted); mb-2;">${step.description}</div>
+          <pre style="font-family: inherit; font-size: 0.85rem; white-space: pre-wrap; color: var(--text-main); margin-top: 6px;">${
+            typeof step.analysis === 'string' ? step.analysis : JSON.stringify(step.analysis || step.ranked_priorities || step.solutions || step.trade_offs || step.roadmap || step.kpis, null, 2)
+          }</pre>
+        </div>
+      `).join('');
+    }
+
+    // EventSource SSE Live Telemetry Stream Listener
+    function initLiveStream() {
+      if (!window.EventSource) return;
+      const es = new EventSource('/v1/status/stream');
+      es.onmessage = function(event) {
+        try {
+          const payload = JSON.parse(event.data);
+          if (payload.control_room) {
+            renderRegistry(payload.control_room.registry);
+            renderAudit(payload.control_room.security);
+            renderBackups(payload.control_room.backups);
+          }
+        } catch (e) {
+          console.error("SSE parse error", e);
+        }
+      };
+      es.onerror = function() {
+        console.warn("SSE stream interrupted, falling back to manual refresh");
+      };
+    }
+
+    // Initial load
+    refreshStatus();
+    initLiveStream();
+  </script>
+</body>
+</html>

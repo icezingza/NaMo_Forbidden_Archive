@@ -32,11 +32,14 @@ from core.exceptions import NamoAPIError, error_payload
 setup_logging()
 logger = logging.getLogger("namo.server")
 from core.base_persona import BasePersonaEngine
+from core.control_room import ControlRoomManager
 from core.dark_system import DarkNaMoSystem
 from core.namo_omega_engine import NaMoOmegaEngine
 from core.namo_ultimate_engine import NaMoUltimateBrain
 from rinlada_fusion import RinladaAI
 from seraphina_ai_complete import SeraphinaAI
+
+_control_room = ControlRoomManager()
 
 
 # ---------------------------------------------------------------------------
@@ -97,7 +100,9 @@ async def _session_cleanup_loop() -> None:
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     task = asyncio.create_task(_session_cleanup_loop())
+    await _control_room.scheduler.start()
     yield
+    await _control_room.scheduler.stop()
     task.cancel()
     try:
         await task
@@ -151,6 +156,15 @@ app.add_middleware(
 app.mount("/media/visual", StaticFiles(directory="Visual_Scenes", check_dir=False), name="visual")
 app.mount("/media/audio", StaticFiles(directory="Audio_Layers", check_dir=False), name="audio")
 app.mount("/ui", StaticFiles(directory="web", html=True, check_dir=False), name="ui")
+
+
+from fastapi.responses import FileResponse
+
+
+@app.get("/control-room")
+def get_control_room_page():
+    return FileResponse("web/control_room.html")
+
 
 
 # ---------------------------------------------------------------------------
@@ -520,6 +534,7 @@ async def status_stream(request: Request):
                     break
 
                 status = active_engine.get_status()
+                status["control_room"] = _control_room.get_full_status()
                 data = json.dumps(status, ensure_ascii=False)
                 yield f"data: {data}\n\n"
                 await asyncio.sleep(1)  # Update interval
@@ -626,10 +641,65 @@ def clear_session(
     return {"session_id": session_id, "cleared_from": cleared}
 
 
+@app.get("/v1/control-room/status")
+def control_room_status(x_admin_secret: str | None = Header(default=None)):
+    """Full Control Room status report (registry, backups, security, tasks)."""
+    _assert_admin(x_admin_secret)
+    return _control_room.get_full_status()
+
+
+@app.post("/v1/control-room/backup")
+def trigger_backup(x_admin_secret: str | None = Header(default=None)):
+    """Trigger manual state backup."""
+    _assert_admin(x_admin_secret)
+    return _control_room.backup.trigger_backup()
+
+
+@app.get("/v1/control-room/audit")
+def security_audit(x_admin_secret: str | None = Header(default=None)):
+    """Run security audit scan."""
+    _assert_admin(x_admin_secret)
+    return _control_room.auditor.run_audit()
+
+
+@app.get("/v1/control-room/registry")
+def agent_registry():
+    """Get active agent registry summary."""
+    return _control_room.registry.get_summary()
+
+
+class RouteRequestPayload(BaseModel):
+    text: str
+    requested_engine: str | None = None
+
+
+@app.post("/v1/control-room/route")
+def route_task(payload: RouteRequestPayload):
+    """Fast deterministic task routing endpoint."""
+    return _control_room.router.route(
+        user_input=payload.text,
+        requested_engine=payload.requested_engine,
+        default_engine=settings.default_engine,
+    )
+
+
+class AnalyzeRequestPayload(BaseModel):
+    topic: str
+    context: str | None = None
+
+
+@app.post("/v1/control-room/analyze")
+def analyze_architecture(payload: AnalyzeRequestPayload):
+    """Run 7-step architecture analysis."""
+    return _control_room.analyzer.analyze(topic=payload.topic, context=payload.context)
+
+
 @app.get("/")
 def root():
     return {
         "status": "NaMo is Online",
         "default_engine": settings.default_engine,
         "available_engines": _EngineRegistry.available(),
+        "control_room": "active",
     }
+
