@@ -10,7 +10,7 @@ import os
 from typing import Any
 
 try:
-    from neo4j import GraphDatabase, Driver
+    from neo4j import Driver, GraphDatabase
 except ImportError:
     GraphDatabase = None
     Driver = None

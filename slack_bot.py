@@ -2,13 +2,12 @@
 NaMo Sovereign Engine - Slack Integration (Socket Mode)
 """
 
-import os
-import io
 import asyncio
-import requests
-from dotenv import load_dotenv
+import os
 
 import edge_tts
+import requests
+from dotenv import load_dotenv
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
