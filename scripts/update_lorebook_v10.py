@@ -63,21 +63,18 @@ def main():
         print(f"❌ File not found: {json_path}")
         return
 
-    with open(json_path, "r", encoding="utf-8") as f:
+    with open(json_path, encoding="utf-8") as f:
         data = json.load(f)
 
     updated_count = 0
 
     for entry in data:
-        updated = False
-
         # 1. Strip trailing/leading spaces from string fields and arrays
         for field in ["key", "keysRaw", "keywordsRaw", "keysecondary"]:
             if field in entry:
                 cleaned = strip_spaces(entry[field])
                 if cleaned != entry[field]:
                     entry[field] = cleaned
-                    updated = True
 
         # 2. Add 'beat' field
         beat, tension_range = determine_beat_and_tension(entry)
