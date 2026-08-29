@@ -5,9 +5,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     # --- System ---
-    app_env: str = "development"
+    app_env: str = "production"
     app_port: int = 8000
-    debug: bool = True
+    debug: bool = False
     log_level: str = "INFO"
 
     # --- External Services ---
@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     memory_api_url: str | None = None
     memory_api_key: str | None = None
     public_base_url: str | None = None
-    cors_allow_origins: str = "*"
+    cors_allow_origins: str = ""
     memory_logging: int = 0
 
     # --- LLM Config ---

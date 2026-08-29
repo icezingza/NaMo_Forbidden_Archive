@@ -1,0 +1,64 @@
+NaMo Forbidden Archive - Changelog
+===================================
+This file consolidates historical status/audit/summary reports that were
+previously scattered across multiple markdown files. Old files removed:
+CI_CD_STATUS.md, DEPLOYMENT_READY.md, FILES_SUMMARY.md, FINAL_AUDIT_REPORT.md,
+FINAL_IMPLEMENTATION_REPORT.md, FINAL_STATUS.md, OPTIMIZATION_SUMMARY.md,
+PITCH_SAFETY_SUMMARY.md, TESTING_REPORT.md.
+
+-----------------------------------------------------------------------------
+2026-08-30 - CI/CD & Docker Finalization
+-----------------------------------------------------------------------------
+- Added ci.yml, security-scanning.yml, build-cloud.yml GitHub Actions workflows.
+- Dockerfile and Dockerfile.memory updated with multi-stage builds and
+  HEALTHCHECK targeting /v1/health and /health respectively.
+- Verified Docker images build and pass health checks (API + Memory services).
+- Consolidated to two canonical Dockerfiles (Dockerfile, Dockerfile.memory);
+  removed unused experimental variants (alpine, distroless, final, lean,
+  optimized-v2) that were not referenced by any CI workflow or compose file.
+
+-----------------------------------------------------------------------------
+2026-08-29 - Dockerfile Optimization Exploration
+-----------------------------------------------------------------------------
+- Explored multi-stage builds, Alpine base, and .dockerignore tightening.
+- Baseline image: 681MB (python:3.12-slim). Alpine variant projected ~200MB
+  but was never merged into the production Dockerfile; removed as dead code.
+- Known issue at the time: server default port mismatch (8080 vs 8000) -
+  since fixed; server now runs on port 8000 consistently.
+
+-----------------------------------------------------------------------------
+2026-06-16 - Critical Import & Stability Audit
+-----------------------------------------------------------------------------
+- Found and fixed missing core/engines/ package (asi_simulation_engine,
+  reasoning_engine) causing server.py import failure on /api/dream.
+- Flagged duplicate namo_forbidden_archive/ directory and orphaned
+  templates/improved/* modules for cleanup review.
+- Confirmed graceful degradation when Qdrant/Neo4j/OpenAI are unavailable.
+- Test suite baseline: 335+ tests across core engines and adapters.
+
+-----------------------------------------------------------------------------
+Safety Pipeline Summary
+-----------------------------------------------------------------------------
+- 4-layer narrative sanitization pipeline (content moderation regex,
+  pacing/quality scoring, HITL taxonomy classification, RAG/DPO gating).
+- Safeword detection latency < 5ms; measured safety precision 1.0000,
+  recall 0.9542 on a 239-file corpus dry run.
+
+-----------------------------------------------------------------------------
+2026-XX-XX - Ongoing Hardening (this session)
+-----------------------------------------------------------------------------
+- config.py: debug now defaults to False, cors_allow_origins defaults to
+  "" (was "*"), app_env defaults to "production".
+- Dockerfile: HEALTHCHECK now hardcodes port 8000 instead of relying on
+  shell-expanded ${PORT}, which does not expand in HEALTHCHECK CMD.
+- docker-compose.yml: Postgres/Neo4j passwords now sourced from
+  ${POSTGRES_PASSWORD} / ${NEO4J_PASSWORD} env vars instead of being
+  hardcoded; removed circular emotion->api depends_on.
+- requirements.txt: added pydantic, psycopg2-binary, python-multipart.
+- app.py: import failure of DarkNaMoSystem is now fatal (SystemExit) instead
+  of silently continuing with a None engine; fixed CLI printing a dict
+  instead of the "text" field from process_input().
+- main.py: removed incorrect async/await usage (main() is synchronous;
+  TTS adapter call fixed accordingly).
+- .gitignore: added chat_memory.json, chat_profile.json, memory_history.json,
+  memory_protocol.json, and all .env.* files (except .env.example).

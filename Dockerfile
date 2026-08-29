@@ -55,7 +55,7 @@ ENV PORT=8000 \
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-8000}/v1/health || exit 1
+    CMD curl -f http://localhost:8000/v1/health || exit 1
 
 # Default: start FastAPI server with explicit args (no shell for faster startup)
 CMD ["python", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]

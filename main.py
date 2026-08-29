@@ -1,5 +1,9 @@
+import json
+import logging
+import os
 import sys
 import time
+from datetime import UTC, datetime
 
 from dotenv import load_dotenv
 
@@ -9,8 +13,35 @@ from core.character_profile import CharacterProfile
 from Core_Scripts.emotion_parasite_engine import analyze_and_react
 
 
+class JsonFormatter(logging.Formatter):
+    """Formats log records as single-line JSON for log aggregators."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        payload = {
+            "timestamp": datetime.now(UTC).isoformat(),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+        if record.exc_info:
+            payload["exc_info"] = self.formatException(record.exc_info)
+        return json.dumps(payload, ensure_ascii=False)
+
+
+def _setup_logging() -> logging.Logger:
+    handler = logging.StreamHandler()
+    handler.setFormatter(JsonFormatter())
+    root = logging.getLogger()
+    root.handlers = [handler]
+    root.setLevel(os.environ.get("LOG_LEVEL", "INFO").upper())
+    return logging.getLogger("main")
+
+
+logger = _setup_logging()
+
+
 def type_effect(text):
-    """เอฟเฟกต์พิมพ์ทีละตัวอักษร"""
+    """เอฟเฟกต์พิมพ์ทีละตัวอักษร (user-facing output, not a log)"""
     for char in text:
         sys.stdout.write(char)
         sys.stdout.flush()
@@ -18,7 +49,8 @@ def type_effect(text):
     print("")
 
 
-async def main():
+def main():
+    """Main loop for NaMo interaction (synchronous version)"""
     load_dotenv()
     print("==========================================")
     print("   FORBIDDEN ARCHEOLOGY: NAMO PROTOCOL    ")
@@ -29,9 +61,9 @@ async def main():
     namo = CharacterProfile("NaMo")
     tts = TTSAdapter()
 
-    # ทักทายตามสถานะล่าสุด
-    print(f"\n[System]: Loading Persona... {namo.get_status_str()}")
+    logger.info("Loading Persona... %s", namo.get_status_str())
 
+    # ทักทายตามสถานะล่าสุด
     last_talk = memory.get_last_conversation()
     if last_talk:
         type_effect(
@@ -54,23 +86,30 @@ async def main():
             response, stats = analyze_and_react(user_input, namo)
 
             # 2. Output
-            print(f"[Internal]: Corruption +{stats['corruption']} | Arousal +{stats['arousal']}")
+            logger.info(
+                "corruption_delta=%s arousal_delta=%s",
+                stats["corruption"],
+                stats["arousal"],
+            )
             print("NaMo: ", end="")
             type_effect(response)
 
             # 2.1 สร้างเสียงพูดจริง (ถ้ามี ElevenLabs API key)
-            audio_path = await tts.synthesize(response) if tts else None
-            if audio_path:
-                print(f"[Audio]: Generated voice at {audio_path}")
+            if tts:
+                audio_path = tts.synthesize(response)
+                if audio_path:
+                    logger.info("Generated voice at %s", audio_path)
 
             # 3. Memory Storage
             memory.store_interaction(user_input, response, namo.get_status_str())
 
         except KeyboardInterrupt:
+            logger.info("Interrupted. Shutting down.")
             break
+        except Exception as e:
+            logger.exception("Unhandled error in main loop: %s", e)
+            # Continue loop on error
 
 
 if __name__ == "__main__":
-    import asyncio
-
-    asyncio.run(main())
+    main()

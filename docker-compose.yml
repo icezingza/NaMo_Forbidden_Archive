@@ -105,8 +105,6 @@ services:
     restart: unless-stopped
     networks:
       - namo-network
-    depends_on:
-      - api
 
   # === Telegram Bot Service ===
   telegram-bot:
@@ -184,7 +182,7 @@ services:
       - "5432:5432"
     environment:
       POSTGRES_USER: cognitive
-      POSTGRES_PASSWORD: cognitive
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cognitive-change-me}
       POSTGRES_DB: cognition
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
     volumes:
@@ -226,7 +224,7 @@ services:
       - "7474:7474"
       - "7687:7687"
     environment:
-      NEO4J_AUTH: neo4j/namo-password-change-me
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-namo-password-change-me}
       NEO4J_PLUGINS: '["apoc"]'
       NEO4J_dbms_memory_heap_initial__size: 512m
       NEO4J_dbms_memory_heap_max__size: 1024m

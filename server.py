@@ -352,6 +352,10 @@ def _resolve_engine_from_payload(payload: ChatInput) -> BasePersonaEngine:
 @app.post("/chat")
 @app.post("/session/chat")
 async def chat_with_namo(payload: ChatInput, request: Request):
+    client_ip = request.client.host if request.client else "unknown"
+    if not _rate_limiter.is_allowed(client_ip):
+        raise HTTPException(status_code=429, detail="rate_limit_exceeded")
+
     active_engine = _resolve_engine_from_payload(payload)
     session_id = payload.session_id or str(uuid.uuid4())
     _touch_session(session_id)

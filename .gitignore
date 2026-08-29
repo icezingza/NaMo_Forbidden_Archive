@@ -215,3 +215,11 @@ usage_events.jsonl
 state/
 scratch/
 web_legacy_backup/
+
+# NaMo conversational memory / secrets (never commit)
+chat_memory.json
+chat_profile.json
+memory_history.json
+memory_protocol.json
+.env.*
+!.env.example
