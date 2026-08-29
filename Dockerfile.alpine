@@ -1,0 +1,53 @@
+# Dockerfile.alpine - Ultra-minimal with Alpine (~150MB vs 681MB)
+FROM python:3.12-slim AS builder
+
+WORKDIR /build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential libpq-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+
+RUN pip install --upgrade pip setuptools wheel && \
+    pip wheel --no-cache-dir --no-deps --wheel-dir ./wheels -r requirements.txt
+
+# Alpine runtime - 35MB base image
+FROM alpine:3.20
+
+WORKDIR /app
+
+# Install Python 3.12 + runtime deps (slim = no build tools)
+RUN apk add --no-cache python3 py3-pip curl libpq && \
+    apk add --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/v3.20/main py3-setuptools
+
+# Non-root user
+RUN addgroup -g 1001 -S appuser && adduser -u 1001 -S appuser -G appuser
+
+# Copy wheels
+COPY --from=builder /build/wheels /wheels
+COPY requirements.txt .
+
+# Install dependencies
+RUN pip install --no-cache-dir --no-index --find-links /wheels -r requirements.txt && \
+    rm -rf /wheels
+
+# Copy app
+COPY --chown=appuser:appuser core ./core
+COPY --chown=appuser:appuser adapters ./adapters
+COPY --chown=appuser:appuser *.py ./
+COPY --chown=appuser:appuser config.py ./
+
+USER appuser
+
+EXPOSE 8000
+
+ENV PORT=8000 \
+    HOST=0.0.0.0 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-8000}/v1/health || exit 1
+
+CMD ["python3", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]

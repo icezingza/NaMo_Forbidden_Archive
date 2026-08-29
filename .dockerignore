@@ -1,66 +1,95 @@
-# Python cache & environments
-__pycache__/
+# Aggressive exclusion - Windows + Linux venv paths
+.venv
+venv
+env
+**/.venv/**
+**/venv/**
+**/env/**
+.venv/**
+venv/**
+env/**
+
+# Python bytecode
+__pycache__
 *.pyc
 *.pyo
 *.pyd
-.env
-.env.local
-.env.*.local
-venv/
-.venv/
-env/
-*.egg-info/
-dist/
-build/
-.pytest_cache/
-.ruff_cache/
-.mypy_cache/
+*.egg-info
+dist
+build
+.eggs
+*.egg
 
-# Development tools
-.git/
+# Development
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.git
+.github
+.gitlab
 .gitignore
-.github/
-.gitlab/
-.gitlab-ci.yml
-.vscode/
-.idea/
-.devcontainer/
-.pre-commit-config.yaml
+.vscode
+.idea
+.devcontainer
 
-# Documentation & CI scripts
+# Documentation
 *.md
-*.sh
-*.bat
-tests/
-docs/
-Documentation/
+tests
+docs
+Documentation
 
-# IDE & editor files
+# Large assets
+Audio_Layers
+Visual_Scenes
+Archived_Assets
+backups
+
+# State files
+*.json
+*.bak
+*.tmp
+chat_memory.json
+memory_history.json
+namo_state.json
+loadbord.json
+
+# IDE
 *.swp
 *.swo
 *~
 .DS_Store
 Thumbs.db
 
-# Archived & backup files
-Archived_Assets/
-backups/
-*.bak
-*.tmp
+# Presentation/Config
+Pitch_Presentation
+*.pptx
+NaMo_Forbidden_Core_v*.json
+AI-Seraphina.json
 
-# Large data & state files
-chat_memory.json
-memory_history.json
-namo_state.json
-loadbord.json
-chat_profile.json
-memory_protocol.json
+# CI/CD
+.gitlab-ci.yml
+.pre-commit-config.yaml
+*.sh
+*.bat
 
-# Terraform & IaC
-*.tfstate
-*.tfstate.*
-terraform/
+# Terraform
+*.tfstate*
+terraform
 
-# Cloud-specific
-.gcloud/
-.aws/
+# Cloud
+.gcloud
+.aws
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.exe
+
+# Node (if any)
+node_modules
+package-lock.json
+
+# Requirement files (KEEP)
+!requirements.txt
+!requirements*.txt

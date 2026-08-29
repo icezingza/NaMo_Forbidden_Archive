@@ -1,0 +1,49 @@
+# Dockerfile.distroless - Ultra-Minimal (~180MB, no shell)
+FROM python:3.12-slim AS builder
+
+WORKDIR /build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential libpq-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --upgrade pip setuptools wheel && \
+    pip wheel --no-cache-dir --no-deps --wheel-dir ./wheels -r requirements.txt
+
+# Strip stage
+FROM python:3.12-slim AS stripper
+WORKDIR /build
+COPY --from=builder /build/wheels ./wheels
+RUN find ./wheels -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true
+
+# Distroless: no shell, no curl, ~45MB base vs 150MB slim
+FROM gcr.io/distroless/python312-debian12
+
+WORKDIR /app
+
+# Copy Python site-packages only (no APK install possible in distroless)
+COPY --from=builder /build/wheels /wheels
+COPY requirements.txt .
+
+RUN ["/usr/bin/python3", "-m", "pip", "install", "--no-cache-dir", "--no-index", \
+     "--find-links=/wheels", "-r", "requirements.txt"] && \
+    rm -rf /wheels
+
+# Copy app (no --chown possible, distroless runs as nonroot by default)
+COPY core ./core
+COPY adapters ./adapters
+COPY *.py ./
+COPY *.json ./
+COPY config.py ./
+
+EXPOSE 8000
+
+ENV PORT=8000 \
+    HOST=0.0.0.0 \
+    PYTHONUNBUFFERED=1
+
+# No healthcheck with curl - use external monitoring or TCP probe
+ENTRYPOINT ["/usr/bin/python3", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]
