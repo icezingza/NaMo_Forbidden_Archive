@@ -1,0 +1,126 @@
+name: Docker Build Cloud Setup & Multi-Platform Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: 'Target platforms (comma-separated)'
+        required: false
+        default: 'linux/amd64,linux/arm64'
+  push:
+    branches: [main]
+    paths:
+      - 'Dockerfile'
+      - 'Dockerfile.memory'
+      - 'requirements.txt'
+      - 'requirements-emotion.txt'
+
+jobs:
+  multi-platform-build:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+      DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+      DOCKER_BUILD_CLOUD_TOKEN: ${{ secrets.DOCKER_BUILD_CLOUD_TOKEN }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-options: image=moby/buildkit:latest
+
+      - name: Log in to Docker Hub
+        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKER_HUB_USERNAME }}
+          password: ${{ env.DOCKER_HUB_TOKEN }}
+
+      - name: Prepare platforms
+        id: platforms
+        run: |
+          PLATFORMS="${{ github.event.inputs.platforms }}"
+          if [ -z "$PLATFORMS" ]; then
+            PLATFORMS="linux/amd64,linux/arm64"
+          fi
+          echo "PLATFORMS=$PLATFORMS" >> $GITHUB_OUTPUT
+
+      - name: Build and push API image (multi-platform)
+        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: ${{ steps.platforms.outputs.PLATFORMS }}
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: |
+            ${{ env.DOCKER_HUB_USERNAME }}/namo-api:multi-platform-${{ github.sha }}
+            ${{ env.DOCKER_HUB_USERNAME }}/namo-api:latest
+
+      - name: Build and push Memory image (multi-platform)
+        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.memory
+          platforms: ${{ steps.platforms.outputs.PLATFORMS }}
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: |
+            ${{ env.DOCKER_HUB_USERNAME }}/namo-memory:multi-platform-${{ github.sha }}
+            ${{ env.DOCKER_HUB_USERNAME }}/namo-memory:latest
+
+      - name: Inspect built images
+        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
+        run: |
+          docker buildx du --verbose || true
+          docker buildx prune -af || true
+
+  sbom-generation:
+    needs: multi-platform-build
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+      DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKER_HUB_USERNAME }}
+          password: ${{ env.DOCKER_HUB_TOKEN }}
+
+      - name: Generate SBOM for API image
+        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
+        uses: docker/scout-action@v1
+        with:
+          command: sbom
+          image: ${{ env.DOCKER_HUB_USERNAME }}/namo-api:latest
+          format: spdx-json
+          output: sbom-api.spdx.json
+        continue-on-error: true
+
+      - name: Generate SBOM for Memory image
+        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
+        uses: docker/scout-action@v1
+        with:
+          command: sbom
+          image: ${{ env.DOCKER_HUB_USERNAME }}/namo-memory:latest
+          format: spdx-json
+          output: sbom-memory.spdx.json
+        continue-on-error: true
+
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-multi-platform
+          path: sbom-*.spdx.json
+          if-no-files-found: warn

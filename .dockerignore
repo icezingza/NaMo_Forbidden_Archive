@@ -1,20 +1,66 @@
+# Python cache & environments
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .env
-venv
-.venv
+.env.local
+.env.*.local
+venv/
 .venv/
+env/
+*.egg-info/
+dist/
+build/
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
 
-# Version control & CI/CD
+# Development tools
 .git/
-.github/
 .gitignore
+.github/
+.gitlab/
+.gitlab-ci.yml
+.vscode/
+.idea/
+.devcontainer/
+.pre-commit-config.yaml
 
-# Documentation, scripts, and tests
+# Documentation & CI scripts
 *.md
 *.sh
+*.bat
 tests/
+docs/
+Documentation/
+
+# IDE & editor files
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Archived & backup files
+Archived_Assets/
+backups/
+*.bak
+*.tmp
+
+# Large data & state files
+chat_memory.json
+memory_history.json
+namo_state.json
+loadbord.json
+chat_profile.json
+memory_protocol.json
+
+# Terraform & IaC
+*.tfstate
+*.tfstate.*
+terraform/
+
+# Cloud-specific
+.gcloud/
+.aws/

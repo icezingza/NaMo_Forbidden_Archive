@@ -1,0 +1,117 @@
+name: Docker Image Security & Signing
+
+on:
+  push:
+    branches: [main]
+  workflow_run:
+    workflows: ["NaMo ACC CI Pipeline"]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  sign-and-attest:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+      DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+      COSIGN_EXPERIMENTAL: 1
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: 'v2.2.0'
+
+      - name: Log in to Docker Hub
+        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKER_HUB_USERNAME }}
+          password: ${{ env.DOCKER_HUB_TOKEN }}
+
+      - name: Sign API image with Cosign (keyless)
+        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
+        run: |
+          cosign sign --yes \
+            ${{ env.DOCKER_HUB_USERNAME }}/namo-api:${{ github.sha }}
+        continue-on-error: true
+
+      - name: Sign Memory image with Cosign (keyless)
+        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
+        run: |
+          cosign sign --yes \
+            ${{ env.DOCKER_HUB_USERNAME }}/namo-memory:${{ github.sha }}
+        continue-on-error: true
+
+      - name: Generate attestation for API image
+        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
+        run: |
+          cosign attest --yes \
+            --predicate <(echo '{"buildConfig":"NaMo-CI","timestamp":"'$(date -u +'%Y-%m-%dT%H:%M:%SZ')'"}') \
+            ${{ env.DOCKER_HUB_USERNAME }}/namo-api:${{ github.sha }}
+        continue-on-error: true
+
+      - name: Generate attestation for Memory image
+        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
+        run: |
+          cosign attest --yes \
+            --predicate <(echo '{"buildConfig":"NaMo-CI","timestamp":"'$(date -u +'%Y-%m-%dT%H:%M:%SZ')'"}') \
+            ${{ env.DOCKER_HUB_USERNAME }}/namo-memory:${{ github.sha }}
+        continue-on-error: true
+
+  deploy-security-report:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+      DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKER_HUB_USERNAME }}
+          password: ${{ env.DOCKER_HUB_TOKEN }}
+
+      - name: Generate comprehensive Scout report (API)
+        uses: docker/scout-action@v1
+        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
+        continue-on-error: true
+        with:
+          command: cves
+          image: ${{ env.DOCKER_HUB_USERNAME }}/namo-api:${{ github.sha }}
+          format: sarif
+          output: scout-report-api.sarif
+
+      - name: Generate comprehensive Scout report (Memory)
+        uses: docker/scout-action@v1
+        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
+        continue-on-error: true
+        with:
+          command: cves
+          image: ${{ env.DOCKER_HUB_USERNAME }}/namo-memory:${{ github.sha }}
+          format: sarif
+          output: scout-report-memory.sarif
+
+      - name: Upload API Scout SARIF report to GitHub Security tab
+        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: scout-report-api.sarif
+          category: Docker Scout API Security Report
+        continue-on-error: true
+
+      - name: Upload Memory Scout SARIF report to GitHub Security tab
+        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: scout-report-memory.sarif
+          category: Docker Scout Memory Security Report
+        continue-on-error: true

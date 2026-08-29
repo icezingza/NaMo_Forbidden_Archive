@@ -1,119 +1,261 @@
-# Full local stack for NaMo Forbidden Archive with Telegram Bot.
-#   docker compose up --build
-# Requires a .env file at the repo root (copy from .env.example first).
+# NaMo Forbidden Archive - Production-Ready Compose Stack
+# Usage: docker compose up --pull always
+# 
+# Services:
+#   - api (FastAPI main server on 8000)
+#   - memory (Memory service on 8081)
+#   - telegram-bot (Telegram async interface)
+#   - slack-bot (Slack bolt adapter)
+#   - redis (Session cache, rate limiting)
+#   - postgres (Persistent cognitive state)
+#   - qdrant (Vector embeddings)
+#   - neo4j (Graph memory)
+
 services:
+  # === Core API Service ===
   api:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: namo-api
     ports:
-      - "8005:8000"
+      - "8000:8000"
     env_file:
       - .env
     environment:
-      # server.py CMD uses ${PORT:-8080}; pin it to the mapped port
-      - PORT=8000
-      # reach the memory service over the compose network.
-      # server.py POSTs directly to this URL, so it must include the /store path.
-      - MEMORY_API_URL=http://memory:8081/store
+      PORT: "8000"
+      HOST: "0.0.0.0"
+      MEMORY_API_URL: "http://memory:8081/store"
+      EMOTION_API_URL: "http://emotion:8082/analyze"
+      QDRANT_URL: "http://qdrant:6333"
+      NEO4J_URI: "bolt://neo4j:7687"
+      REDIS_URL: "redis://redis:6379/0"
+      DATABASE_URL: "postgresql://cognitive:cognitive@postgres:5432/cognition"
+      PYTHONUNBUFFERED: "1"
     depends_on:
-      - memory
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_started
+      qdrant:
+        condition: service_started
+      neo4j:
+        condition: service_started
     volumes:
-      - ./web:/app/web
-      - ./Visual_Scenes:/app/Visual_Scenes
-      - ./Audio_Layers:/app/Audio_Layers
+      - ./web:/app/web:ro
+      - ./Visual_Scenes:/app/Visual_Scenes:ro
+      - ./Audio_Layers:/app/Audio_Layers:ro
+      - ./learning_set:/app/learning_set:rw
     restart: unless-stopped
     networks:
       - namo-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "com.namo.service=api"
 
+  # === Memory Service (Vector + Graph Store) ===
   memory:
     build:
       context: .
       dockerfile: Dockerfile.memory
+    container_name: namo-memory
     ports:
-      - "8085:8081"
+      - "8081:8081"
     env_file:
       - .env
     environment:
-      # Dockerfile.memory CMD uses $PORT with no default — must be set
-      - PORT=8081
+      PORT: "8081"
+      QDRANT_URL: "http://qdrant:6333"
+      NEO4J_URI: "bolt://neo4j:7687"
+      PYTHONUNBUFFERED: "1"
+    depends_on:
+      - qdrant
+      - neo4j
+    volumes:
+      - ./core/memory:/app/core/memory:ro
     restart: unless-stopped
     networks:
       - namo-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
-  # --- Telegram Bot Service ---
-  telegram-bot:
+  # === Emotion Service (Optional) ===
+  emotion:
     build:
-      context: projects-NaMo-Forbidden-Archive
+      context: .
       dockerfile: Dockerfile
+    container_name: namo-emotion
     ports:
-      - "8086:8080"
+      - "8082:8082"
     env_file:
       - .env
     environment:
-      - PORT=8080
-      - BACKEND_URL=http://api:8000
-      - MEMORY_API_URL=http://memory:8081/store
+      PORT: "8082"
+      PYTHONUNBUFFERED: "1"
+    command: ["python", "-m", "uvicorn", "core.emotion_engine:app", "--host", "0.0.0.0", "--port", "8082"]
+    restart: unless-stopped
+    networks:
+      - namo-network
     depends_on:
       - api
-      - memory
-      - redis
-      - qdrant
+
+  # === Telegram Bot Service ===
+  telegram-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: namo-telegram
+    env_file:
+      - .env
+    environment:
+      TELEGRAM_TOKEN: "${TELEGRAM_TOKEN}"
+      BACKEND_URL: "http://api:8000"
+      MEMORY_API_URL: "http://memory:8081/store"
+      PYTHONUNBUFFERED: "1"
+    command: ["python", "telegram_bot.py"]
+    depends_on:
+      api:
+        condition: service_healthy
+      memory:
+        condition: service_started
     restart: unless-stopped
     networks:
       - namo-network
+    profiles:
+      - with-bots
 
-  # --- Optional backing services for the ASI engines (core/engines/*) ---
+  # === Slack Bot Service ===
+  slack-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: namo-slack
+    ports:
+      - "8090:3000"
+    env_file:
+      - .env
+    environment:
+      SLACK_BOT_TOKEN: "${SLACK_BOT_TOKEN}"
+      SLACK_SIGNING_SECRET: "${SLACK_SIGNING_SECRET}"
+      BACKEND_URL: "http://api:8000"
+      PYTHONUNBUFFERED: "1"
+    command: ["python", "slack_bot.py"]
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - namo-network
+    profiles:
+      - with-bots
+
+  # === Redis (Session Cache & Rate Limiter) ===
+  redis:
+    image: redis:7-alpine
+    container_name: namo-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - namo-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # === PostgreSQL (Persistent State) ===
   postgres:
-    image: postgres:16
+    image: postgres:16-alpine
+    container_name: namo-postgres
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_USER: cognitive
       POSTGRES_PASSWORD: cognitive
       POSTGRES_DB: cognition
-    ports:
-      - "5433:5432"
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
     restart: unless-stopped
     networks:
       - namo-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cognitive"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
-  redis:
-    image: redis:7
-    ports:
-      - "6380:6379"
-    restart: unless-stopped
-    networks:
-      - namo-network
-
+  # === Qdrant (Vector Database) ===
   qdrant:
-    image: qdrant/qdrant:latest
+    image: qdrant/qdrant:latest-alpine
+    container_name: namo-qdrant
     ports:
-      - "6334:6333"
+      - "6333:6333"
+    environment:
+      QDRANT_API_KEY: "${QDRANT_API_KEY:-test-key}"
     volumes:
       - qdrant_data:/qdrant/storage
     restart: unless-stopped
     networks:
       - namo-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
+  # === Neo4j (Graph Memory) ===
   neo4j:
-    image: neo4j:latest
-    environment:
-      - NEO4J_AUTH=neo4j/password
+    image: neo4j:5-alpine
+    container_name: namo-neo4j
     ports:
-      - "7475:7474"
-      - "7688:7687"
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: neo4j/namo-password-change-me
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_dbms_memory_heap_initial__size: 512m
+      NEO4J_dbms_memory_heap_max__size: 1024m
     volumes:
       - neo4j_data:/data
+      - neo4j_logs:/logs
     restart: unless-stopped
     networks:
       - namo-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7474"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
 
+# === Volumes ===
 volumes:
+  redis_data:
+    driver: local
   postgres_data:
+    driver: local
   qdrant_data:
+    driver: local
   neo4j_data:
+    driver: local
+  neo4j_logs:
+    driver: local
 
+# === Networks ===
 networks:
   namo-network:
     driver: bridge
