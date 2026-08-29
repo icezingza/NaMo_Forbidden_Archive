@@ -58,12 +58,12 @@ class TestSinSystem:
     def test_commit_sin_updates_rank_corrupted(self):
         self.sin.commit_sin(11)  # 1100 points → Corrupted Master
         assert self.sin.rank == "Corrupted Master"
-        assert "Sensory Overload" in self.sin.unlocked_fetishes
+        assert "Sensory Detail" in self.sin.unlocked_fetishes
 
     def test_commit_sin_updates_rank_dark_lord(self):
         self.sin.commit_sin(51)  # 5100 points → Dark Lord
         assert self.sin.rank == "Dark Lord"
-        assert "Mindbreak" in self.sin.unlocked_fetishes
+        assert "Intense Pacing" in self.sin.unlocked_fetishes
 
     def test_get_status_contains_rank(self):
         status = self.sin.get_status()
@@ -97,13 +97,13 @@ class TestSensoryOverloadManager:
         assert "omega" in result["image"].lower() or "NaMo" in result["image"]
         assert result["audio"] is not None
 
-    def test_high_arousal_triggers_mindbreak(self):
+    def test_high_arousal_triggers_intense_asset(self):
         result = self.mgr.trigger_sensation(100, "normal")
         assert result["image"] is not None
-        assert "mindbreak" in result["image"].lower() or "Mindbreak" in result["image"]
+        assert "omega" in result["image"].lower()
 
-    def test_mindbreak_context_triggers_even_at_low_arousal(self):
-        result = self.mgr.trigger_sensation(5, "mindbreak scenario")
+    def test_intense_context_triggers_even_at_low_arousal(self):
+        result = self.mgr.trigger_sensation(5, "intense scene")
         assert result["image"] is not None
 
     def test_whisper_context_sets_audio(self):
@@ -126,15 +126,15 @@ class TestPersonaOrchestrator:
         assert self.orc.active_personas == ["NaMo"]
 
     def test_summon_new_persona(self):
-        msg = self.orc.summon_persona("Sister")
-        assert "Sister" in self.orc.active_personas
-        assert "Sister" in msg
+        msg = self.orc.summon_persona("Muse")
+        assert "Muse" in self.orc.active_personas
+        assert "Muse" in msg
 
     def test_summon_duplicate_is_noop(self):
-        self.orc.summon_persona("Sister")
-        msg = self.orc.summon_persona("Sister")
+        self.orc.summon_persona("Muse")
+        msg = self.orc.summon_persona("Muse")
         assert msg == ""
-        assert self.orc.active_personas.count("Sister") == 1
+        assert self.orc.active_personas.count("Muse") == 1
 
     def test_summon_unknown_persona(self):
         msg = self.orc.summon_persona("Ghost")
@@ -144,10 +144,10 @@ class TestPersonaOrchestrator:
         result = self.orc.generate_dialogue("test", "Innocent Soul")
         assert "NaMo" in result
 
-    def test_generate_dialogue_with_sister(self):
-        self.orc.summon_persona("Sister")
+    def test_generate_dialogue_with_muse(self):
+        self.orc.summon_persona("Muse")
         result = self.orc.generate_dialogue("test", "Innocent Soul")
-        assert "Sister" in result
+        assert "Muse" in result
 
 
 # ===========================================================================
@@ -180,11 +180,10 @@ class TestNaMoOmegaEngineProcessInput:
         arousal_val = int(status["arousal"].rstrip("%"))
         assert arousal_val > 0
 
-    async def test_sister_summon_keyword(self):
-        await self.engine.process_input("เรียกน้องมาเล่นด้วย", session_id="persona-test")
+    async def test_muse_summon_keyword(self):
+        await self.engine.process_input("เรียกมิวส์มาร่วมฉาก", session_id="persona-test")
         state = self.engine._get_session_state("persona-test")
-        # "เรียกน้อง" triggers persona summon
-        assert "Sister" in state["personas"].active_personas
+        assert "Muse" in state["personas"].active_personas
 
     async def test_per_session_isolation(self):
         await self.engine.process_input("เย็ด", session_id="session-A")

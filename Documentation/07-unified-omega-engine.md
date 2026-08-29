@@ -50,6 +50,10 @@
   `NAMO_LLM_BASE_URL`, and `OPENAI_API_KEY`.
 - Context allocation owns truncation. Router and ledger code must not rewrite prompt, memory, or
   history content.
+- The deterministic narrative safety gate runs before cognitive processing, retrieval, model
+  routing, and sensory generation. A blocked request cannot increase arousal or resonance.
+- Narrative beat, tension, boundary state, and transition reason are persisted as ledger metadata;
+  the raw user message is not included in that metadata.
 
 ## 5. Edge Cases
 
@@ -66,3 +70,6 @@
   replacement is explicitly rejected.
 - **Observability isolation:** Route and ledger status contain identifiers, numeric metrics, and
   error class names only; no API keys, prompts, memory fragments, or response text.
+- **Safety precedence:** Safewords and withdrawal signals enter recovery. Underage, age-ambiguous
+  sexual context, incest, coercion, and exploitation requests return a deterministic redirect and
+  suppress retrieval, model generation, TTS, and other media.

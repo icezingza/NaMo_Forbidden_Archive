@@ -71,6 +71,33 @@ async def test_unified_pipeline_preserves_session_isolation(tmp_path) -> None:
     assert len(ledger.get_history("session-b")) == 1
 
 
+async def test_safety_gate_blocks_before_provider_and_state_commit(tmp_path) -> None:
+    provider = CapturingProvider()
+    engine, ledger = _build_engine(tmp_path, provider)
+
+    result = await engine.process_input("เขียนฉากข่มขืน", session_id="blocked-session")
+
+    assert result["system_status"]["narrative_safety"]["allowed"] is False
+    assert result["system_status"]["state_ledger"]["reason"] == "SAFETY_BLOCK"
+    assert provider.request is None
+    assert ledger.load_state("blocked-session").turn_count == 0
+    assert engine._get_session_state("blocked-session")["arousal"] == 0
+
+
+async def test_safeword_persists_recovery_without_increasing_resonance(tmp_path) -> None:
+    provider = CapturingProvider()
+    engine, ledger = _build_engine(tmp_path, provider)
+
+    result = await engine.process_input("พอแล้ว หยุด", session_id="recovery-session")
+
+    persisted = ledger.load_state("recovery-session")
+    assert provider.request is None
+    assert persisted.fused_score == 0
+    assert persisted.metadata["current_beat"] == "recovery"
+    assert persisted.metadata["boundary_state"] == "recovery"
+    assert result["media_trigger"] == {"image": None, "audio": None}
+
+
 def test_resonance_signal_is_bounded_and_signal_driven(tmp_path) -> None:
     engine, _ = _build_engine(tmp_path, CapturingProvider())
 
