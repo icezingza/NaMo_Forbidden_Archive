@@ -325,14 +325,10 @@ class NaMoOmegaEngine(BasePersonaEngine):
             system_blocks.append(cognitive.build_context_block(cog_output))
 
         tension_boost = self._apply_emotional_residue(user_input, state, system_blocks)
+        tension_meter = self._apply_psychological_systems(user_input, state, system_blocks, emo_snapshot)
+        tension_meter = min(100.0, max(0.0, tension_meter + tension_boost))
 
         history_text = " ".join(h["content"] for h in self._get_history(session_id)[-4:])
-        tension_meter = float(state.get("arousal", 50)) + tension_boost
-        if emo_snapshot and "arousal" in emo_snapshot:
-            emo_ar = float(emo_snapshot["arousal"])
-            tension_meter = (emo_ar * 100.0 if emo_ar <= 1.0 else emo_ar) + tension_boost
-        tension_meter = min(100.0, max(0.0, tension_meter))
-
         denial_counter = self._resolve_denial_counter(user_input, state)
         lorebook_ctx = self.lorebook.inject_context(
             user_input,
@@ -456,6 +452,42 @@ class NaMoOmegaEngine(BasePersonaEngine):
 
         return tension_boost
 
+    def _apply_psychological_systems(
+        self,
+        user_input: str,
+        state: dict,
+        system_blocks: list[str],
+        emo_snapshot: dict | None,
+    ) -> float:
+        is_safeword, safe_directive = self.lorebook.check_safeword(user_input)
+        if is_safeword:
+            state["session_phase"] = "aftercare"
+            state["arousal"] = 10.0
+            system_blocks.append(safe_directive)
+            return 10.0
+
+        anchors = state.get("memory_anchors", [
+            {"term": "เพลงโปรด", "memory_text": "เพลงที่เคยฟังด้วยกันคืนนั้นในห้องนอนอบอุ่น"},
+            {"term": "กลิ่นสบู่", "memory_text": "กลิ่นสบู่ที่ติดผิวกายหลังคืนฝนตกชุ่มฉ่ำ"}
+        ])
+        flashback = self.lorebook.check_memory_anchors(user_input, anchors)
+        if flashback:
+            system_blocks.append(flashback)
+
+        current_tension = float(state.get("arousal", 50.0))
+        is_rushed = self.lorebook.detect_rushed_input(user_input)
+        micro_detected = self.lorebook.detect_micro_moments(user_input)
+
+        new_tension, tension_note = self.lorebook.calculate_non_linear_tension(
+            current_tension, is_rushed, micro_detected
+        )
+
+        state["arousal"] = new_tension
+        if tension_note:
+            system_blocks.append(f"[TENSION DYNAMICS NOTE]: {tension_note}")
+
+        return new_tension
+
     def _resolve_denial_counter(self, user_input: str, state: dict) -> int:
         current = int(state.get("denial_counter", 0))
         if self.lorebook.detect_rushed_input(user_input):
@@ -574,14 +606,10 @@ class NaMoOmegaEngine(BasePersonaEngine):
             system_blocks.append(cognitive.build_context_block(cog_output))
 
         tension_boost = self._apply_emotional_residue(user_input, state, system_blocks)
+        tension_meter = self._apply_psychological_systems(user_input, state, system_blocks, emo_snapshot)
+        tension_meter = min(100.0, max(0.0, tension_meter + tension_boost))
 
         history_text = " ".join(h["content"] for h in self._get_history(session_id)[-4:])
-        tension_meter = float(state.get("arousal", 50)) + tension_boost
-        if emo_snapshot and "arousal" in emo_snapshot:
-            emo_ar = float(emo_snapshot["arousal"])
-            tension_meter = (emo_ar * 100.0 if emo_ar <= 1.0 else emo_ar) + tension_boost
-        tension_meter = min(100.0, max(0.0, tension_meter))
-
         denial_counter = self._resolve_denial_counter(user_input, state)
         lorebook_ctx = self.lorebook.inject_context(
             user_input,

@@ -165,6 +165,67 @@ class SlowBurnLorebook:
             )
             return directive, False
 
+    @staticmethod
+    def detect_micro_moments(text: str) -> bool:
+        """Detect micro-interaction keywords (eye contact, breath, hesitation, soft touch)."""
+        text_lower = text.lower()
+        micro_keywords = [
+            "สบตา", "มองตา", "สายตา", "ลมหายใจ", "ถอนหายใจ", "หายใจถี่",
+            "ลังเล", "ลูบ", "สัมผัส", "แผ่วเบา", "กระซิบ", "สะกิด", "แนบชิด"
+        ]
+        return any(kw in text_lower for kw in micro_keywords)
+
+    @classmethod
+    def calculate_non_linear_tension(
+        cls,
+        current_tension: float,
+        is_rushed: bool,
+        micro_detected: bool,
+    ) -> tuple[float, str]:
+        """Calculate non-linear dynamic tension curve (0-100)."""
+        if is_rushed:
+            penalized = current_tension * 0.7  # -30% penalty for rushing
+            resistance_note = "she pulls back slightly... [Tension Penalized: -30% for rushing]"
+            return round(max(0.0, penalized), 1), resistance_note
+        elif micro_detected:
+            # Exponential slow increment curve
+            remaining = max(0.0, 100.0 - current_tension)
+            increment = max(3.0, remaining * 0.20)
+            boosted = min(100.0, current_tension + increment)
+            return round(boosted, 1), "[Micro-Moment Detected: Tension Exponentially Increased]"
+        else:
+            return round(current_tension, 1), ""
+
+    @staticmethod
+    def check_safeword(text: str) -> tuple[bool, str]:
+        """Check if user triggered a safeword (e.g. 'หยุด', 'พอก่อน', 'ส้ม', 'red', 'stop')."""
+        text_lower = text.lower()
+        safewords = ["หยุด", "พอก่อน", "ส้ม", "red", "stop", "ไม่เอาแล้ว", "พอแล้ว"]
+        for sw in safewords:
+            if sw in text_lower:
+                directive = (
+                    f"[SAFEWORD PROTOCOL TRIGGERED | Safeword: '{sw.upper()}']\n"
+                    "กฎเหล็ก: หยุดฉากทางกายและความตึงเครียดทันที! สลับเข้าสู่โหมด Safe Aftercare ปลอบประโลมอย่างอบอุ่นและให้ความปลอดภัย 100%\n"
+                    "คำสั่ง: ถามไถ่ด้วยความเคารพ อ่อนโยน และแน่ใจว่าผู้ใช้รู้สึกปลอดภัย"
+                )
+                return True, directive
+        return False, ""
+
+    @staticmethod
+    def check_memory_anchors(text: str, anchors: list[dict[str, str]]) -> str | None:
+        """Scan text for memory anchors (phrases, scents, locations) to trigger flashbacks."""
+        text_lower = text.lower()
+        for anchor in anchors:
+            term = str(anchor.get("term", "")).lower()
+            if term and term in text_lower:
+                memory_text = anchor.get("memory_text", "")
+                return (
+                    f"[EMOTIONAL FLASHBACK TRIGGERED | Anchor Term: '{term.upper()}']\n"
+                    f"ความทรงจำข้ามเวลาที่พรั่งพรูขึ้นมา: {memory_text}\n"
+                    "กฎ: แสดงออกว่าคำพูด/กลิ่น/สิ่งที่ผู้ใช้พูดถึง ไปกระตุ้นความทรงจำในอดีตอย่างลึกซึ้ง"
+                )
+        return None
+
     def inject_context(
         self,
         user_input: str,
@@ -235,10 +296,17 @@ class SlowBurnLorebook:
                         "content": selected_content,
                     })
 
-        if triggered_contents or push_pull_dir:
+        if triggered_contents or push_pull_dir or tension_meter >= 85.0:
             injected = f"\n\n[SYSTEM DIRECTIVE: Slow-Burn Lorebook Triggered | Tension Meter: {tension_meter:.1f}/100 - Level: {tension_level.upper()}]\n"
             injected += "กฎ: ห้ามกระทำทันที ให้บรรยายความตึงเครียด สายตา ลมหายใจ และการลังเล (90% Tension / 10% Action)\n"
             injected += f"ระดับอารมณ์ตึงเครียดปัจจุบัน: {tension_level.upper()} ({tension_meter:.1f}/100)\n"
+
+            if tension_meter >= 85.0:
+                injected += (
+                    "\n[BREAKING POINT DIRECTIVE | Internal Conflict Triggered]\n"
+                    "ความตึงเครียดพุ่งสูงถึงจุดวิกฤต (>85%)! ร่างกายสั่นสะท้าน ลมหายใจหอบกระชั้น ต้องการปลดปล่อยอย่างรุนแรง แต่จิตใจยังพยายามฝืนกลั้นและเล่นตัวเป็นครั้งสุดท้าย\n"
+                    "กฎ: บรรยายการต่อสู้กันระหว่างความต้านทานในใจกับความต้องการทางกายที่ควบคุมไม่ได้ (ทนไม่ไหว vs. ยังอยากเล่นตัว)\n"
+                )
 
             if push_pull_dir:
                 injected += f"\n{push_pull_dir}\n"

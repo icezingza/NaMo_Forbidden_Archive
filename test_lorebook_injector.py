@@ -58,6 +58,23 @@ def main() -> None:
         injected = lorebook.inject_context(rushed_prompt, tension_meter=75.0, denial_counter=turn_denial_count)
         print(f"Injected Directive:\n{injected}")
 
+    print("\n--- Testing Group 1: Deep Psychological Systems ---")
+    # 1. Non-linear Tension Curve & Breaking Point (>85)
+    print("\n1. Breaking Point (>85% Tension):")
+    breaking_dir = lorebook.inject_context("จับฉันใน ท่าหมา แบบช้าๆ สิ", tension_meter=88.0)
+    print(f"Breaking Point Context:\n{breaking_dir}")
+
+    # 2. Safeword Protocol
+    print("\n2. Safeword Protocol Triggered:")
+    is_safe, safe_dir = lorebook.check_safeword("พอแล้ว หยุดก่อนนะ")
+    print(f"Safeword Detected: {is_safe} -> Directive:\n{safe_dir}")
+
+    # 3. Memory Anchors Flashback
+    print("\n3. Memory Anchor Flashback Triggered:")
+    anchors = [{"term": "กลิ่นสบู่", "memory_text": "กลิ่นสบู่ที่ติดผิวกายหลังคืนฝนตกชุ่มฉ่ำในอดีต"}]
+    flashback_dir = lorebook.check_memory_anchors("จำได้ไหม กลิ่นสบู่ คืนนั้น...", anchors)
+    print(f"Flashback Directive:\n{flashback_dir}")
+
 
 if __name__ == "__main__":
     main()
