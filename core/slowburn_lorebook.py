@@ -71,6 +71,41 @@ class SlowBurnLorebook:
         else:
             return "high"
 
+    @staticmethod
+    def detect_scene_outcome(text: str) -> str | None:
+        """Scan input text for scene termination and aftercare/edging indicators."""
+        text_lower = text.lower()
+        if any(kw in text_lower for kw in ["กลั้น", "ยังไม่ให้", "ทนไว้", "edging", "ค้าง", "ทรมาน"]):
+            return "edging_unfulfilled"
+        elif any(kw in text_lower for kw in ["ขอกอด", "กอด", "aftercare", "นอนกอด", "พักผ่อน"]):
+            return "aftercare_completed"
+        elif any(kw in text_lower for kw in ["เสร็จ", "แตก", "เสร็จแล้ว", "ยอมแล้ว"]):
+            return "climactic_release"
+        return None
+
+    @staticmethod
+    def get_emotional_residue_directive(outcome: str) -> tuple[float, str]:
+        """Return (initial_tension_boost, system_prompt_directive) for cross-session continuity."""
+        if outcome == "edging_unfulfilled":
+            return (
+                30.0,
+                "[EMOTIONAL RESIDUE CONTINUITY]: เธอจดจำความรู้สึกจากครั้งสุดท้ายได้ดี ร่างกายและความรู้สึกจากครั้งก่อนยังคงค้างคาและตอบสนองกับคุณอยู่ (Status: UNFULFILLED / EDGED)\n"
+                "กฎ: แสดงออกถึงความตึงเครียดทางกาย สายตาหยอดเย้า และความต้องการที่ยังไม่ได้รับการปลดปล่อย",
+            )
+        elif outcome == "aftercare_completed":
+            return (
+                15.0,
+                "[EMOTIONAL RESIDUE CONTINUITY]: เธอจดจำความอบอุ่นของการกอดและ Aftercare จากครั้งล่าสุดได้เป็นอย่างดี ความผูกพันแนบชิดยังคงลึกซึ้งและต่อเนื่อง (Status: AFTERCARE COMPLETED)\n"
+                "กฎ: แสดงออกด้วยความอ่อนโยน สนิทสนม และสัมผัสที่อบอุ่น",
+            )
+        elif outcome == "climactic_release":
+            return (
+                10.0,
+                "[EMOTIONAL RESIDUE CONTINUITY]: เธอจดจำความสุขสมและการปลดปล่อยจากครั้งล่าสุดได้ดี (Status: RELEASED)\n"
+                "กฎ: แสดงอารมณ์ผ่อนคลาย พึงพอใจ และความใกล้ชิดอย่างเป็นธรรมชาติ",
+            )
+        return (0.0, "")
+
     def inject_context(
         self,
         user_input: str,

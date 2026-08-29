@@ -36,6 +36,17 @@ def main() -> None:
         else:
             print("⚠️ No lorebook keywords triggered.")
 
+    print("\n--- Testing Emotional Residue & Aftercare Continuity ---")
+    residue_samples = [
+        "ทนไว้ก่อนนะ ยังไม่ให้เสร็จตอนนี้ ห้ามกลั้นหายใจ",  # Edging / Unfulfilled
+        "ขอกอดหน่อยนะ นอนกอดกันนิ่งๆ",  # Aftercare
+    ]
+    for text in residue_samples:
+        outcome = lorebook.detect_scene_outcome(text)
+        boost, directive = lorebook.get_emotional_residue_directive(outcome) if outcome else (0.0, "")
+        print(f"\nInput: '{text}' -> Outcome Detected: '{outcome}' (Tension Boost: +{boost})")
+        print(f"Directive Generated:\n{directive}")
+
 
 if __name__ == "__main__":
     main()

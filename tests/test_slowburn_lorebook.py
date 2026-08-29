@@ -86,3 +86,23 @@ def test_slowburn_lorebook_tension_modulation(tmp_path: Path):
     assert "Level: HIGH" in ctx_high
     assert "High tension unhinged passion" in ctx_high
 
+
+def test_slowburn_lorebook_emotional_residue():
+    # Edging detection
+    outcome_edge = SlowBurnLorebook.detect_scene_outcome("ยังไม่ให้เสร็จ ทนไว้ก่อน")
+    assert outcome_edge == "edging_unfulfilled"
+
+    boost_edge, dir_edge = SlowBurnLorebook.get_emotional_residue_directive(outcome_edge)
+    assert boost_edge == 30.0
+    assert "EMOTIONAL RESIDUE CONTINUITY" in dir_edge
+    assert "UNFULFILLED" in dir_edge
+
+    # Aftercare detection
+    outcome_ac = SlowBurnLorebook.detect_scene_outcome("นอนกอดกันนิ่งๆ นะ ขอกอด")
+    assert outcome_ac == "aftercare_completed"
+
+    boost_ac, dir_ac = SlowBurnLorebook.get_emotional_residue_directive(outcome_ac)
+    assert boost_ac == 15.0
+    assert "AFTERCARE COMPLETED" in dir_ac
+
+

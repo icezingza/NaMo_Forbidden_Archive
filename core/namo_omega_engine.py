@@ -324,11 +324,15 @@ class NaMoOmegaEngine(BasePersonaEngine):
         if cognitive is not None and cog_output is not None:
             system_blocks.append(cognitive.build_context_block(cog_output))
 
+        tension_boost = self._apply_emotional_residue(user_input, state, system_blocks)
+
         history_text = " ".join(h["content"] for h in self._get_history(session_id)[-4:])
-        tension_meter = float(state.get("arousal", 50))
+        tension_meter = float(state.get("arousal", 50)) + tension_boost
         if emo_snapshot and "arousal" in emo_snapshot:
             emo_ar = float(emo_snapshot["arousal"])
-            tension_meter = emo_ar * 100.0 if emo_ar <= 1.0 else emo_ar
+            tension_meter = (emo_ar * 100.0 if emo_ar <= 1.0 else emo_ar) + tension_boost
+        tension_meter = min(100.0, max(0.0, tension_meter))
+
         lorebook_ctx = self.lorebook.inject_context(
             user_input,
             ai_history=history_text,
@@ -421,6 +425,34 @@ class NaMoOmegaEngine(BasePersonaEngine):
         if emo.get("arousal", 0.3) > 0.7:
             lines.append("ตื่นเต้น หายใจถี่")
         return "[Tone]: " + " / ".join(lines) if lines else "[Tone]: เป็นกลางแต่แฝงความนัย"
+
+    def _apply_emotional_residue(
+        self,
+        user_input: str,
+        state: dict,
+        system_blocks: list[str],
+    ) -> float:
+        detected = self.lorebook.detect_scene_outcome(user_input)
+        if detected:
+            state["last_scene_outcome"] = detected
+            ledger_state = state.get("ledger_state")
+            if ledger_state and hasattr(ledger_state, "metadata"):
+                ledger_state.metadata["last_scene_outcome"] = detected
+
+        outcome = state.get("last_scene_outcome")
+        if not outcome:
+            ledger_state = state.get("ledger_state")
+            if ledger_state and hasattr(ledger_state, "metadata"):
+                outcome = ledger_state.metadata.get("last_scene_outcome")
+
+        tension_boost = 0.0
+        if outcome:
+            boost, directive = self.lorebook.get_emotional_residue_directive(outcome)
+            if directive:
+                system_blocks.append(directive)
+                tension_boost = boost
+
+        return tension_boost
 
     def _build_status_context(self, state: dict) -> str:
         return (
@@ -527,11 +559,15 @@ class NaMoOmegaEngine(BasePersonaEngine):
         if cognitive is not None and cog_output is not None:
             system_blocks.append(cognitive.build_context_block(cog_output))
 
+        tension_boost = self._apply_emotional_residue(user_input, state, system_blocks)
+
         history_text = " ".join(h["content"] for h in self._get_history(session_id)[-4:])
-        tension_meter = float(state.get("arousal", 50))
+        tension_meter = float(state.get("arousal", 50)) + tension_boost
         if emo_snapshot and "arousal" in emo_snapshot:
             emo_ar = float(emo_snapshot["arousal"])
-            tension_meter = emo_ar * 100.0 if emo_ar <= 1.0 else emo_ar
+            tension_meter = (emo_ar * 100.0 if emo_ar <= 1.0 else emo_ar) + tension_boost
+        tension_meter = min(100.0, max(0.0, tension_meter))
+
         lorebook_ctx = self.lorebook.inject_context(
             user_input,
             ai_history=history_text,
