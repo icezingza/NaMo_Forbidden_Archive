@@ -9,10 +9,14 @@ from __future__ import annotations
 import io
 import os
 import re
+import sys
 
 import requests
 import telebot
 from dotenv import load_dotenv
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 load_dotenv()
 

@@ -422,6 +422,47 @@ async def chat_with_namo_v1(
     }
 
 
+@app.post("/session/chat")
+async def session_chat(payload: ChatInput, request: Request):
+    """Compatibility endpoint for Vipha Telegram Bot v2."""
+    active_engine = _EngineRegistry.get(settings.default_engine)
+    session_id = payload.session_id or "default"
+    _touch_session(session_id)
+    result = active_engine.process_input(payload.text, session_id=session_id)
+    if asyncio.iscoroutine(result):
+        result = await result
+
+    sys_status = result.get("system_status", {})
+    state_ledger = sys_status.get("state_ledger", {}) or {}
+
+    return {
+        "narrative": result["text"],
+        "session_id": session_id,
+        "emotion_state": {
+            "arousal": float(str(sys_status.get("arousal", "50")).replace("%", "")),
+            "trust": 0.85,
+            "passion": 0.75,
+            "temperament": 0.60,
+            "resonance": 0.90,
+        },
+        "relationship_stage": state_ledger.get("stage", 1),
+        "stage_progress": "12/25",
+    }
+
+
+@app.post("/session/reset")
+async def session_reset(payload: ChatInput):
+    """Reset session state and arousal."""
+    session_id = payload.session_id or "default"
+    active_engine = _EngineRegistry.get(settings.default_engine)
+    _STATE_ATTRS = ("_session_states", "_session_arousal", "_session_intensity", "session_history")
+    for attr in _STATE_ATTRS:
+        store = getattr(active_engine, attr, None)
+        if isinstance(store, dict):
+            store.pop(session_id, None)
+    return {"status": "reset", "session_id": session_id}
+
+
 @app.post("/v1/chat/stream")
 async def chat_stream(
     payload: ChatInput,
