@@ -18,16 +18,17 @@ def main() -> None:
     print("Loading Slow-Burn Lorebook (v10)...")
     lorebook = SlowBurnLorebook("core/lorebooks/Sex_Positions_Kinks_SlowBurn_TH_v10.json")
 
-    test_inputs = [
-        "เธอเดินเข้ามาใกล้ แล้วกระซิบว่า อยากให้ฉัน โม๊ก ให้ไหม",  # Blowjob
-        "จับฉันใน ท่าหมา แบบช้าๆ สิ",  # Doggy Slow / Deep
-        "ฉันอยาก กอด เธอหลังเสร็จ",  # Aftercare
-        "สวัสดีครับ วันนี้อากาศดีจัง",  # No trigger
+    test_cases = [
+        ("จับฉันใน ท่าหมา แบบช้าๆ สิ", 20.0),  # Low Tension (20)
+        ("จับฉันใน ท่าหมา แบบช้าๆ สิ", 50.0),  # Mid Tension (50)
+        ("จับฉันใน ท่าหมา แบบช้าๆ สิ", 85.0),  # High Tension (85)
+        ("เธอเดินเข้ามาใกล้ แล้วกระซิบว่า อยากให้ฉัน โม๊ก ให้ไหม", 85.0),  # Blowjob High
+        ("สวัสดีครับ วันนี้อากาศดีจัง", 50.0),  # No trigger
     ]
 
-    for i, text in enumerate(test_inputs, 1):
-        print(f"\n--- Test Case {i}: '{text}' ---")
-        injected = lorebook.inject_context(text)
+    for i, (text, tension) in enumerate(test_cases, 1):
+        print(f"\n--- Test Case {i}: '{text}' (Tension: {tension}/100) ---")
+        injected = lorebook.inject_context(text, tension_meter=tension)
 
         if injected:
             print("✅ Detected Keyword Match! Injected Context:")

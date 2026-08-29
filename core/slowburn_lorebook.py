@@ -61,12 +61,34 @@ class SlowBurnLorebook:
             return self.system_prompt_path.read_text(encoding="utf-8")
         return ""
 
-    def inject_context(self, user_input: str, ai_history: str = "") -> str:
-        """Scan input and history for keywords and return structured hidden directive context."""
+    @staticmethod
+    def resolve_tension_level(tension_meter: float) -> str:
+        """Map tension meter score (0-100) to low, mid, or high level."""
+        if tension_meter <= 35.0:
+            return "low"
+        elif tension_meter <= 70.0:
+            return "mid"
+        else:
+            return "high"
+
+    def inject_context(
+        self,
+        user_input: str,
+        ai_history: str = "",
+        tension_meter: float = 50.0,
+    ) -> str:
+        """Scan input and history for keywords and return structured hidden directive context.
+
+        Args:
+            user_input: Current turn user message.
+            ai_history: Concatenated conversation history.
+            tension_meter: Tension / Arousal intensity score (0.0 to 100.0).
+        """
         if not self.entries:
             return ""
 
         text_to_scan = f"{user_input} {ai_history}".lower()
+        tension_level = self.resolve_tension_level(tension_meter)
         triggered_contents: list[dict[str, Any]] = []
 
         for entry in self.entries:
@@ -89,7 +111,6 @@ class SlowBurnLorebook:
                 has_sk_match = any(
                     str(sk).lower() in text_to_scan for sk in secondary_keys if str(sk).strip()
                 )
-                # If matched primary key is specific (e.g. contains Thai chars or length > 3), allow trigger even without generic secondary keys like 'sex'/'fuck'
                 has_specific_pk = any(
                     any(ord(c) > 127 for c in str(pk)) or len(str(pk)) > 3
                     for pk in matched_pk
@@ -97,19 +118,28 @@ class SlowBurnLorebook:
                 secondary_match = has_sk_match or has_specific_pk
 
             if primary_match and secondary_match:
+                # Dynamic Tension Content Resolution
+                tension_dict = entry.get("tension_levels")
+                if isinstance(tension_dict, dict) and tension_level in tension_dict:
+                    selected_content = tension_dict[tension_level]
+                else:
+                    selected_content = entry.get("content", "")
+
                 triggered_contents.append({
                     "order": entry.get("insertion_order", 100),
                     "comment": entry.get("comment", ""),
-                    "content": entry.get("content", ""),
+                    "content": selected_content,
                 })
 
         if triggered_contents:
-            injected = "\n\n[SYSTEM DIRECTIVE: Slow-Burn Lorebook Triggered]\n"
+            injected = f"\n\n[SYSTEM DIRECTIVE: Slow-Burn Lorebook Triggered | Tension Meter: {tension_meter:.1f}/100 - Level: {tension_level.upper()}]\n"
             injected += "กฎ: ห้ามกระทำทันที ให้บรรยายความตึงเครียด สายตา ลมหายใจ และการลังเล (90% Tension / 10% Action)\n"
-            injected += "บริบทของท่าทางที่ระบบตรวจจับได้:\n"
+            injected += f"ระดับอารมณ์ตึงเครียดปัจจุบัน: {tension_level.upper()} ({tension_meter:.1f}/100)\n"
+            injected += "บริบทของท่าทางที่ระบบตรวจจับได้ (ปรับตามระดับ Tension):\n"
             for t in triggered_contents:
                 injected += f"- ({t['comment']}): {t['content']}\n"
             injected += "[END SYSTEM DIRECTIVE - นำแนวทางข้างต้นไปผสานกับการตอบกลับอย่างเป็นธรรมชาติ]\n"
             return injected
 
         return ""
+

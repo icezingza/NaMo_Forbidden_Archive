@@ -48,3 +48,41 @@ def test_slowburn_lorebook_no_trigger():
     lorebook = SlowBurnLorebook()
     ctx = lorebook.inject_context("วันนี้ฝนตกหนักมาก")
     assert ctx == ""
+
+
+def test_slowburn_lorebook_tension_modulation(tmp_path: Path):
+    raw_lorebook = [
+        {
+            "id": 1,
+            "key": ["ท่าหมา"],
+            "comment": "Doggy Test",
+            "content": "Default content",
+            "tension_levels": {
+                "low": "Low tension hesitant touch",
+                "mid": "Mid tension deeper contact",
+                "high": "High tension unhinged passion",
+            },
+            "enabled": True,
+            "insertion_order": 100,
+        }
+    ]
+    json_file = tmp_path / "tension_test.json"
+    json_file.write_text(json.dumps(raw_lorebook, ensure_ascii=False), encoding="utf-8")
+
+    lorebook = SlowBurnLorebook(json_path=json_file)
+
+    # Low tension (15)
+    ctx_low = lorebook.inject_context("เอาท่าหมานะ", tension_meter=15.0)
+    assert "Level: LOW" in ctx_low
+    assert "Low tension hesitant touch" in ctx_low
+
+    # Mid tension (50)
+    ctx_mid = lorebook.inject_context("เอาท่าหมานะ", tension_meter=50.0)
+    assert "Level: MID" in ctx_mid
+    assert "Mid tension deeper contact" in ctx_mid
+
+    # High tension (90)
+    ctx_high = lorebook.inject_context("เอาท่าหมานะ", tension_meter=90.0)
+    assert "Level: HIGH" in ctx_high
+    assert "High tension unhinged passion" in ctx_high
+

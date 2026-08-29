@@ -325,7 +325,15 @@ class NaMoOmegaEngine(BasePersonaEngine):
             system_blocks.append(cognitive.build_context_block(cog_output))
 
         history_text = " ".join(h["content"] for h in self._get_history(session_id)[-4:])
-        lorebook_ctx = self.lorebook.inject_context(user_input, ai_history=history_text)
+        tension_meter = float(state.get("arousal", 50))
+        if emo_snapshot and "arousal" in emo_snapshot:
+            emo_ar = float(emo_snapshot["arousal"])
+            tension_meter = emo_ar * 100.0 if emo_ar <= 1.0 else emo_ar
+        lorebook_ctx = self.lorebook.inject_context(
+            user_input,
+            ai_history=history_text,
+            tension_meter=tension_meter,
+        )
         if lorebook_ctx:
             system_blocks.append(lorebook_ctx)
 
@@ -520,7 +528,15 @@ class NaMoOmegaEngine(BasePersonaEngine):
             system_blocks.append(cognitive.build_context_block(cog_output))
 
         history_text = " ".join(h["content"] for h in self._get_history(session_id)[-4:])
-        lorebook_ctx = self.lorebook.inject_context(user_input, ai_history=history_text)
+        tension_meter = float(state.get("arousal", 50))
+        if emo_snapshot and "arousal" in emo_snapshot:
+            emo_ar = float(emo_snapshot["arousal"])
+            tension_meter = emo_ar * 100.0 if emo_ar <= 1.0 else emo_ar
+        lorebook_ctx = self.lorebook.inject_context(
+            user_input,
+            ai_history=history_text,
+            tension_meter=tension_meter,
+        )
         if lorebook_ctx:
             system_blocks.append(lorebook_ctx)
 
