@@ -47,6 +47,10 @@ def main() -> None:
         print(f"\nInput: '{text}' -> Outcome Detected: '{outcome}' (Tension Boost: +{boost})")
         print(f"Directive Generated:\n{directive}")
 
+    print("\n--- Testing Multi-Sensory Injection Engine (5D Atmospheric Immersion) ---")
+    sensory_dir = lorebook.get_sensory_directive(environment="bedroom", tension_meter=85.0)
+    print(f"Sensory Directive (Tension: 85.0/100):\n{sensory_dir}")
+
 
 if __name__ == "__main__":
     main()

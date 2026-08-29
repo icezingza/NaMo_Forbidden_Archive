@@ -106,6 +106,40 @@ class SlowBurnLorebook:
             )
         return (0.0, "")
 
+    @staticmethod
+    def get_sensory_directive(
+        environment: str = "bedroom",
+        tension_meter: float = 50.0,
+    ) -> str:
+        """Generate 5D multi-sensory atmospheric directive (temperature, sound, scent, touch)."""
+        temp_desc = (
+            "ไอความเย็นของแอร์สัมผัสผิวกายภายนอก ตัดกับความร้อนระอุใต้ชั้นผิวหนังที่เกร็งสั่น"
+            if tension_meter > 60.0
+            else "อุณหภูมิห้องแอร์เย็นฉ่ำ สัมผัสผิวกายผ่อนคลายแต่แฝงความตึงเครียด"
+        )
+        sound_desc = (
+            "เสียงลมหายใจติดขัดขาดห้วง เสียงผ้าเสียดสีสั่นไหวอย่างจงใจ และเสียงหัวใจที่เต้นระรัวในความเงียบ"
+            if tension_meter > 50.0
+            else "เสียงกระซิบต่ำแผ่วเบา เสียงลมหายใจสม่ำเสมอ และเสียงสัมผัสผิวกาย"
+        )
+        scent_desc = (
+            "กลิ่นกายอุ่น ๆ ผสมกลิ่นเหงื่อซึมบางเบาและกลิ่นน้ำหอมละมุนประจำตัวที่ลอยเตะจมูกเมื่อแนบชิด"
+        )
+        touch_desc = (
+            "สัมผัสปลายนิ้วสั่นสะท้านที่ลูบผ่านผิวหนังร้อน ความนุ่มยืดหยุ่นของเตียงนอน และจังหวะชีพจรที่เต้นตุบๆ"
+        )
+
+        directive = (
+            f"[MULTI-SENSORY ATMOSPHERIC DIRECTIVE | Environment: {environment.upper()}]\n"
+            "กฎการบรรยายประสาทสัมผัส 5 มิติ (Literary Realism):\n"
+            f"- 🌡️ อุณหภูมิ/เหงื่อ: {temp_desc}\n"
+            f"- 🔊 เสียงประกอบ: {sound_desc}\n"
+            f"- 🌸 กลิ่นกาย/บรรยากาศ: {scent_desc}\n"
+            f"- ✋ สัมผัส/แรงเสียดทาน: {touch_desc}\n"
+            "- ✨ ผสานรายละเอียดประสาทสัมผัสข้างต้นเข้าไปในการบรรยายการกระทำอย่างเป็นธรรมชาติ"
+        )
+        return directive
+
     def inject_context(
         self,
         user_input: str,
@@ -173,6 +207,7 @@ class SlowBurnLorebook:
             injected += "บริบทของท่าทางที่ระบบตรวจจับได้ (ปรับตามระดับ Tension):\n"
             for t in triggered_contents:
                 injected += f"- ({t['comment']}): {t['content']}\n"
+            injected += f"\n{self.get_sensory_directive(tension_meter=tension_meter)}\n"
             injected += "[END SYSTEM DIRECTIVE - นำแนวทางข้างต้นไปผสานกับการตอบกลับอย่างเป็นธรรมชาติ]\n"
             return injected
 

@@ -106,3 +106,13 @@ def test_slowburn_lorebook_emotional_residue():
     assert "AFTERCARE COMPLETED" in dir_ac
 
 
+def test_slowburn_lorebook_sensory_directive():
+    directive = SlowBurnLorebook.get_sensory_directive(environment="bedroom", tension_meter=80.0)
+    assert "MULTI-SENSORY ATMOSPHERIC DIRECTIVE" in directive
+    assert "BEDROOM" in directive
+    assert "🌡️" in directive
+    assert "🔊" in directive
+    assert "🌸" in directive
+    assert "✋" in directive
+
+
