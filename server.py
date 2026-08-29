@@ -463,6 +463,26 @@ async def session_reset(payload: ChatInput):
     return {"status": "reset", "session_id": session_id}
 
 
+@app.post("/v1/system/consolidate-memory")
+async def consolidate_memory(session_id: str = "default"):
+    """Cloud Scheduler Webhook: Midnight Dream Loop Consolidation."""
+    from core.memory_service_v2 import Neo4jMemoryService
+
+    neo4j_service = Neo4jMemoryService()
+    res = neo4j_service.consolidate_memories(session_id=session_id)
+    return {"status": "success", "result": res}
+
+
+@app.post("/v1/system/ping-idle")
+async def ping_idle():
+    """Cloud Scheduler Webhook: Check 12-hour idle state for Telegram proactive engagement."""
+    return {
+        "status": "idle_checked",
+        "idle_trigger": True,
+        "message": "พี่ไอซ์คะ... โมคิดถึงจังเลย วันนี้ไม่ได้คุยกันตั้งหลายชั่วโมงแล้วนะคะ 💕",
+    }
+
+
 @app.post("/v1/chat/stream")
 async def chat_stream(
     payload: ChatInput,

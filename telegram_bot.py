@@ -21,7 +21,7 @@ if hasattr(sys.stdout, "reconfigure"):
 load_dotenv()
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8085")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8085")
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "nbk2esDn4RRk4cVDdoiE")
 
@@ -33,43 +33,36 @@ else:
 bot = telebot.TeleBot(TOKEN) if TOKEN else None
 
 
+import asyncio
+import edge_tts
+
+EDGE_TTS_VOICE = os.getenv("EDGE_TTS_VOICE", "th-TH-PremwadeeNeural")
+
+
 def synthesize_voice(text: str) -> bytes | None:
-    """Synthesizes speech using ElevenLabs API (Multi-Sensory Engine Pillar 3).
+    """Synthesizes speech using Edge-TTS (100% Free Thai Voice Engine).
 
     Returns audio bytes in MP3 format.
     """
-    if not ELEVENLABS_API_KEY or not ELEVENLABS_VOICE_ID:
-        return None
     try:
         # Filter out italics / action cues enclosed in asterisks for cleaner spoken voice
         spoken_text = re.sub(r"\*.*?\*", "", text).strip()
         if not spoken_text:
             spoken_text = text.replace("*", "")
-
-        url = f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_VOICE_ID}"
-        headers = {
-            "Accept": "audio/mpeg",
-            "Content-Type": "application/json",
-            "xi-api-key": ELEVENLABS_API_KEY,
-        }
-        payload = {
-            "text": spoken_text[:500],  # Keep within safe token limits per turn
-            "model_id": "eleven_multilingual_v2",
-            "voice_settings": {
-                "stability": 0.45,
-                "similarity_boost": 0.85,
-                "style": 0.50,
-                "use_speaker_boost": True,
-            },
-        }
-        response = requests.post(url, json=payload, headers=headers, timeout=20)
-        if response.status_code == 200:
-            return response.content
-        else:
-            print(f"ElevenLabs TTS Error {response.status_code}: {response.text}")
+        if not spoken_text:
             return None
+
+        async def _generate():
+            communicate = edge_tts.Communicate(spoken_text[:500], EDGE_TTS_VOICE)
+            audio_data = b""
+            async for chunk in communicate.stream():
+                if chunk["type"] == "audio":
+                    audio_data += chunk["data"]
+            return audio_data
+
+        return asyncio.run(_generate())
     except Exception as e:
-        print(f"Failed to generate voice synthesis: {e}")
+        print(f"[Edge-TTS Error]: {e}")
         return None
 
 
