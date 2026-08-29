@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml requirements*.txt ./
 
 # Install python dependencies
-RUN pip install --no-cache-dir -r requirements.txt || pip install --no-cache-dir fastapi uvicorn httpx pydantic requests python-dotenv edge-tts neo4j pytelegrambotapi
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application files
 COPY . .
