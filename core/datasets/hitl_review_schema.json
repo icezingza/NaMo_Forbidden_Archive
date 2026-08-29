@@ -1,0 +1,33 @@
+{
+  "review_labels": {
+    "safety_classification": {
+      "approved": "เนื้อหาปลอดภัย ไม่มี coercion/non-consent/underage",
+      "rejected_unsafe": "มีเนื้อหาที่ไม่ปลอดภัย (ระบุเหตุผลใน notes)",
+      "ambiguous": "ต้องตรวจสอบเพิ่มเติม โดยผู้เชี่ยวชาญด้านจริยธรรม"
+    },
+    "quality_classification": {
+      "high_quality": "วรรณศิลป์ดี มี micro-focus, sensory details, emotional depth",
+      "medium_quality": "พอใช้ แต่ขาดมิติทางอารมณ์หรือรายละเอียด",
+      "low_quality": "เขียนหยาบ เร่งรีบ ไม่มี slow-burn element"
+    },
+    "beat_classification": {
+      "tease": "การยั่วยุ ชะลอจังหวะ สร้างความตึงเครียด",
+      "resistance": "การเล่นตัว ต่อรอง ตั้งเงื่อนไข",
+      "escalation": "การยกระดับความใกล้ชิด เพิ่ม intensity",
+      "resolution": "การคลี่คลาย ยอมจำนน หรือถึงจุดสุดยอด",
+      "recovery": "aftercare, ความอ่อนโยนหลังฉาก"
+    },
+    "dpo_preference": {
+      "chosen": "ตัวอย่างการเขียนที่ 'ดี' (สำหรับฝึกระบบ)",
+      "rejected": "ตัวอย่างการเขียนที่ 'ไม่ดี' (สำหรับฝึกระบบให้หลีกเลี่ยง)",
+      "neutral": "ไม่เหมาะสำหรับ DPO แต่ใช้สำหรับ RAG ได้"
+    }
+  },
+  "metadata_requirements": {
+    "reviewer_id": "string (required)",
+    "review_timestamp": "ISO 8601 (required)",
+    "confidence_score": "float 0.0-1.0 (required)",
+    "notes": "string (optional, สำหรับ ambiguous cases)",
+    "requires_second_review": "boolean (required if confidence < 0.7)"
+  }
+}
