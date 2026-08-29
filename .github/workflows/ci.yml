@@ -12,6 +12,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Require Docker Hub credentials for main publishing
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+        run: |
+          test -n "$DOCKER_HUB_USERNAME" || { echo "DOCKER_HUB_USERNAME is required for main publishing" >&2; exit 1; }
+          test -n "$DOCKER_HUB_TOKEN" || { echo "DOCKER_HUB_TOKEN is required for main publishing" >&2; exit 1; }
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -38,6 +47,7 @@ jobs:
         with:
           files: ./coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
 
   validate-compose:
     runs-on: ubuntu-latest
@@ -255,7 +265,3 @@ jobs:
           command: cves
           image: ${{ env.DOCKER_HUB_USERNAME }}/namo-api:${{ github.sha }}
           only-severities: critical
-
-      - name: Skip Docker Hub publish without credentials
-        if: env.DOCKER_HUB_USERNAME == '' || env.DOCKER_HUB_TOKEN == ''
-        run: echo "Docker Hub credentials are not configured; publish skipped."

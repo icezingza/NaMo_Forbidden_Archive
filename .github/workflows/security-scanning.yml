@@ -1,8 +1,6 @@
 name: Docker Image Security & Signing
 
 on:
-  push:
-    branches: [main]
   workflow_run:
     workflows: ["NaMo ACC CI Pipeline"]
     types: [completed]
@@ -11,7 +9,7 @@ on:
 jobs:
   sign-and-attest:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'
     env:
       DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
       DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
@@ -19,8 +17,16 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      packages: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Require Docker Hub credentials
+        run: |
+          test -n "$DOCKER_HUB_USERNAME" || { echo "DOCKER_HUB_USERNAME is required" >&2; exit 1; }
+          test -n "$DOCKER_HUB_TOKEN" || { echo "DOCKER_HUB_TOKEN is required" >&2; exit 1; }
 
       - name: Set up Cosign
         uses: sigstore/cosign-installer@v3
@@ -28,53 +34,53 @@ jobs:
           cosign-release: 'v2.2.0'
 
       - name: Log in to Docker Hub
-        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
         uses: docker/login-action@v3
         with:
           username: ${{ env.DOCKER_HUB_USERNAME }}
           password: ${{ env.DOCKER_HUB_TOKEN }}
 
       - name: Sign API image with Cosign (keyless)
-        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
         run: |
           cosign sign --yes \
-            ${{ env.DOCKER_HUB_USERNAME }}/namo-api:${{ github.sha }}
-        continue-on-error: true
+            ${{ env.DOCKER_HUB_USERNAME }}/namo-api:${{ github.event.workflow_run.head_sha }}
 
       - name: Sign Memory image with Cosign (keyless)
-        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
         run: |
           cosign sign --yes \
-            ${{ env.DOCKER_HUB_USERNAME }}/namo-memory:${{ github.sha }}
-        continue-on-error: true
+            ${{ env.DOCKER_HUB_USERNAME }}/namo-memory:${{ github.event.workflow_run.head_sha }}
 
       - name: Generate attestation for API image
-        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
         run: |
           cosign attest --yes \
             --predicate <(echo '{"buildConfig":"NaMo-CI","timestamp":"'$(date -u +'%Y-%m-%dT%H:%M:%SZ')'"}') \
-            ${{ env.DOCKER_HUB_USERNAME }}/namo-api:${{ github.sha }}
-        continue-on-error: true
+            ${{ env.DOCKER_HUB_USERNAME }}/namo-api:${{ github.event.workflow_run.head_sha }}
 
       - name: Generate attestation for Memory image
-        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
         run: |
           cosign attest --yes \
             --predicate <(echo '{"buildConfig":"NaMo-CI","timestamp":"'$(date -u +'%Y-%m-%dT%H:%M:%SZ')'"}') \
-            ${{ env.DOCKER_HUB_USERNAME }}/namo-memory:${{ github.sha }}
-        continue-on-error: true
+            ${{ env.DOCKER_HUB_USERNAME }}/namo-memory:${{ github.event.workflow_run.head_sha }}
 
   deploy-security-report:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'
     env:
       DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
       DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+    permissions:
+      contents: read
+      security-events: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Require Docker Hub credentials
+        run: |
+          test -n "$DOCKER_HUB_USERNAME" || { echo "DOCKER_HUB_USERNAME is required" >&2; exit 1; }
+          test -n "$DOCKER_HUB_TOKEN" || { echo "DOCKER_HUB_TOKEN is required" >&2; exit 1; }
 
       - name: Log in to Docker Hub
-        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
         uses: docker/login-action@v3
         with:
           username: ${{ env.DOCKER_HUB_USERNAME }}
@@ -82,36 +88,28 @@ jobs:
 
       - name: Generate comprehensive Scout report (API)
         uses: docker/scout-action@v1
-        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
-        continue-on-error: true
         with:
           command: cves
-          image: ${{ env.DOCKER_HUB_USERNAME }}/namo-api:${{ github.sha }}
+          image: ${{ env.DOCKER_HUB_USERNAME }}/namo-api:${{ github.event.workflow_run.head_sha }}
           format: sarif
           output: scout-report-api.sarif
 
       - name: Generate comprehensive Scout report (Memory)
         uses: docker/scout-action@v1
-        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
-        continue-on-error: true
         with:
           command: cves
-          image: ${{ env.DOCKER_HUB_USERNAME }}/namo-memory:${{ github.sha }}
+          image: ${{ env.DOCKER_HUB_USERNAME }}/namo-memory:${{ github.event.workflow_run.head_sha }}
           format: sarif
           output: scout-report-memory.sarif
 
       - name: Upload API Scout SARIF report to GitHub Security tab
-        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: scout-report-api.sarif
           category: Docker Scout API Security Report
-        continue-on-error: true
 
       - name: Upload Memory Scout SARIF report to GitHub Security tab
-        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: scout-report-memory.sarif
           category: Docker Scout Memory Security Report
-        continue-on-error: true
