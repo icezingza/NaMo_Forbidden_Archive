@@ -12,6 +12,7 @@ from core.context_allocator import AllocatorConfig, ContextAllocator
 from core.intent_analyzer import IntentAnalyzer
 from core.model_router import ModelRouter, OpenAICompatibleProvider
 from core.relationship_engine import RelationshipEngine
+from core.slowburn_lorebook import SlowBurnLorebook
 from core.state_ledger import SessionState, StateConflictError, StateLedger, StateLedgerError
 from core.token_counter import build_model_token_counter
 
@@ -139,6 +140,7 @@ class NaMoOmegaEngine(BasePersonaEngine):
         self.tts = TTSAdapter()
         self.emotions = EmotionState()
         self.intent_analyzer = IntentAnalyzer()
+        self.lorebook = SlowBurnLorebook()
 
         self._session_states: dict[str, dict] = {}
         self.session_history: dict[str, list[dict[str, str]]] = {}
@@ -321,6 +323,11 @@ class NaMoOmegaEngine(BasePersonaEngine):
         cognitive = getattr(self, "cognitive", None)
         if cognitive is not None and cog_output is not None:
             system_blocks.append(cognitive.build_context_block(cog_output))
+
+        history_text = " ".join(h["content"] for h in self._get_history(session_id)[-4:])
+        lorebook_ctx = self.lorebook.inject_context(user_input, ai_history=history_text)
+        if lorebook_ctx:
+            system_blocks.append(lorebook_ctx)
 
         rag_ctx = None
         if self.rag_memory and intent in _MEMORY_INTENTS:
@@ -511,6 +518,11 @@ class NaMoOmegaEngine(BasePersonaEngine):
         cognitive = getattr(self, "cognitive", None)
         if cognitive is not None and cog_output is not None:
             system_blocks.append(cognitive.build_context_block(cog_output))
+
+        history_text = " ".join(h["content"] for h in self._get_history(session_id)[-4:])
+        lorebook_ctx = self.lorebook.inject_context(user_input, ai_history=history_text)
+        if lorebook_ctx:
+            system_blocks.append(lorebook_ctx)
 
         rag_ctx = None
         if self.rag_memory and intent in _MEMORY_INTENTS:

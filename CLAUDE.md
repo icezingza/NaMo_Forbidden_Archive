@@ -32,18 +32,22 @@ Do not introduce:
 ## Architecture
 
 ```
-core/                  → pure Python engines (no heavy IO)
+core/                  → pure Python engines + cognitive stack (no heavy IO)
+  ├── control_room/    → VPS Control Room subsystem (registry, router, backup, auditor, scheduler, analyzer)
+  ├── lorebooks/       → SillyTavern lorebook JSON files (Sex_Positions_Kinks_SlowBurn_TH_v10.json)
+  ├── prompts/         → base persona system prompts (slowburn_thai_system.txt)
+  └── slowburn_lorebook.py → dynamic lorebook keyword matching & hidden directive injector
 adapters/              → thin wrappers for all external IO
 Core_Scripts/          → experimental/auxiliary scripts (not imported by server.py)
-tests/                 → pytest suite (24 files, 336+ tests; async tests via pytest-asyncio)
+tests/                 → pytest suite (async tests via pytest-asyncio)
 docs/                  → API and architecture specs
-web/                   → static frontend (served at /ui by server.py)
+web/                   → static frontend & Control Room UI (served at /ui by server.py)
 Audio_Layers/          → static audio assets  → served at /media/audio
 Visual_Scenes/         → static image assets  → served at /media/visual
 learning_set/          → input ZIPs for FAISS knowledge base
-tools/                 → one-off utility scripts (not part of the app)
+tools/                 → one-off utility scripts & vps_control CLI
 emotion_fusion_engine/ → standalone multi-modal emotion analysis service
-Archived_Assets/       → archived legacy files + refactor/experimental "improved" templates (not imported)
+Archived_Assets/       → archived legacy files + refactor/experimental templates
 Documentation/         → legacy documentation
 ```
 
