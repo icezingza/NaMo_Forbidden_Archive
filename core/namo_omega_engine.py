@@ -333,10 +333,12 @@ class NaMoOmegaEngine(BasePersonaEngine):
             tension_meter = (emo_ar * 100.0 if emo_ar <= 1.0 else emo_ar) + tension_boost
         tension_meter = min(100.0, max(0.0, tension_meter))
 
+        denial_counter = self._resolve_denial_counter(user_input, state)
         lorebook_ctx = self.lorebook.inject_context(
             user_input,
             ai_history=history_text,
             tension_meter=tension_meter,
+            denial_counter=denial_counter,
         )
         if lorebook_ctx:
             system_blocks.append(lorebook_ctx)
@@ -454,6 +456,18 @@ class NaMoOmegaEngine(BasePersonaEngine):
 
         return tension_boost
 
+    def _resolve_denial_counter(self, user_input: str, state: dict) -> int:
+        current = int(state.get("denial_counter", 0))
+        if self.lorebook.detect_rushed_input(user_input):
+            if current < 2:
+                next_count = current + 1
+                state["denial_counter"] = next_count
+                return current
+            else:
+                state["denial_counter"] = 0
+                return 2
+        return current
+
     def _build_status_context(self, state: dict) -> str:
         return (
             f"System status: sin={state['sin_system'].get_status()} | arousal={state['arousal']}%"
@@ -568,10 +582,12 @@ class NaMoOmegaEngine(BasePersonaEngine):
             tension_meter = (emo_ar * 100.0 if emo_ar <= 1.0 else emo_ar) + tension_boost
         tension_meter = min(100.0, max(0.0, tension_meter))
 
+        denial_counter = self._resolve_denial_counter(user_input, state)
         lorebook_ctx = self.lorebook.inject_context(
             user_input,
             ai_history=history_text,
             tension_meter=tension_meter,
+            denial_counter=denial_counter,
         )
         if lorebook_ctx:
             system_blocks.append(lorebook_ctx)

@@ -136,15 +136,41 @@ class SlowBurnLorebook:
             f"- 🔊 เสียงประกอบ: {sound_desc}\n"
             f"- 🌸 กลิ่นกาย/บรรยากาศ: {scent_desc}\n"
             f"- ✋ สัมผัส/แรงเสียดทาน: {touch_desc}\n"
-            "- ✨ ผสานรายละเอียดประสาทสัมผัสข้างต้นเข้าไปในการบรรยายการกระทำอย่างเป็นธรรมชาติ"
+            "- ✨ ผสานรายละเอียดประสาทสัมผัสข้างต้นเข้าไปในการบรรยายการกระทำอย่างเป็นธรรมชาติ\n"
         )
         return directive
+    @staticmethod
+    def detect_rushed_input(text: str) -> bool:
+        """Detect rushed or urgent commands in user input."""
+        text_lower = text.lower()
+        rushed_keywords = ["เอาเลย", "เร็วๆ", "เร็ว ๆ", "ด่วน", "เดี๋ยวนี้", "ทำเลย", "ยัดเข้ามา", "รีบ"]
+        return any(kw in text_lower for kw in rushed_keywords)
+
+    @staticmethod
+    def get_push_pull_directive(denial_counter: int) -> tuple[str, bool]:
+        """Return (directive_text, should_block_actions) for Push-Pull teasing mechanic."""
+        if denial_counter < 2:
+            directive = (
+                f"[PUSH-PULL DENIAL DIRECTIVE | Denial Turn: {denial_counter + 1}/2]\n"
+                "กฎ: ปฏิเสธหรือชะลอการกระทำทางกายอย่างมีชั้นเชิง ห้ามทำตามคำขอเร่งรีบในทันที\n"
+                "บริบทการเย้าหยอก: เธอจับมือคุณไว้เบา ๆ ยิ้มมุมปากอย่างมีชั้นเชิง สายตามีเสน่ห์เย้ายวนแล้วกระซิบเสียงต่ำแผ่วเบาว่า '...ใจร้อนแบบนี้ไม่ได้หรอกนะ... อยากได้ขนาดนั้นเลยเหรอ'\n"
+                "คำสั่ง: บรรยายการชะลอจังหวะ การสบตา และการแกล้งเย้าหยอกก่อนยิงบทกระทำจริง"
+            )
+            return directive, True
+        else:
+            directive = (
+                "[PUSH-PULL YIELD DIRECTIVE | Denial Resolved]\n"
+                "กฎ: ยอมทำตามคำขอหลังจากชะลอจังหวะมาแล้ว 2 ครั้ง\n"
+                "บริบทการยอมทำตาม: เธอถอนหายใจยาว สายตาอ่อนลงด้วยความพ่ายแพ้ต่อความต้องการ และยอมทำตามอย่างหวานซึม..."
+            )
+            return directive, False
 
     def inject_context(
         self,
         user_input: str,
         ai_history: str = "",
         tension_meter: float = 50.0,
+        denial_counter: int = 0,
     ) -> str:
         """Scan input and history for keywords and return structured hidden directive context.
 
@@ -152,61 +178,76 @@ class SlowBurnLorebook:
             user_input: Current turn user message.
             ai_history: Concatenated conversation history.
             tension_meter: Tension / Arousal intensity score (0.0 to 100.0).
+            denial_counter: Number of times user rushed commands have been denied (0-2).
         """
         if not self.entries:
             return ""
 
         text_to_scan = f"{user_input} {ai_history}".lower()
         tension_level = self.resolve_tension_level(tension_meter)
+        is_rushed = self.detect_rushed_input(user_input)
+        push_pull_dir, block_actions = (
+            self.get_push_pull_directive(denial_counter)
+            if is_rushed
+            else ("", False)
+        )
+
         triggered_contents: list[dict[str, Any]] = []
 
-        for entry in self.entries:
-            if not entry.get("enabled", True):
-                continue
+        if not block_actions:
+            for entry in self.entries:
+                if not entry.get("enabled", True):
+                    continue
 
-            primary_keys = entry.get("key", [])
-            secondary_keys = entry.get("keysecondary", [])
+                primary_keys = entry.get("key", [])
+                secondary_keys = entry.get("keysecondary", [])
 
-            # Check primary key match
-            matched_pk = [
-                pk for pk in primary_keys
-                if str(pk).strip() and str(pk).lower() in text_to_scan
-            ]
-            primary_match = len(matched_pk) > 0
+                # Check primary key match
+                matched_pk = [
+                    pk for pk in primary_keys
+                    if str(pk).strip() and str(pk).lower() in text_to_scan
+                ]
+                primary_match = len(matched_pk) > 0
 
-            # Check secondary key match
-            secondary_match = True
-            if secondary_keys:
-                has_sk_match = any(
-                    str(sk).lower() in text_to_scan for sk in secondary_keys if str(sk).strip()
-                )
-                has_specific_pk = any(
-                    any(ord(c) > 127 for c in str(pk)) or len(str(pk)) > 3
-                    for pk in matched_pk
-                )
-                secondary_match = has_sk_match or has_specific_pk
+                # Check secondary key match
+                secondary_match = True
+                if secondary_keys:
+                    has_sk_match = any(
+                        str(sk).lower() in text_to_scan for sk in secondary_keys if str(sk).strip()
+                    )
+                    has_specific_pk = any(
+                        any(ord(c) > 127 for c in str(pk)) or len(str(pk)) > 3
+                        for pk in matched_pk
+                    )
+                    secondary_match = has_sk_match or has_specific_pk
 
-            if primary_match and secondary_match:
-                # Dynamic Tension Content Resolution
-                tension_dict = entry.get("tension_levels")
-                if isinstance(tension_dict, dict) and tension_level in tension_dict:
-                    selected_content = tension_dict[tension_level]
-                else:
-                    selected_content = entry.get("content", "")
+                if primary_match and secondary_match:
+                    # Dynamic Tension Content Resolution
+                    tension_dict = entry.get("tension_levels")
+                    if isinstance(tension_dict, dict) and tension_level in tension_dict:
+                        selected_content = tension_dict[tension_level]
+                    else:
+                        selected_content = entry.get("content", "")
 
-                triggered_contents.append({
-                    "order": entry.get("insertion_order", 100),
-                    "comment": entry.get("comment", ""),
-                    "content": selected_content,
-                })
+                    triggered_contents.append({
+                        "order": entry.get("insertion_order", 100),
+                        "comment": entry.get("comment", ""),
+                        "content": selected_content,
+                    })
 
-        if triggered_contents:
+        if triggered_contents or push_pull_dir:
             injected = f"\n\n[SYSTEM DIRECTIVE: Slow-Burn Lorebook Triggered | Tension Meter: {tension_meter:.1f}/100 - Level: {tension_level.upper()}]\n"
             injected += "กฎ: ห้ามกระทำทันที ให้บรรยายความตึงเครียด สายตา ลมหายใจ และการลังเล (90% Tension / 10% Action)\n"
             injected += f"ระดับอารมณ์ตึงเครียดปัจจุบัน: {tension_level.upper()} ({tension_meter:.1f}/100)\n"
-            injected += "บริบทของท่าทางที่ระบบตรวจจับได้ (ปรับตามระดับ Tension):\n"
-            for t in triggered_contents:
-                injected += f"- ({t['comment']}): {t['content']}\n"
+
+            if push_pull_dir:
+                injected += f"\n{push_pull_dir}\n"
+
+            if triggered_contents:
+                injected += "บริบทของท่าทางที่ระบบตรวจจับได้ (ปรับตามระดับ Tension):\n"
+                for t in triggered_contents:
+                    injected += f"- ({t['comment']}): {t['content']}\n"
+
             injected += f"\n{self.get_sensory_directive(tension_meter=tension_meter)}\n"
             injected += "[END SYSTEM DIRECTIVE - นำแนวทางข้างต้นไปผสานกับการตอบกลับอย่างเป็นธรรมชาติ]\n"
             return injected

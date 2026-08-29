@@ -51,6 +51,13 @@ def main() -> None:
     sensory_dir = lorebook.get_sensory_directive(environment="bedroom", tension_meter=85.0)
     print(f"Sensory Directive (Tension: 85.0/100):\n{sensory_dir}")
 
+    print("\n--- Testing 'Push-Pull' Denial Teasing Mechanic ---")
+    rushed_prompt = "เอาเลย ด่วนๆ ยัดเข้ามาใน ท่าหมา เลย"
+    for turn_denial_count in [0, 1, 2]:
+        print(f"\nTurn {turn_denial_count + 1} Rushed Input (Denial Counter: {turn_denial_count}): '{rushed_prompt}'")
+        injected = lorebook.inject_context(rushed_prompt, tension_meter=75.0, denial_counter=turn_denial_count)
+        print(f"Injected Directive:\n{injected}")
+
 
 if __name__ == "__main__":
     main()

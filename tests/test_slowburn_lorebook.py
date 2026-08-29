@@ -116,3 +116,25 @@ def test_slowburn_lorebook_sensory_directive():
     assert "✋" in directive
 
 
+def test_slowburn_lorebook_push_pull_denial():
+    is_rushed = SlowBurnLorebook.detect_rushed_input("เอาเลย ด่วนๆ ยัดเข้ามาใน ท่าหมา เลย")
+    assert is_rushed is True
+
+    # Turn 1: denial_counter = 0 -> Action blocked, denial injected
+    dir_t1, block_t1 = SlowBurnLorebook.get_push_pull_directive(0)
+    assert block_t1 is True
+    assert "PUSH-PULL DENIAL DIRECTIVE" in dir_t1
+    assert "Denial Turn: 1/2" in dir_t1
+
+    # Turn 2: denial_counter = 1 -> Action blocked, denial injected
+    dir_t2, block_t2 = SlowBurnLorebook.get_push_pull_directive(1)
+    assert block_t2 is True
+    assert "Denial Turn: 2/2" in dir_t2
+
+    # Turn 3: denial_counter = 2 -> Action allowed, yield injected
+    dir_t3, block_t3 = SlowBurnLorebook.get_push_pull_directive(2)
+    assert block_t3 is False
+    assert "PUSH-PULL YIELD DIRECTIVE" in dir_t3
+
+
+
