@@ -21,8 +21,8 @@ client = OpenAI()
 extract_dir = os.path.join(VECTOR_DIR, "extracted")
 os.makedirs(extract_dir, exist_ok=True)
 
-CHUNK_SIZE = 800
-CHUNK_OVERLAP = 200
+CHUNK_SIZE 150
+CHUNK_OVERLAP = 20
 
 if not os.path.exists(ZIP_PATH):
     print("⚠️ กรุณาวางไฟล์ set.zip ใน learning_set ก่อนรันสคริปต์นี้")
