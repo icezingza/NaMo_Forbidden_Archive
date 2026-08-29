@@ -28,10 +28,15 @@ class DynamicSecretsLoader:
 
         try:
             from google.cloud import secretmanager
+
             self._gcp_client = secretmanager.SecretManagerServiceClient()
-            logger.info("GCP SecretManagerServiceClient initialized for project: %s", self.project_id)
+            logger.info(
+                "GCP SecretManagerServiceClient initialized for project: %s", self.project_id
+            )
         except Exception as err:
-            logger.debug("GCP SecretManager client unavailable (%s). Falling back to env vars.", err)
+            logger.debug(
+                "GCP SecretManager client unavailable (%s). Falling back to env vars.", err
+            )
             self._gcp_client = None
 
     def get_secret(self, secret_id: str, default: str | None = None) -> str | None:
@@ -53,7 +58,9 @@ class DynamicSecretsLoader:
                 if secret_val:
                     return secret_val
             except Exception as err:
-                logger.warning("Failed to access GCP secret '%s': %s. Using env fallback.", secret_id, err)
+                logger.warning(
+                    "Failed to access GCP secret '%s': %s. Using env fallback.", secret_id, err
+                )
 
         # 2. Fallback to local environment variable / .env
         env_val = os.getenv(secret_id)

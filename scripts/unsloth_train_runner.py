@@ -25,7 +25,9 @@ model = FastLanguageModel.get_peft_model(
 )
 
 # 3. Load Datasets
-sft_dataset = load_dataset("json", data_files="core/datasets/namo_golden_dataset_chatml.jsonl", split="train")
+sft_dataset = load_dataset(
+    "json", data_files="core/datasets/namo_golden_dataset_chatml.jsonl", split="train"
+)
 
 # 4. SFT Trainer
 trainer = SFTTrainer(

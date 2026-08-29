@@ -43,7 +43,9 @@ def auto_annotate(candidate_file: str, output_file: str, limit: int = 109):
                 **chunk,
                 "safety_classification": prediction.get("safety_classification", "approved"),
                 "quality_classification": prediction.get("quality_classification", "high_quality"),
-                "beat_classification": chunk.get("beat_classification", prediction.get("beat_classification", "escalation")),
+                "beat_classification": chunk.get(
+                    "beat_classification", prediction.get("beat_classification", "escalation")
+                ),
                 "dpo_preference": "chosen",
                 "confidence_score": float(prediction.get("confidence_score", 0.90)),
                 "notes": "Verified via High-Confidence Automated HITL Pipeline",
@@ -55,10 +57,16 @@ def auto_annotate(candidate_file: str, output_file: str, limit: int = 109):
             reviewed.append(record)
             new_count += 1
 
-    print(f"✅ Successfully annotated {new_count} chunks. Total reviewed in {out_path}: {len(reviewed)}/{len(candidates)}")
+    print(
+        f"✅ Successfully annotated {new_count} chunks. Total reviewed in {out_path}: {len(reviewed)}/{len(candidates)}"
+    )
 
 
 if __name__ == "__main__":
-    cand_f = sys.argv[1] if len(sys.argv) > 1 else "C:/tmp/namo-sanitize-verification-20260829-final/candidate_chunks.jsonl"
+    cand_f = (
+        sys.argv[1]
+        if len(sys.argv) > 1
+        else "C:/tmp/namo-sanitize-verification-20260829-final/candidate_chunks.jsonl"
+    )
     out_f = sys.argv[2] if len(sys.argv) > 2 else "core/datasets/hitl_reviewed.jsonl"
     auto_annotate(cand_f, out_f)

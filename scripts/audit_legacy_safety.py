@@ -24,7 +24,12 @@ def audit_repo(root_dir: str = ".") -> list[dict]:
     violations = []
     root = Path(root_dir)
     for path in root.rglob("*.py"):
-        if "test_" in path.name or "audit_legacy_safety" in path.name or "__pycache__" in str(path) or ".venv" in str(path):
+        if (
+            "test_" in path.name
+            or "audit_legacy_safety" in path.name
+            or "__pycache__" in str(path)
+            or ".venv" in str(path)
+        ):
             continue
         try:
             content = path.read_text(encoding="utf-8", errors="ignore")
@@ -59,7 +64,9 @@ def main():
     else:
         print(f"🚨 Found {len(results)} potential safety violations:\n")
         for v in results:
-            print(f"  📍 {v['file']}:{v['line']} — [{v['pattern']}]\n     Context: {v['context']}\n")
+            print(
+                f"  📍 {v['file']}:{v['line']} — [{v['pattern']}]\n     Context: {v['context']}\n"
+            )
     print("=" * 70)
 
 

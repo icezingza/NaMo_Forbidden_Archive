@@ -6,6 +6,7 @@ from pathlib import Path
 # Add root directory to sys.path
 sys.path.insert(0, os.path.abspath("."))
 
+
 def test_slow_burn_framework():
     print("=" * 60)
     print("  SLOW-BURN THAI EROTIC FRAMEWORK - INTEGRATION TEST")
@@ -30,7 +31,16 @@ def test_slow_burn_framework():
     print(f"✓ [Lorebook Check]: Successfully loaded {len(entries)} lorebook entries.")
 
     # Test key trigger lookup
-    triggers = ["titjob", "blowjob", "doggy", "cowgirl", "dirty talk", "aftercare", "เย็ดนม", "อมควย"]
+    triggers = [
+        "titjob",
+        "blowjob",
+        "doggy",
+        "cowgirl",
+        "dirty talk",
+        "aftercare",
+        "เย็ดนม",
+        "อมควย",
+    ]
     matched_count = 0
     print("\n--- Testing Keyword Trigger Matching ---")
     for trigger in triggers:
@@ -58,7 +68,7 @@ def test_slow_burn_framework():
     test_queries = [
         "ลองคุยเสียวหน่อยสิคนดี",
         "เธอหิวรึยัง มาอมควยให้หน่อย",
-        "นอนลงช้าๆ แล้วทำให้ดูหน่อย"
+        "นอนลงช้าๆ แล้วทำให้ดูหน่อย",
     ]
 
     for q in test_queries:
@@ -71,6 +81,7 @@ def test_slow_burn_framework():
     print("\n" + "=" * 60)
     print("  ALL SLOW-BURN INTEGRATION TESTS PASSED (100% SUCCESS)!")
     print("=" * 60)
+
 
 if __name__ == "__main__":
     test_slow_burn_framework()

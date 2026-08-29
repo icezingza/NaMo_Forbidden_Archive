@@ -167,7 +167,6 @@ def get_control_room_page():
     return FileResponse("web/control_room.html")
 
 
-
 # ---------------------------------------------------------------------------
 # Engine Registry — lazy-loads persona engines on first request
 # ---------------------------------------------------------------------------
@@ -628,6 +627,7 @@ def health_check():
 @app.get("/v1/datasets/stats")
 def dataset_stats():
     """Return live dataset counts and pipeline metrics."""
+
     def count_jsonl(path_str: str) -> int:
         p = Path(path_str)
         if not p.exists():
@@ -794,4 +794,3 @@ def root():
         "available_engines": _EngineRegistry.available(),
         "control_room": "active",
     }
-

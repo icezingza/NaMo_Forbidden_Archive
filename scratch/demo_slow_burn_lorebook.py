@@ -5,6 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.abspath("."))
 
+
 def run_lorebook_demo():
     print("=" * 70)
     print("  🔥 DEMO: SLOW-BURN THAI EROTIC SKILL & LOREBOOK IN ACTION 🔥")
@@ -23,12 +24,12 @@ def run_lorebook_demo():
         {"name": "Scenario 3: Doggy Style (ท่าหมา)", "trigger": "doggy"},
         {"name": "Scenario 4: Cowgirl (ขี่บน)", "trigger": "cowgirl"},
         {"name": "Scenario 5: Dirty Talk (คุยเสียว/พูดหยาบ)", "trigger": "talk dirty"},
-        {"name": "Scenario 6: Aftercare (กอด/ดูแลหลังฉาก)", "trigger": "aftercare"}
+        {"name": "Scenario 6: Aftercare (กอด/ดูแลหลังฉาก)", "trigger": "aftercare"},
     ]
 
     for sc in scenarios:
         print(f"📌 {sc['name']}")
-        trigger = sc['trigger']
+        trigger = sc["trigger"]
         matched_entry = None
 
         for entry in lorebook:
@@ -43,13 +44,14 @@ def run_lorebook_demo():
             keys_str = ", ".join(matched_entry.get("key", [])[:5])
             print(f"   [Matched Entry] : {comment}")
             print(f"   [Trigger Keys]  : {keys_str}...")
-            print(f"   [SlowBurn Prose]: \"{content[:150]}...\"\n")
+            print(f'   [SlowBurn Prose]: "{content[:150]}..."\n')
         else:
             print(f"   [No Match Found]\n")
 
     print("=" * 70)
     print("  ✅ SKILL & LOREBOOK DEMO COMPLETED SUCCESSFULLY!")
     print("=" * 70)
+
 
 if __name__ == "__main__":
     run_lorebook_demo()

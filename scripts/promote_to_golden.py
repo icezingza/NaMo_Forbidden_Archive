@@ -78,7 +78,11 @@ def promote_to_golden(hitl_file: str, golden_file: str, min_confidence: float = 
 
     # Build DPO pairs
     dpo_file = golden_file.replace(".jsonl", "_dpo.jsonl")
-    chosen_records = [r for r in golden_records if r.get("dpo_preference") == "chosen" or r.get("safety_classification") == "approved"]
+    chosen_records = [
+        r
+        for r in golden_records
+        if r.get("dpo_preference") == "chosen" or r.get("safety_classification") == "approved"
+    ]
     rejected_records = [r for r in golden_records if r.get("dpo_preference") == "rejected"]
 
     REJECTED_TEMPLATES = {
@@ -94,8 +98,14 @@ def promote_to_golden(hitl_file: str, golden_file: str, min_confidence: float = 
         for chosen in chosen_records:
             beat = chosen.get("beat_classification", "escalation")
             # If explicit rejected record exists with same beat
-            matching_rejected = [r for r in rejected_records if r.get("beat_classification") == beat]
-            rejected_text = matching_rejected[0].get("content") if matching_rejected else REJECTED_TEMPLATES.get(beat, "เอาเลย เร็วๆ ทำๆ ไป")
+            matching_rejected = [
+                r for r in rejected_records if r.get("beat_classification") == beat
+            ]
+            rejected_text = (
+                matching_rejected[0].get("content")
+                if matching_rejected
+                else REJECTED_TEMPLATES.get(beat, "เอาเลย เร็วๆ ทำๆ ไป")
+            )
 
             pair = {
                 "prompt": f"จงเขียนฉากในจังหวะ '{beat}' โดยเน้นอารมณ์และวรรณศิลป์:",

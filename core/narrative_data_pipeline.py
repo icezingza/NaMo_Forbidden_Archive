@@ -147,7 +147,11 @@ class NarrativeDataSanitizer:
                     unique_records.append(record)
             if len(unique_records) != len(file_records):
                 audit = ProvenanceRecord(
-                    **{**asdict(audit), "reason_codes": [*audit.reason_codes, "DUPLICATE_CHUNK_REMOVED"], "chunk_count": len(unique_records)}
+                    **{
+                        **asdict(audit),
+                        "reason_codes": [*audit.reason_codes, "DUPLICATE_CHUNK_REMOVED"],
+                        "chunk_count": len(unique_records),
+                    }
                 )
             records.extend(unique_records)
             provenance.append(audit)

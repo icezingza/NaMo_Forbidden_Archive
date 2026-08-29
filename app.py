@@ -91,7 +91,9 @@ def main_loop():
             user_input = input("You: ")
 
             if user_input.lower() in ["exit", "quit", "ออก"]:
-                logger.info("[app.py] Deactivating Metaphysical Core. Mōriko is returning to the Void.")
+                logger.info(
+                    "[app.py] Deactivating Metaphysical Core. Mōriko is returning to the Void."
+                )
                 break
 
             # 3. ส่งข้อมูลไปยัง "มันสมอง" (The Brain)

@@ -26,7 +26,9 @@ class SlowBurnLorebook:
         system_prompt_path: str | Path | None = None,
     ) -> None:
         self.json_path = Path(json_path) if json_path else DEFAULT_LOREBOOK_PATH
-        self.system_prompt_path = Path(system_prompt_path) if system_prompt_path else DEFAULT_PROMPT_PATH
+        self.system_prompt_path = (
+            Path(system_prompt_path) if system_prompt_path else DEFAULT_PROMPT_PATH
+        )
         self.entries: list[dict[str, Any]] = []
 
         if self.json_path.exists():
@@ -75,7 +77,9 @@ class SlowBurnLorebook:
     def detect_scene_outcome(text: str) -> str | None:
         """Scan input text for scene termination and aftercare/edging indicators."""
         text_lower = text.lower()
-        if any(kw in text_lower for kw in ["กลั้น", "ยังไม่ให้", "ทนไว้", "edging", "ค้าง", "ทรมาน"]):
+        if any(
+            kw in text_lower for kw in ["กลั้น", "ยังไม่ให้", "ทนไว้", "edging", "ค้าง", "ทรมาน"]
+        ):
             return "edging_unfulfilled"
         elif any(kw in text_lower for kw in ["ขอกอด", "กอด", "aftercare", "นอนกอด", "พักผ่อน"]):
             return "aftercare_completed"
@@ -122,12 +126,8 @@ class SlowBurnLorebook:
             if tension_meter > 50.0
             else "เสียงกระซิบต่ำแผ่วเบา เสียงลมหายใจสม่ำเสมอ และเสียงสัมผัสผิวกาย"
         )
-        scent_desc = (
-            "กลิ่นกายอุ่น ๆ ผสมกลิ่นเหงื่อซึมบางเบาและกลิ่นน้ำหอมละมุนประจำตัวที่ลอยเตะจมูกเมื่อแนบชิด"
-        )
-        touch_desc = (
-            "สัมผัสปลายนิ้วสั่นสะท้านที่ลูบผ่านผิวหนังร้อน ความนุ่มยืดหยุ่นของเตียงนอน และจังหวะชีพจรที่เต้นตุบๆ"
-        )
+        scent_desc = "กลิ่นกายอุ่น ๆ ผสมกลิ่นเหงื่อซึมบางเบาและกลิ่นน้ำหอมละมุนประจำตัวที่ลอยเตะจมูกเมื่อแนบชิด"
+        touch_desc = "สัมผัสปลายนิ้วสั่นสะท้านที่ลูบผ่านผิวหนังร้อน ความนุ่มยืดหยุ่นของเตียงนอน และจังหวะชีพจรที่เต้นตุบๆ"
 
         directive = (
             f"[MULTI-SENSORY ATMOSPHERIC DIRECTIVE | Environment: {environment.upper()}]\n"
@@ -139,11 +139,21 @@ class SlowBurnLorebook:
             "- ✨ ผสานรายละเอียดประสาทสัมผัสข้างต้นเข้าไปในการบรรยายการกระทำอย่างเป็นธรรมชาติ\n"
         )
         return directive
+
     @staticmethod
     def detect_rushed_input(text: str) -> bool:
         """Detect rushed or urgent commands in user input."""
         text_lower = text.lower()
-        rushed_keywords = ["เอาเลย", "เร็วๆ", "เร็ว ๆ", "ด่วน", "เดี๋ยวนี้", "ทำเลย", "ยัดเข้ามา", "รีบ"]
+        rushed_keywords = [
+            "เอาเลย",
+            "เร็วๆ",
+            "เร็ว ๆ",
+            "ด่วน",
+            "เดี๋ยวนี้",
+            "ทำเลย",
+            "ยัดเข้ามา",
+            "รีบ",
+        ]
         return any(kw in text_lower for kw in rushed_keywords)
 
     @staticmethod
@@ -170,8 +180,19 @@ class SlowBurnLorebook:
         """Detect micro-interaction keywords (eye contact, breath, hesitation, soft touch)."""
         text_lower = text.lower()
         micro_keywords = [
-            "สบตา", "มองตา", "สายตา", "ลมหายใจ", "ถอนหายใจ", "หายใจถี่",
-            "ลังเล", "ลูบ", "สัมผัส", "แผ่วเบา", "กระซิบ", "สะกิด", "แนบชิด"
+            "สบตา",
+            "มองตา",
+            "สายตา",
+            "ลมหายใจ",
+            "ถอนหายใจ",
+            "หายใจถี่",
+            "ลังเล",
+            "ลูบ",
+            "สัมผัส",
+            "แผ่วเบา",
+            "กระซิบ",
+            "สะกิด",
+            "แนบชิด",
         ]
         return any(kw in text_lower for kw in micro_keywords)
 
@@ -225,6 +246,7 @@ class SlowBurnLorebook:
                     "กฎ: แสดงออกว่าคำพูด/กลิ่น/สิ่งที่ผู้ใช้พูดถึง ไปกระตุ้นความทรงจำในอดีตอย่างลึกซึ้ง"
                 )
         return None
+
     @staticmethod
     def evaluate_tease_and_deny(
         tease_streak: int,
@@ -358,8 +380,7 @@ class SlowBurnLorebook:
 
             # Check primary key match
             matched_pk = [
-                pk for pk in primary_keys
-                if str(pk).strip() and str(pk).lower() in text_to_scan
+                pk for pk in primary_keys if str(pk).strip() and str(pk).lower() in text_to_scan
             ]
             primary_match = len(matched_pk) > 0
 
@@ -370,8 +391,7 @@ class SlowBurnLorebook:
                     str(sk).lower() in text_to_scan for sk in secondary_keys if str(sk).strip()
                 )
                 has_specific_pk = any(
-                    any(ord(c) > 127 for c in str(pk)) or len(str(pk)) > 3
-                    for pk in matched_pk
+                    any(ord(c) > 127 for c in str(pk)) or len(str(pk)) > 3 for pk in matched_pk
                 )
                 secondary_match = has_sk_match or has_specific_pk
 
@@ -387,15 +407,17 @@ class SlowBurnLorebook:
                 beat_match = 1 if entry_beat == current_beat else 0
                 priority = entry.get("priority", 1)
 
-                triggered.append({
-                    "beat_match": beat_match,
-                    "priority": priority,
-                    "order": entry.get("insertion_order", 100),
-                    "comment": entry.get("comment", ""),
-                    "content": selected_content,
-                    "beat": entry_beat,
-                    "entry_id": entry.get("id"),
-                })
+                triggered.append(
+                    {
+                        "beat_match": beat_match,
+                        "priority": priority,
+                        "order": entry.get("insertion_order", 100),
+                        "comment": entry.get("comment", ""),
+                        "content": selected_content,
+                        "beat": entry_beat,
+                        "entry_id": entry.get("id"),
+                    }
+                )
 
         # Sort by Beat Match (descending), Priority (descending), Insertion Order (descending)
         if triggered:
@@ -429,9 +451,7 @@ class SlowBurnLorebook:
         tension_level = self.resolve_tension_level(tension_meter)
         is_rushed = self.detect_rushed_input(user_input)
         push_pull_dir, block_actions = (
-            self.get_push_pull_directive(denial_counter)
-            if is_rushed
-            else ("", False)
+            self.get_push_pull_directive(denial_counter) if is_rushed else ("", False)
         )
 
         triggered_contents = (
@@ -448,7 +468,9 @@ class SlowBurnLorebook:
         if triggered_contents or push_pull_dir or tension_meter >= 85.0:
             injected = f"\n\n[SYSTEM DIRECTIVE: Slow-Burn Lorebook Triggered | Tension Meter: {tension_meter:.1f}/100 - Level: {tension_level.upper()} - Beat: {current_beat.upper()}]\n"
             injected += "กฎ: ห้ามกระทำทันที ให้บรรยายความตึงเครียด สายตา ลมหายใจ และการลังเล (90% Tension / 10% Action)\n"
-            injected += f"ระดับอารมณ์ตึงเครียดปัจจุบัน: {tension_level.upper()} ({tension_meter:.1f}/100)\n"
+            injected += (
+                f"ระดับอารมณ์ตึงเครียดปัจจุบัน: {tension_level.upper()} ({tension_meter:.1f}/100)\n"
+            )
 
             if tension_meter >= 85.0:
                 injected += (
@@ -466,8 +488,9 @@ class SlowBurnLorebook:
                     injected += f"- ({t['comment']} | Beat: {t['beat'].upper()}): {t['content']}\n"
 
             injected += f"\n{self.get_sensory_directive(tension_meter=tension_meter)}\n"
-            injected += "[END SYSTEM DIRECTIVE - นำแนวทางข้างต้นไปผสานกับการตอบกลับอย่างเป็นธรรมชาติ]\n"
+            injected += (
+                "[END SYSTEM DIRECTIVE - นำแนวทางข้างต้นไปผสานกับการตอบกลับอย่างเป็นธรรมชาติ]\n"
+            )
             return injected
 
         return ""
-

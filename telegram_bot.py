@@ -105,7 +105,11 @@ if bot:
         try:
             # 1. Forward message to FastAPI backend
             payload = {"session_id": chat_id, "text": user_text}
-            endpoint = f"{BACKEND_URL}/session/chat" if hasattr(requests, "post") else f"{BACKEND_URL}/v1/chat/completions"
+            endpoint = (
+                f"{BACKEND_URL}/session/chat"
+                if hasattr(requests, "post")
+                else f"{BACKEND_URL}/v1/chat/completions"
+            )
             response = requests.post(endpoint, json=payload, timeout=35)
 
             if response.status_code == 200:

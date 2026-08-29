@@ -60,7 +60,11 @@ def process_message(user_id, channel_id, user_text, say, client):
     try:
         # 1. Forward message to FastAPI backend
         payload = {"session_id": user_id, "text": user_text}
-        endpoint = f"{BACKEND_URL}/session/chat" if hasattr(requests, "post") else f"{BACKEND_URL}/v1/chat/completions"
+        endpoint = (
+            f"{BACKEND_URL}/session/chat"
+            if hasattr(requests, "post")
+            else f"{BACKEND_URL}/v1/chat/completions"
+        )
         response = requests.post(endpoint, json=payload, timeout=35)
 
         if response.status_code == 200:
@@ -99,7 +103,9 @@ def process_message(user_id, channel_id, user_text, say, client):
             say("❌ ระบบประมวลผลสมองเกิดข้อผิดพลาด (Backend Error)")
 
     except requests.exceptions.ConnectionError:
-        say("❌ ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์หลังบ้านได้ (กรุณาตรวจเช็กว่า Docker พอร์ต 8080/8085 กำลังรันอยู่หรือไม่นะคะ)")
+        say(
+            "❌ ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์หลังบ้านได้ (กรุณาตรวจเช็กว่า Docker พอร์ต 8080/8085 กำลังรันอยู่หรือไม่นะคะ)"
+        )
     except Exception as e:
         say(f"❌ เกิดข้อผิดพลาดไม่คาดคิด: {str(e)}")
 
@@ -114,7 +120,10 @@ def handle_direct_message(message, say, client):
     channel_type = message.get("channel_type")
     # Only respond in DM, or if mentioned in channel (handled separately)
     if channel_type == "im":
-        process_message(message.get("user"), message.get("channel"), message.get("text"), say, client)
+        process_message(
+            message.get("user"), message.get("channel"), message.get("text"), say, client
+        )
+
 
 @app.event("app_mention")
 def handle_app_mention(event, say, client):

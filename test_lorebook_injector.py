@@ -43,7 +43,9 @@ def main() -> None:
     ]
     for text in residue_samples:
         outcome = lorebook.detect_scene_outcome(text)
-        boost, directive = lorebook.get_emotional_residue_directive(outcome) if outcome else (0.0, "")
+        boost, directive = (
+            lorebook.get_emotional_residue_directive(outcome) if outcome else (0.0, "")
+        )
         print(f"\nInput: '{text}' -> Outcome Detected: '{outcome}' (Tension Boost: +{boost})")
         print(f"Directive Generated:\n{directive}")
 
@@ -54,8 +56,12 @@ def main() -> None:
     print("\n--- Testing 'Push-Pull' Denial Teasing Mechanic ---")
     rushed_prompt = "เอาเลย ด่วนๆ ยัดเข้ามาใน ท่าหมา เลย"
     for turn_denial_count in [0, 1, 2]:
-        print(f"\nTurn {turn_denial_count + 1} Rushed Input (Denial Counter: {turn_denial_count}): '{rushed_prompt}'")
-        injected = lorebook.inject_context(rushed_prompt, tension_meter=75.0, denial_counter=turn_denial_count)
+        print(
+            f"\nTurn {turn_denial_count + 1} Rushed Input (Denial Counter: {turn_denial_count}): '{rushed_prompt}'"
+        )
+        injected = lorebook.inject_context(
+            rushed_prompt, tension_meter=75.0, denial_counter=turn_denial_count
+        )
         print(f"Injected Directive:\n{injected}")
 
     print("\n--- Testing Group 1: Deep Psychological Systems ---")
@@ -71,7 +77,9 @@ def main() -> None:
 
     # 3. Memory Anchors Flashback
     print("\n3. Memory Anchor Flashback Triggered:")
-    anchors = [{"term": "กลิ่นสบู่", "memory_text": "กลิ่นสบู่ที่ติดผิวกายหลังคืนฝนตกชุ่มฉ่ำในอดีต"}]
+    anchors = [
+        {"term": "กลิ่นสบู่", "memory_text": "กลิ่นสบู่ที่ติดผิวกายหลังคืนฝนตกชุ่มฉ่ำในอดีต"}
+    ]
     flashback_dir = lorebook.check_memory_anchors("จำได้ไหม กลิ่นสบู่ คืนนั้น...", anchors)
     print(f"Flashback Directive:\n{flashback_dir}")
 
@@ -80,7 +88,9 @@ def main() -> None:
     streak = 0
     for i in range(4):
         is_surrender, tease_dir, streak = lorebook.evaluate_tease_and_deny(streak, "เอาเลย สิ")
-        print(f"Turn {i+1} (Streak: {streak}) -> Surrender Moment: {is_surrender}\nDirective: {tease_dir}\n")
+        print(
+            f"Turn {i+1} (Streak: {streak}) -> Surrender Moment: {is_surrender}\nDirective: {tease_dir}\n"
+        )
 
     print("\n2. 3-Phase Realistic Push-Pull Dynamics:")
     for phase in ["resistance", "negotiation", "surrender"]:
@@ -90,7 +100,9 @@ def main() -> None:
     print("\n--- Testing Group 4: Memory & Continuity ---")
     print("\n1. Erotic Memory Palace RAG Contextual Recall:")
     memories = [{"summary": "ฉากแนบชิดใต้แสงไฟสลัวในห้องนอน คืนที่มีเสียงฝนตกกระทบกระจกหน้าต่าง"}]
-    palace_dir = lorebook.check_erotic_memory_palace("จำคืนนั้นได้ไหม ที่เรานอนฟังเสียงฝนด้วยกัน", memories)
+    palace_dir = lorebook.check_erotic_memory_palace(
+        "จำคืนนั้นได้ไหม ที่เรานอนฟังเสียงฝนด้วยกัน", memories
+    )
     print(f"Memory Palace Directive:\n{palace_dir}")
 
     print("\n2. Attachment Style Evolution Directives:")

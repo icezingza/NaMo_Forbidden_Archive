@@ -57,7 +57,7 @@ class MicroChunker:
                     chunks.append(" ".join(current_chunk))
                     current_chunk = []
                     current_len = 0
-                
+
                 # Hard chunk long sentence
                 sub_start = 0
                 while sub_start < sentence_len:

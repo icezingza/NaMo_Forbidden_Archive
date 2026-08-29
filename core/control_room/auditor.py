@@ -28,92 +28,112 @@ class SecurityAuditor:
         if gitignore_path.exists():
             content = gitignore_path.read_text(encoding="utf-8")
             if ".env" not in content:
-                findings.append({
-                    "id": "SEC-001",
-                    "severity": "HIGH",
-                    "category": "Git Secrets",
-                    "message": ".env file is NOT listed in .gitignore! Risks secret exposure.",
-                })
+                findings.append(
+                    {
+                        "id": "SEC-001",
+                        "severity": "HIGH",
+                        "category": "Git Secrets",
+                        "message": ".env file is NOT listed in .gitignore! Risks secret exposure.",
+                    }
+                )
             else:
-                findings.append({
-                    "id": "SEC-001",
-                    "severity": "PASS",
-                    "category": "Git Secrets",
-                    "message": ".env is properly excluded in .gitignore.",
-                })
+                findings.append(
+                    {
+                        "id": "SEC-001",
+                        "severity": "PASS",
+                        "category": "Git Secrets",
+                        "message": ".env is properly excluded in .gitignore.",
+                    }
+                )
 
         from core.gcp_secrets import DynamicSecretsLoader
+
         loader = DynamicSecretsLoader()
 
         # 2. Check ADMIN_SECRET configuration
         admin_secret = loader.get_secret("ADMIN_SECRET")
         if not admin_secret:
-            findings.append({
-                "id": "SEC-002",
-                "severity": "MEDIUM",
-                "category": "Authentication",
-                "message": "ADMIN_SECRET is not set in environment or GCP. Admin routes rely on fallback.",
-            })
+            findings.append(
+                {
+                    "id": "SEC-002",
+                    "severity": "MEDIUM",
+                    "category": "Authentication",
+                    "message": "ADMIN_SECRET is not set in environment or GCP. Admin routes rely on fallback.",
+                }
+            )
         elif len(admin_secret) < 12:
-            findings.append({
-                "id": "SEC-002",
-                "severity": "MEDIUM",
-                "category": "Authentication",
-                "message": "ADMIN_SECRET is too short (< 12 characters). Recommended >= 16 characters.",
-            })
+            findings.append(
+                {
+                    "id": "SEC-002",
+                    "severity": "MEDIUM",
+                    "category": "Authentication",
+                    "message": "ADMIN_SECRET is too short (< 12 characters). Recommended >= 16 characters.",
+                }
+            )
         else:
-            findings.append({
-                "id": "SEC-002",
-                "severity": "PASS",
-                "category": "Authentication",
-                "message": "ADMIN_SECRET is securely configured.",
-            })
+            findings.append(
+                {
+                    "id": "SEC-002",
+                    "severity": "PASS",
+                    "category": "Authentication",
+                    "message": "ADMIN_SECRET is securely configured.",
+                }
+            )
 
         # 3. Check OPENAI_API_KEY presence
         openai_key = loader.get_secret("OPENAI_API_KEY")
         if not openai_key:
-            findings.append({
-                "id": "SEC-003",
-                "severity": "INFO",
-                "category": "Third-Party API",
-                "message": "OPENAI_API_KEY is missing. System will operate in offline/mock mode.",
-            })
+            findings.append(
+                {
+                    "id": "SEC-003",
+                    "severity": "INFO",
+                    "category": "Third-Party API",
+                    "message": "OPENAI_API_KEY is missing. System will operate in offline/mock mode.",
+                }
+            )
         else:
-            findings.append({
-                "id": "SEC-003",
-                "severity": "PASS",
-                "category": "Third-Party API",
-                "message": "OPENAI_API_KEY is present.",
-            })
+            findings.append(
+                {
+                    "id": "SEC-003",
+                    "severity": "PASS",
+                    "category": "Third-Party API",
+                    "message": "OPENAI_API_KEY is present.",
+                }
+            )
 
         # 4. Check GCP Secret Manager Status
         if loader.is_gcp_active():
-            findings.append({
-                "id": "SEC-005",
-                "severity": "PASS",
-                "category": "Cloud Secret Manager",
-                "message": f"GCP Secret Manager active for project '{loader.project_id}'.",
-            })
+            findings.append(
+                {
+                    "id": "SEC-005",
+                    "severity": "PASS",
+                    "category": "Cloud Secret Manager",
+                    "message": f"GCP Secret Manager active for project '{loader.project_id}'.",
+                }
+            )
         else:
-            findings.append({
-                "id": "SEC-005",
-                "severity": "INFO",
-                "category": "Cloud Secret Manager",
-                "message": "GCP Secret Manager unconfigured. Operating with local env fallback.",
-            })
-
+            findings.append(
+                {
+                    "id": "SEC-005",
+                    "severity": "INFO",
+                    "category": "Cloud Secret Manager",
+                    "message": "GCP Secret Manager unconfigured. Operating with local env fallback.",
+                }
+            )
 
         # 4. Check critical data file presence and non-emptiness
         critical_files = ["memory_history.json", "system.yaml"]
         for cfile in critical_files:
             cpath = self.base_dir / cfile
             if cpath.exists() and cpath.stat().st_size == 0:
-                findings.append({
-                    "id": "SEC-004",
-                    "severity": "HIGH",
-                    "category": "Data Integrity",
-                    "message": f"Critical file {cfile} exists but is empty (0 bytes)!",
-                })
+                findings.append(
+                    {
+                        "id": "SEC-004",
+                        "severity": "HIGH",
+                        "category": "Data Integrity",
+                        "message": f"Critical file {cfile} exists but is empty (0 bytes)!",
+                    }
+                )
 
         # Calculate security rating
         high_count = sum(1 for f in findings if f["severity"] == "HIGH")

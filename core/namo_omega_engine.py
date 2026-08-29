@@ -111,7 +111,9 @@ class PersonaOrchestrator:
         response = ""
         for p in self.active_personas:
             if p == "NaMo":
-                response += f"NaMo: โมได้ยินว่า '{user_input}' เราค่อยๆ วางจังหวะและขอบเขตให้ชัดก่อนนะ\n"
+                response += (
+                    f"NaMo: โมได้ยินว่า '{user_input}' เราค่อยๆ วางจังหวะและขอบเขตให้ชัดก่อนนะ\n"
+                )
             elif p == "Muse":
                 response += "Muse: ฉันพร้อมร่วมฉากเมื่อทุกคนยืนยันขอบเขตตรงกันแล้ว\n"
         return response
@@ -421,7 +423,9 @@ class NaMoOmegaEngine(BasePersonaEngine):
             system_blocks.append(cognitive.build_context_block(cog_output))
 
         tension_boost = self._apply_emotional_residue(user_input, state, system_blocks)
-        tension_meter = self._apply_psychological_systems(user_input, state, system_blocks, emo_snapshot)
+        tension_meter = self._apply_psychological_systems(
+            user_input, state, system_blocks, emo_snapshot
+        )
         tension_meter = min(100.0, max(0.0, tension_meter + tension_boost))
 
         history_text = " ".join(h["content"] for h in self._get_history(session_id)[-4:])
@@ -507,9 +511,7 @@ class NaMoOmegaEngine(BasePersonaEngine):
             tension_str = "0.0"
 
         beat_str = str(state.get("current_beat", "tease"))
-        residue_str = str(
-            state.get("last_scene_outcome", state.get("emotional_residue", "None"))
-        )
+        residue_str = str(state.get("last_scene_outcome", state.get("emotional_residue", "None")))
 
         replaced = text.replace("[TENSION_LEVEL]", tension_str)
         replaced = replaced.replace("[CURRENT_BEAT]", beat_str)
@@ -592,10 +594,13 @@ class NaMoOmegaEngine(BasePersonaEngine):
             system_blocks.append(safe_directive)
             return 10.0
 
-        anchors = state.get("memory_anchors", [
-            {"term": "เพลงโปรด", "memory_text": "เพลงที่เคยฟังด้วยกันคืนนั้นในห้องนอนอบอุ่น"},
-            {"term": "กลิ่นสบู่", "memory_text": "กลิ่นสบู่ที่ติดผิวกายหลังคืนฝนตกชุ่มฉ่ำ"}
-        ])
+        anchors = state.get(
+            "memory_anchors",
+            [
+                {"term": "เพลงโปรด", "memory_text": "เพลงที่เคยฟังด้วยกันคืนนั้นในห้องนอนอบอุ่น"},
+                {"term": "กลิ่นสบู่", "memory_text": "กลิ่นสบู่ที่ติดผิวกายหลังคืนฝนตกชุ่มฉ่ำ"},
+            ],
+        )
         flashback = self.lorebook.check_memory_anchors(user_input, anchors)
         if flashback:
             system_blocks.append(flashback)
@@ -634,9 +639,10 @@ class NaMoOmegaEngine(BasePersonaEngine):
             system_blocks.append(phase_dir)
 
         # 6. Erotic Memory Palace RAG Recall
-        erotic_memories = state.get("erotic_memories", [
-            {"summary": "ฉากแนบชิดใต้แสงไฟสลัวในห้องนอน คืนที่มีเสียงฝนตกกระทบกระจกหน้าต่าง"}
-        ])
+        erotic_memories = state.get(
+            "erotic_memories",
+            [{"summary": "ฉากแนบชิดใต้แสงไฟสลัวในห้องนอน คืนที่มีเสียงฝนตกกระทบกระจกหน้าต่าง"}],
+        )
         memory_recall = self.lorebook.check_erotic_memory_palace(user_input, erotic_memories)
         if memory_recall:
             system_blocks.append(memory_recall)
@@ -778,7 +784,9 @@ class NaMoOmegaEngine(BasePersonaEngine):
             system_blocks.append(cognitive.build_context_block(cog_output))
 
         tension_boost = self._apply_emotional_residue(user_input, state, system_blocks)
-        tension_meter = self._apply_psychological_systems(user_input, state, system_blocks, emo_snapshot)
+        tension_meter = self._apply_psychological_systems(
+            user_input, state, system_blocks, emo_snapshot
+        )
         tension_meter = min(100.0, max(0.0, tension_meter + tension_boost))
 
         history_text = " ".join(h["content"] for h in self._get_history(session_id)[-4:])

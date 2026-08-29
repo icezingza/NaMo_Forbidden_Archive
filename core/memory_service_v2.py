@@ -34,14 +34,16 @@ class Neo4jMemoryService:
 
         if GraphDatabase and self.uri and self.password:
             try:
-                self.driver = GraphDatabase.driver(
-                    self.uri, auth=(self.username, self.password)
-                )
+                self.driver = GraphDatabase.driver(self.uri, auth=(self.username, self.password))
                 logger.info("[Neo4jMemoryService] Connected to Neo4j AuraDB at %s", self.uri)
             except Exception as exc:
-                logger.warning("[Neo4jMemoryService] Connection failed (%s), running in offline mode.", exc)
+                logger.warning(
+                    "[Neo4jMemoryService] Connection failed (%s), running in offline mode.", exc
+                )
         else:
-            logger.info("[Neo4jMemoryService] Neo4j credentials missing or driver not installed. Offline mode.")
+            logger.info(
+                "[Neo4jMemoryService] Neo4j credentials missing or driver not installed. Offline mode."
+            )
 
     def close(self):
         if self.driver:
@@ -139,13 +141,16 @@ class Neo4jMemoryService:
             """
             summary_text = f"Consolidated {len(records)} turns. Peak tension: {max((r['tension'] for r in records), default=0.0)}"
             with self.driver.session() as session:
-                session.run(create_summary_query, {
-                    "session_id": session_id,
-                    "turn_count": len(records),
-                    "summary": summary_text
-                })
+                session.run(
+                    create_summary_query,
+                    {"session_id": session_id, "turn_count": len(records), "summary": summary_text},
+                )
 
-            return {"status": "success", "consolidated_turns": len(records), "summary": summary_text}
+            return {
+                "status": "success",
+                "consolidated_turns": len(records),
+                "summary": summary_text,
+            }
 
         except Exception as exc:
             logger.error("[Neo4jMemoryService] Memory consolidation error: %s", exc)

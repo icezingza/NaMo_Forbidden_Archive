@@ -47,7 +47,6 @@ def chunk_text(text: str, chunk_size: int = 150, overlap: int = 20) -> list[str]
     return _chunker.chunk_text(text)
 
 
-
 def embed_with_retry(text: str, attempts: int = 3, delay: float = 1.0) -> list[float]:
     """Create embeddings with basic retry/backoff."""
     for attempt in range(1, attempts + 1):

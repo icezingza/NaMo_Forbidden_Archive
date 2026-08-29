@@ -64,15 +64,9 @@ def main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
     pipeline_output = Path(
-        sys.argv[1]
-        if len(sys.argv) > 1
-        else "core/datasets/candidate_chunks.jsonl"
+        sys.argv[1] if len(sys.argv) > 1 else "core/datasets/candidate_chunks.jsonl"
     )
-    hitl_output = Path(
-        sys.argv[2]
-        if len(sys.argv) > 2
-        else "core/datasets/hitl_reviewed.jsonl"
-    )
+    hitl_output = Path(sys.argv[2] if len(sys.argv) > 2 else "core/datasets/hitl_reviewed.jsonl")
 
     if not hitl_output.exists():
         print("❌ HITL review file not found. Please run hitl_reviewer.py first.")

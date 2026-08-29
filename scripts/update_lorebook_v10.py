@@ -28,7 +28,13 @@ def determine_beat_and_tension(entry: dict) -> tuple[str, list[int]]:
     entry_id = entry.get("id", 0)
 
     # 1. Recovery
-    if entry_id in (54, 55) or "aftercare" in comment or "aftermath" in comment or "หลังฉาก" in content or "นอนกอด" in content:
+    if (
+        entry_id in (54, 55)
+        or "aftercare" in comment
+        or "aftermath" in comment
+        or "หลังฉาก" in content
+        or "นอนกอด" in content
+    ):
         return "recovery", [0, 40]
 
     # 2. Resolution (Orgasm / Climax / Cum / Creampie)
@@ -44,10 +50,23 @@ def determine_beat_and_tension(entry: dict) -> tuple[str, list[int]]:
         return "resolution", [80, 100]
 
     # 3. Resistance / Tease
-    if "resistance" in comment or "tease" in comment or "เล่นตัว" in content or "ต่อรอง" in content or "ปฏิเสธ" in content or "ชะลอ" in content:
+    if (
+        "resistance" in comment
+        or "tease" in comment
+        or "เล่นตัว" in content
+        or "ต่อรอง" in content
+        or "ปฏิเสธ" in content
+        or "ชะลอ" in content
+    ):
         return "resistance", [20, 60]
 
-    if "kiss" in comment or "foreplay" in comment or "touch" in comment or "ลูบไล้" in content or "สัมผัส" in content:
+    if (
+        "kiss" in comment
+        or "foreplay" in comment
+        or "touch" in comment
+        or "ลูบไล้" in content
+        or "สัมผัส" in content
+    ):
         return "tease", [10, 50]
 
     # 4. Escalation (Default for positions & kinks)

@@ -20,13 +20,15 @@ def print_fine_tuning_spec():
     print("SFT Dataset:      core/datasets/namo_golden_dataset_chatml.jsonl")
     print("DPO Dataset:      core/datasets/namo_golden_dataset_dpo.jsonl")
     print("LoRA Rank (r):    16 | Alpha: 32 | Dropout: 0.05")
-    print("System Prompt:    'คุณคือผู้เชี่ยวชาญด้านการเขียน Erotic Literary Realism เน้น 90% Tension / 10% Action'")
+    print(
+        "System Prompt:    'คุณคือผู้เชี่ยวชาญด้านการเขียน Erotic Literary Realism เน้น 90% Tension / 10% Action'"
+    )
     print("Target Hardware:  1x NVIDIA RTX 4090 (24GB) or A10G / T4 GPU Cluster")
     print("=" * 70 + "\n")
 
 
 def generate_unsloth_training_code() -> str:
-    return '''# Fine-Tuning Execution Code for Unsloth / HuggingFace TRL
+    return """# Fine-Tuning Execution Code for Unsloth / HuggingFace TRL
 import torch
 from unsloth import FastLanguageModel
 from trl import SFTTrainer, DPOTrainer
@@ -81,7 +83,7 @@ trainer.train()
 # 5. Save LoRA Weights & Merged GGUF
 model.save_pretrained("outputs/namo_lora_model")
 tokenizer.save_pretrained("outputs/namo_lora_model")
-'''
+"""
 
 
 def main():

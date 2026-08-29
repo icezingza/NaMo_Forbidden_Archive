@@ -166,19 +166,22 @@ def test_slowburn_lorebook_group4_memory_continuity():
     assert "คืนฝนตกชุ่มฉ่ำใต้แสงไฟสลัว" in recall
 
     # Attachment Style Evolution
-    style_dis = SlowBurnLorebook.resolve_attachment_style(trust_score=30.0, tension_meter=80.0, scene_count=2)
+    style_dis = SlowBurnLorebook.resolve_attachment_style(
+        trust_score=30.0, tension_meter=80.0, scene_count=2
+    )
     assert style_dis == "disorganized"
-    style_anx = SlowBurnLorebook.resolve_attachment_style(trust_score=45.0, tension_meter=50.0, scene_count=2)
+    style_anx = SlowBurnLorebook.resolve_attachment_style(
+        trust_score=45.0, tension_meter=50.0, scene_count=2
+    )
     assert style_anx == "anxious"
-    style_avo = SlowBurnLorebook.resolve_attachment_style(trust_score=80.0, tension_meter=20.0, scene_count=6)
+    style_avo = SlowBurnLorebook.resolve_attachment_style(
+        trust_score=80.0, tension_meter=20.0, scene_count=6
+    )
     assert style_avo == "avoidant"
-    style_sec = SlowBurnLorebook.resolve_attachment_style(trust_score=80.0, tension_meter=50.0, scene_count=2)
+    style_sec = SlowBurnLorebook.resolve_attachment_style(
+        trust_score=80.0, tension_meter=50.0, scene_count=2
+    )
     assert style_sec == "secure"
 
     dir_anx = SlowBurnLorebook.get_attachment_style_directive("anxious")
     assert "ANXIOUS" in dir_anx
-
-
-
-
-

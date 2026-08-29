@@ -14,7 +14,7 @@ COPY requirements.txt ./
 
 # Build wheels in isolation with strict error handling
 RUN pip install --upgrade pip setuptools wheel && \
-    pip wheel --no-cache-dir --no-deps --wheel-dir /build/wheels -r requirements.txt
+    pip wheel --no-cache-dir --wheel-dir /build/wheels -r requirements.txt
 
 # Stage 2: Runtime image (minimal)
 FROM python:3.12-slim
