@@ -199,7 +199,7 @@ services:
 
   # === Qdrant (Vector Database) ===
   qdrant:
-    image: qdrant/qdrant:latest-alpine
+    image: qdrant/qdrant:latest
     container_name: namo-qdrant
     ports:
       - "6333:6333"

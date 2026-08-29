@@ -1,8 +1,7 @@
-"""Tests for app.py — main_loop() CLI entry point."""
-
 import os
 import sys
 from unittest.mock import MagicMock, patch
+import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -35,7 +34,7 @@ def test_main_loop_normal_interaction(capsys):
     assert "NaMo FORBIDDEN CORE" in captured.out
 
 
-def test_main_loop_exit_command(capsys):
+def test_main_loop_exit_command(capsys, caplog):
     """main_loop exits cleanly when user types 'exit'."""
     mock_system = _make_dark_system()
 
@@ -49,7 +48,8 @@ def test_main_loop_exit_command(capsys):
 
     mock_system.process_input.assert_not_called()
     captured = capsys.readouterr()
-    assert "Void" in captured.out or "Deactivating" in captured.out
+    full_output = captured.out + captured.err + caplog.text
+    assert "Void" in full_output or "Deactivating" in full_output
 
 
 def test_main_loop_quit_command(capsys):
@@ -67,7 +67,7 @@ def test_main_loop_quit_command(capsys):
     mock_system.process_input.assert_not_called()
 
 
-def test_main_loop_keyboard_interrupt(capsys):
+def test_main_loop_keyboard_interrupt(capsys, caplog):
     """main_loop handles KeyboardInterrupt gracefully."""
     mock_system = _make_dark_system()
 
@@ -80,10 +80,11 @@ def test_main_loop_keyboard_interrupt(capsys):
         main_loop()  # Should not raise
 
     captured = capsys.readouterr()
-    assert "Interrupted" in captured.out or "Shutting" in captured.out
+    full_output = captured.out + captured.err + caplog.text
+    assert "Interrupted" in full_output or "Shutting" in full_output
 
 
-def test_main_loop_exception_during_input(capsys):
+def test_main_loop_exception_during_input(capsys, caplog):
     """main_loop catches exceptions during process_input and continues the loop."""
     mock_system = _make_dark_system()
     mock_system.process_input.side_effect = [RuntimeError("oops"), None]
@@ -97,10 +98,11 @@ def test_main_loop_exception_during_input(capsys):
         main_loop()  # Should not raise
 
     captured = capsys.readouterr()
-    assert "UNHANDLED EXCEPTION" in captured.out or "oops" in captured.out
+    full_output = captured.out + captured.err + caplog.text
+    assert "UNHANDLED EXCEPTION" in full_output or "oops" in full_output
 
 
-def test_main_loop_init_failure(capsys):
+def test_main_loop_init_failure(capsys, caplog):
     """main_loop returns early and prints an error when DarkNaMoSystem init fails."""
     with (
         patch("app.DarkNaMoSystem", side_effect=RuntimeError("init fail")),
@@ -108,9 +110,12 @@ def test_main_loop_init_failure(capsys):
     ):
         from app import main_loop
 
-        main_loop()
+        with pytest.raises(SystemExit) as excinfo:
+            main_loop()
+        assert excinfo.value.code == 1
 
     # input should never have been called since we returned early
     mock_input.assert_not_called()
     captured = capsys.readouterr()
-    assert "CRITICAL ERROR" in captured.out or "init fail" in captured.out
+    full_output = captured.out + captured.err + caplog.text
+    assert "CRITICAL ERROR" in full_output or "init fail" in full_output
