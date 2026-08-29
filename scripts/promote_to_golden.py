@@ -11,6 +11,8 @@ from pathlib import Path
 
 
 def promote_to_golden(hitl_file: str, golden_file: str, min_confidence: float = 0.8):
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     """กรองและ promote records ที่ผ่านเกณฑ์"""
     hitl_path = Path(hitl_file)
     if not hitl_path.exists():

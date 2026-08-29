@@ -61,6 +61,8 @@ def compute_metrics(cm: dict[str, int]) -> dict[str, float]:
 
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     pipeline_output = Path(
         sys.argv[1]
         if len(sys.argv) > 1
