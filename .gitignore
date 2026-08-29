@@ -212,3 +212,6 @@ Audio_Layers/generated/
 Rinlada_Memory.json
 learned_patterns.json
 usage_events.jsonl
+state/
+scratch/
+web_legacy_backup/

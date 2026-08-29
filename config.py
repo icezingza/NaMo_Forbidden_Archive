@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     namo_llm_max_tokens: int = 240
     namo_llm_memory_turns: int = 6
     namo_llm_base_url: str | None = None
+    namo_llm_presence_penalty: float = 0.6
+    namo_llm_frequency_penalty: float = 0.5
 
     # --- 🔓 Forbidden Unlock (Dark Mode) ---
     safety_filter_enabled: bool = False

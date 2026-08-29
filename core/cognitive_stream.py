@@ -243,8 +243,7 @@ class CognitiveMonologueStream:
             "predicted_behavior": f"Anticipated intent: '{behavioral_prediction}'",
             # ดึง Impulse จาก Dark Knowledge (เช่น ธีมที่ถูกกระตุ้น)
             "dark_knowledge_trigger": (
-                f"Triggered theme: "
-                f"'{self.persona['psychological_profile']['desire_triggers'][0]}'"
+                f"Triggered theme: '{self.persona['psychological_profile']['desire_triggers'][0]}'"
             ),
         }
         print(f"[CognitiveStream] IMPULSES: {impulses}")
