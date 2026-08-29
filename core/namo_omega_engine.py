@@ -345,6 +345,7 @@ class NaMoOmegaEngine(BasePersonaEngine):
         routed_system = "\n\n".join(
             section for section in (allocation["system"], allocation["memory"]) if section
         )
+        routed_system = self._substitute_prompt_variables(routed_system, state)
         return routed_system, allocation["history"]
 
     def _allocate_llm_messages(
