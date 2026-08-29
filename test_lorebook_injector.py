@@ -87,6 +87,17 @@ def main() -> None:
         phase_dir = lorebook.get_push_pull_phase_directive(phase)
         print(f"Phase '{phase.upper()}':\n{phase_dir}\n")
 
+    print("\n--- Testing Group 4: Memory & Continuity ---")
+    print("\n1. Erotic Memory Palace RAG Contextual Recall:")
+    memories = [{"summary": "ฉากแนบชิดใต้แสงไฟสลัวในห้องนอน คืนที่มีเสียงฝนตกกระทบกระจกหน้าต่าง"}]
+    palace_dir = lorebook.check_erotic_memory_palace("จำคืนนั้นได้ไหม ที่เรานอนฟังเสียงฝนด้วยกัน", memories)
+    print(f"Memory Palace Directive:\n{palace_dir}")
+
+    print("\n2. Attachment Style Evolution Directives:")
+    for style in ["anxious", "avoidant", "secure", "disorganized"]:
+        style_dir = lorebook.get_attachment_style_directive(style)
+        print(f"Style '{style.upper()}':\n{style_dir}\n")
+
 
 if __name__ == "__main__":
     main()

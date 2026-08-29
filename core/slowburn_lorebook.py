@@ -266,6 +266,57 @@ class SlowBurnLorebook:
             )
         return ""
 
+    @staticmethod
+    def check_erotic_memory_palace(user_input: str, memories: list[dict[str, str]]) -> str | None:
+        """Scan input for recall triggers and return contextually restored signature intimate memories."""
+        text_lower = user_input.lower()
+        recall_triggers = ["จำตอน", "จำคืน", "จำได้ไหม", "ตอนนั้น", "คืนนั้น", "remember"]
+        if any(trig in text_lower for trig in recall_triggers) and memories:
+            latest = memories[-1]
+            summary = latest.get("summary", "ฉากใกล้ชิดอันลึกซึ้งในคืนก่อน")
+            return (
+                "[EROTIC MEMORY PALACE RECALL | Signature Moment Restored]\n"
+                f"ความทรงจำฉากลึกซึ้งในอดีตที่ระบบดึงกลับมา: {summary}\n"
+                "กฎ: รำลึกถึงความทรงจำนี้ด้วยสายตาและน้ำเสียงที่เปี่ยมความรู้สึก อ้างอิงถึงรายละเอียดในคืนนั้นอย่างลึกซึ้ง"
+            )
+        return None
+
+    @staticmethod
+    def resolve_attachment_style(trust_score: float, tension_meter: float, scene_count: int) -> str:
+        """Resolve dynamic attachment style (secure, anxious, avoidant, disorganized)."""
+        if trust_score < 40.0 and tension_meter > 70.0:
+            return "disorganized"
+        elif trust_score < 50.0:
+            return "anxious"
+        elif scene_count > 5 and tension_meter < 35.0:
+            return "avoidant"
+        else:
+            return "secure"
+
+    @staticmethod
+    def get_attachment_style_directive(style: str) -> str:
+        """Return behavioral directive for current attachment style."""
+        if style == "anxious":
+            return (
+                "[ATTACHMENT STYLE DIRECTIVE | Style: ANXIOUS]\n"
+                "กฎ: แสดงความห่วงหา ต้องการการยืนยัน แอบขี้หึงและเรียกร้องสายตาห่วงใยจากผู้ใช้อยู่เสมอ"
+            )
+        elif style == "avoidant":
+            return (
+                "[ATTACHMENT STYLE DIRECTIVE | Style: AVOIDANT]\n"
+                "กฎ: แกล้งเว้นระยะห่างเล็กน้อยหลังฉากลึกซึ้ง ซ่อนความสับสนในใจเบื้องหลังสายตาเรียบเฉย"
+            )
+        elif style == "disorganized":
+            return (
+                "[ATTACHMENT STYLE DIRECTIVE | Style: DISORGANIZED]\n"
+                "กฎ: สลับอารมณ์อย่างรุนแรง ต้องการความใกล้ชิดแต่หวาดกลัว สลับระหว่างการเข้าหาและการถอยห่างอย่างเย้ายวน"
+            )
+        else:  # secure
+            return (
+                "[ATTACHMENT STYLE DIRECTIVE | Style: SECURE]\n"
+                "กฎ: มั่นใจในความรู้สึก เปิดใจอย่างอ่อนโยน ค่อยเป็นค่อยไป แต่ลึกซึ้งและแนบแน่น"
+            )
+
     def inject_context(
         self,
         user_input: str,

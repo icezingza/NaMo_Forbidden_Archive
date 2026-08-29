@@ -507,6 +507,23 @@ class NaMoOmegaEngine(BasePersonaEngine):
         if phase_dir:
             system_blocks.append(phase_dir)
 
+        # 6. Erotic Memory Palace RAG Recall
+        erotic_memories = state.get("erotic_memories", [
+            {"summary": "ฉากแนบชิดใต้แสงไฟสลัวในห้องนอน คืนที่มีเสียงฝนตกกระทบกระจกหน้าต่าง"}
+        ])
+        memory_recall = self.lorebook.check_erotic_memory_palace(user_input, erotic_memories)
+        if memory_recall:
+            system_blocks.append(memory_recall)
+
+        # 7. Attachment Style Evolution
+        trust_score = float(state.get("trust_score", 80.0))
+        scene_count = int(state.get("scene_count", 1))
+        style = self.lorebook.resolve_attachment_style(trust_score, new_tension, scene_count)
+        state["attachment_style"] = style
+        style_dir = self.lorebook.get_attachment_style_directive(style)
+        if style_dir:
+            system_blocks.append(style_dir)
+
         return new_tension
 
     def _resolve_denial_counter(self, user_input: str, state: dict) -> int:

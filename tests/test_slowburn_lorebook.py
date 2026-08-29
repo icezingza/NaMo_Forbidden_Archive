@@ -157,5 +157,28 @@ def test_slowburn_lorebook_group3_mechanics():
     assert "SURRENDER" in surr_dir
 
 
+def test_slowburn_lorebook_group4_memory_continuity():
+    # Erotic Memory Palace Contextual Recall
+    mems = [{"summary": "คืนฝนตกชุ่มฉ่ำใต้แสงไฟสลัว"}]
+    recall = SlowBurnLorebook.check_erotic_memory_palace("จำคืนนั้นได้ไหม", mems)
+    assert recall is not None
+    assert "EROTIC MEMORY PALACE RECALL" in recall
+    assert "คืนฝนตกชุ่มฉ่ำใต้แสงไฟสลัว" in recall
+
+    # Attachment Style Evolution
+    style_dis = SlowBurnLorebook.resolve_attachment_style(trust_score=30.0, tension_meter=80.0, scene_count=2)
+    assert style_dis == "disorganized"
+    style_anx = SlowBurnLorebook.resolve_attachment_style(trust_score=45.0, tension_meter=50.0, scene_count=2)
+    assert style_anx == "anxious"
+    style_avo = SlowBurnLorebook.resolve_attachment_style(trust_score=80.0, tension_meter=20.0, scene_count=6)
+    assert style_avo == "avoidant"
+    style_sec = SlowBurnLorebook.resolve_attachment_style(trust_score=80.0, tension_meter=50.0, scene_count=2)
+    assert style_sec == "secure"
+
+    dir_anx = SlowBurnLorebook.get_attachment_style_directive("anxious")
+    assert "ANXIOUS" in dir_anx
+
+
+
 
 
