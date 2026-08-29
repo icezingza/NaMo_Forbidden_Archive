@@ -75,6 +75,18 @@ def main() -> None:
     flashback_dir = lorebook.check_memory_anchors("จำได้ไหม กลิ่นสบู่ คืนนั้น...", anchors)
     print(f"Flashback Directive:\n{flashback_dir}")
 
+    print("\n--- Testing Group 3: Advanced Game Mechanics ---")
+    print("\n1. Tease & Deny Streak Engine:")
+    streak = 0
+    for i in range(4):
+        is_surrender, tease_dir, streak = lorebook.evaluate_tease_and_deny(streak, "เอาเลย สิ")
+        print(f"Turn {i+1} (Streak: {streak}) -> Surrender Moment: {is_surrender}\nDirective: {tease_dir}\n")
+
+    print("\n2. 3-Phase Realistic Push-Pull Dynamics:")
+    for phase in ["resistance", "negotiation", "surrender"]:
+        phase_dir = lorebook.get_push_pull_phase_directive(phase)
+        print(f"Phase '{phase.upper()}':\n{phase_dir}\n")
+
 
 if __name__ == "__main__":
     main()

@@ -137,4 +137,25 @@ def test_slowburn_lorebook_push_pull_denial():
     assert "PUSH-PULL YIELD DIRECTIVE" in dir_t3
 
 
+def test_slowburn_lorebook_group3_mechanics():
+    # Tease & Deny Streak Engine
+    is_surr_0, dir_0, streak_1 = SlowBurnLorebook.evaluate_tease_and_deny(0, "ขอสิ")
+    assert is_surr_0 is False
+    assert streak_1 == 1
+
+    is_surr_3, dir_3, streak_0 = SlowBurnLorebook.evaluate_tease_and_deny(3, "ขอสิ")
+    assert is_surr_3 is True
+    assert streak_0 == 0
+    assert "SURRENDER MOMENT TRIGGERED" in dir_3
+
+    # 3-Phase Push-Pull Dynamics
+    res_dir = SlowBurnLorebook.get_push_pull_phase_directive("resistance")
+    assert "RESISTANCE" in res_dir
+    neg_dir = SlowBurnLorebook.get_push_pull_phase_directive("negotiation")
+    assert "NEGOTIATION" in neg_dir
+    surr_dir = SlowBurnLorebook.get_push_pull_phase_directive("surrender")
+    assert "SURRENDER" in surr_dir
+
+
+
 

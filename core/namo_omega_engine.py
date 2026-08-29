@@ -486,6 +486,27 @@ class NaMoOmegaEngine(BasePersonaEngine):
         if tension_note:
             system_blocks.append(f"[TENSION DYNAMICS NOTE]: {tension_note}")
 
+        # 4. Tease & Deny Engine Evaluation
+        current_streak = int(state.get("tease_streak", 0))
+        is_surrender, tease_dir, new_streak = self.lorebook.evaluate_tease_and_deny(
+            current_streak, user_input
+        )
+        state["tease_streak"] = new_streak
+        if is_surrender or is_rushed:
+            system_blocks.append(tease_dir)
+
+        # 5. 3-Phase Realistic Push-Pull Dynamics
+        if current_streak == 0:
+            next_phase = "resistance"
+        elif current_streak == 1:
+            next_phase = "negotiation"
+        else:
+            next_phase = "surrender"
+        state["push_pull_phase"] = next_phase
+        phase_dir = self.lorebook.get_push_pull_phase_directive(next_phase)
+        if phase_dir:
+            system_blocks.append(phase_dir)
+
         return new_tension
 
     def _resolve_denial_counter(self, user_input: str, state: dict) -> int:

@@ -225,6 +225,46 @@ class SlowBurnLorebook:
                     "กฎ: แสดงออกว่าคำพูด/กลิ่น/สิ่งที่ผู้ใช้พูดถึง ไปกระตุ้นความทรงจำในอดีตอย่างลึกซึ้ง"
                 )
         return None
+    @staticmethod
+    def evaluate_tease_and_deny(
+        tease_streak: int,
+        user_input: str,
+    ) -> tuple[bool, str, int]:
+        """Evaluate Tease & Deny Engine dice roll/streak to determine surrender or tease outcome."""
+        if tease_streak >= 3:
+            directive = (
+                f"[TEASE & DENY ENGINE | SURRENDER MOMENT TRIGGERED (Streak: {tease_streak})]\n"
+                "ผลลัพธ์: การปฏิเสธยืดเยื้อสะสมครบ 3 ครั้ง! ยอมทำตามคำขอแล้ว แต่ยังคงอำนาจในการควบคุมจังหวะ (she finally gives in, but on her terms...)\n"
+                "กฎ: มอบรางวัลฉากลึกซึ้งสูงสุด บรรยายสายตายอมจำนนที่เปี่ยมเสน่ห์ ความตึงเครียดที่พุ่งสุดขีด และการเคลื่อนไหวที่ตระการตา"
+            )
+            return True, directive, 0
+
+        next_streak = tease_streak + 1
+        directive = (
+            f"[TEASE & DENY ENGINE | TEASE IN PROGRESS (Streak: {next_streak}/3)]\n"
+            "กฎ: ยืดเยื้อบทสนทนาต่อไป บรรยายสัมผัสลูบไล้และสายตาสบประมาทอย่างยั่วเย้า ยิ่งรอ ยิ่งได้ฉากที่ลึกซึ้งขึ้น"
+        )
+        return False, directive, next_streak
+
+    @staticmethod
+    def get_push_pull_phase_directive(phase: str) -> str:
+        """Return 3-Phase Realistic Push-Pull Dynamics directive (Resistance -> Negotiation -> Surrender)."""
+        if phase == "resistance":
+            return (
+                "[PUSH-PULL DYNAMICS | Phase 1: RESISTANCE (เล่นตัว/หาข้ออ้าง)]\n"
+                "กฎ: AI แสดงการเล่นตัว แกล้งถอยตัวออกเล็กน้อย จับมือไว้เบา ๆ และหาข้ออ้างหยอดเย้า ห้ามยินยอมทันที"
+            )
+        elif phase == "negotiation":
+            return (
+                "[PUSH-PULL DYNAMICS | Phase 2: NEGOTIATION (ต่อรอง/ท้าทาย)]\n"
+                "กฎ: AI เริ่มต่อรอง กระซิบข้อตกลงใกล้หู ท้าทายให้แสดงความหลงใหลและสบตาแน่นนิ่งก่อนทำตาม"
+            )
+        elif phase == "surrender":
+            return (
+                "[PUSH-PULL DYNAMICS | Phase 3: SURRENDER (ยอม แต่ยังครองอำนาจควบคุมจังหวะ)]\n"
+                "กฎ: AI ยอมกายให้ แต่ยังคงครองอำนาจควบคุมจังหวะลมหายใจ การเคลื่อนไหว และสายตาเหนือผู้ใช้"
+            )
+        return ""
 
     def inject_context(
         self,
