@@ -98,6 +98,14 @@ def main() -> None:
         style_dir = lorebook.get_attachment_style_directive(style)
         print(f"Style '{style.upper()}':\n{style_dir}\n")
 
+    print("\n--- Testing Beat-Aware Retrieval & Tension Threshold Filtering ---")
+    beat_inj = lorebook.inject_context(
+        "จับฉันใน ท่าหมา แบบช้าๆ สิ",
+        tension_meter=65.0,
+        current_beat="escalation",
+    )
+    print(f"Beat-Aware Injected Context (Beat: ESCALATION | Tension: 65.0):\n{beat_inj}")
+
 
 if __name__ == "__main__":
     main()

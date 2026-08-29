@@ -323,6 +323,7 @@ class SlowBurnLorebook:
         ai_history: str = "",
         tension_meter: float = 50.0,
         denial_counter: int = 0,
+        current_beat: str = "escalation",
     ) -> str:
         """Scan input and history for keywords and return structured hidden directive context.
 
@@ -331,6 +332,7 @@ class SlowBurnLorebook:
             ai_history: Concatenated conversation history.
             tension_meter: Tension / Arousal intensity score (0.0 to 100.0).
             denial_counter: Number of times user rushed commands have been denied (0-2).
+            current_beat: Active narrative beat (tease, resistance, escalation, resolution, recovery).
         """
         if not self.entries:
             return ""
@@ -350,6 +352,13 @@ class SlowBurnLorebook:
             for entry in self.entries:
                 if not entry.get("enabled", True):
                     continue
+
+                # Tension Threshold Range Check
+                threshold = entry.get("tension_threshold")
+                if isinstance(threshold, (list, tuple)) and len(threshold) == 2:
+                    min_t, max_t = float(threshold[0]), float(threshold[1])
+                    if not (min_t <= tension_meter <= max_t):
+                        continue
 
                 primary_keys = entry.get("key", [])
                 secondary_keys = entry.get("keysecondary", [])
@@ -381,14 +390,28 @@ class SlowBurnLorebook:
                     else:
                         selected_content = entry.get("content", "")
 
+                    entry_beat = entry.get("beat", "escalation")
+                    beat_match = 1 if entry_beat == current_beat else 0
+                    priority = entry.get("priority", 1)
+
                     triggered_contents.append({
+                        "beat_match": beat_match,
+                        "priority": priority,
                         "order": entry.get("insertion_order", 100),
                         "comment": entry.get("comment", ""),
                         "content": selected_content,
+                        "beat": entry_beat,
                     })
 
+        # Sort by Beat Match (descending), Priority (descending), Insertion Order (descending)
+        if triggered_contents:
+            triggered_contents.sort(
+                key=lambda x: (x["beat_match"], x["priority"], x["order"]),
+                reverse=True,
+            )
+
         if triggered_contents or push_pull_dir or tension_meter >= 85.0:
-            injected = f"\n\n[SYSTEM DIRECTIVE: Slow-Burn Lorebook Triggered | Tension Meter: {tension_meter:.1f}/100 - Level: {tension_level.upper()}]\n"
+            injected = f"\n\n[SYSTEM DIRECTIVE: Slow-Burn Lorebook Triggered | Tension Meter: {tension_meter:.1f}/100 - Level: {tension_level.upper()} - Beat: {current_beat.upper()}]\n"
             injected += "กฎ: ห้ามกระทำทันที ให้บรรยายความตึงเครียด สายตา ลมหายใจ และการลังเล (90% Tension / 10% Action)\n"
             injected += f"ระดับอารมณ์ตึงเครียดปัจจุบัน: {tension_level.upper()} ({tension_meter:.1f}/100)\n"
 
@@ -403,9 +426,9 @@ class SlowBurnLorebook:
                 injected += f"\n{push_pull_dir}\n"
 
             if triggered_contents:
-                injected += "บริบทของท่าทางที่ระบบตรวจจับได้ (ปรับตามระดับ Tension):\n"
+                injected += "บริบทของท่าทางที่ระบบตรวจจับได้ (ปรับตามระดับ Tension และ Beat):\n"
                 for t in triggered_contents:
-                    injected += f"- ({t['comment']}): {t['content']}\n"
+                    injected += f"- ({t['comment']} | Beat: {t['beat'].upper()}): {t['content']}\n"
 
             injected += f"\n{self.get_sensory_directive(tension_meter=tension_meter)}\n"
             injected += "[END SYSTEM DIRECTIVE - นำแนวทางข้างต้นไปผสานกับการตอบกลับอย่างเป็นธรรมชาติ]\n"
