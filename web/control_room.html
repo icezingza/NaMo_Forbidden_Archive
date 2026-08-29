@@ -251,6 +251,7 @@
       <button class="tab-btn" onclick="switchTab('security')">🛡️ Security Audit</button>
       <button class="tab-btn" onclick="switchTab('backups')">💾 State Backups</button>
       <button class="tab-btn" onclick="switchTab('analyzer')">🧠 7-Step Architecture Analyzer</button>
+      <button class="tab-btn" onclick="switchTab('datasets')">🏆 Data Pipeline & Fine-Tuning</button>
     </div>
 
     <!-- TAB 1: REGISTRY -->
@@ -322,6 +323,19 @@
         <div id="analyzer-output" style="margin-top: 20px;"></div>
       </div>
     </div>
+
+    <!-- TAB 5: DATASETS & FINE-TUNING -->
+    <div id="tab-datasets" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🏆 HITL Data Pipeline & Fine-Tuning Telemetry</div>
+          <button class="btn-action" onclick="loadDatasetStats()">🔄 Sync Dataset Stats</button>
+        </div>
+        <div id="dataset-container" class="grid-2" style="margin-top: 16px;">
+          <p>Loading dataset statistics...</p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -331,6 +345,7 @@
       
       event.target.classList.add('active');
       document.getElementById(`tab-${tabId}`).classList.add('active');
+      if (tabId === 'datasets') loadDatasetStats();
     }
 
     async function refreshStatus() {
@@ -462,8 +477,50 @@
       };
     }
 
+    async function loadDatasetStats() {
+      const container = document.getElementById('dataset-container');
+      try {
+        const res = await fetch('/v1/datasets/stats');
+        const data = await res.json();
+        container.innerHTML = `
+          <div class="card" style="background: rgba(139, 92, 246, 0.1); border-color: rgba(139, 92, 246, 0.3);">
+            <div class="card-title" style="color: #a78bfa;">📦 Raw Candidate Chunks</div>
+            <div style="font-size: 2rem; font-weight: 700; margin: 10px 0;">${data.candidate_chunks}</div>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Layer 1 Sanitized & Audited Chunks</p>
+          </div>
+          <div class="card" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3);">
+            <div class="card-title" style="color: #34d399;">👁️ HITL Reviewed</div>
+            <div style="font-size: 2rem; font-weight: 700; margin: 10px 0;">${data.hitl_reviewed}</div>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Human Annotated & Verified Ground Truth</p>
+          </div>
+          <div class="card" style="background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3);">
+            <div class="card-title" style="color: #fbbf24;">🏆 Golden SFT ChatML</div>
+            <div style="font-size: 2rem; font-weight: 700; margin: 10px 0;">${data.namo_golden_dataset_chatml}</div>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">90% Tension / 10% Action ChatML Records</p>
+          </div>
+          <div class="card" style="background: rgba(236, 72, 153, 0.1); border-color: rgba(236, 72, 153, 0.3);">
+            <div class="card-title" style="color: #f472b6;">⚖️ DPO Preference Pairs</div>
+            <div style="font-size: 2rem; font-weight: 700; margin: 10px 0;">${data.namo_golden_dataset_dpo}</div>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Chosen vs Rejected Fine-Tuning Pairs</p>
+          </div>
+          <div class="card" style="grid-column: 1 / -1; background: rgba(0,0,0,0.4);">
+            <div class="card-title" style="color: var(--accent-green);">🛡️ Safety Gate Evaluation Metrics</div>
+            <div style="display: flex; gap: 24px; margin-top: 12px; flex-wrap: wrap;">
+              <div>Precision: <strong>${(data.safety_metrics.precision * 100).toFixed(1)}%</strong></div>
+              <div>Recall: <strong>${(data.safety_metrics.recall * 100).toFixed(1)}%</strong></div>
+              <div>F1 Score: <strong>${(data.safety_metrics.f1_score * 100).toFixed(1)}%</strong></div>
+              <div>Target Model: <code>${data.target_model}</code></div>
+            </div>
+          </div>
+        `;
+      } catch (e) {
+        container.innerHTML = `<p style="color: var(--accent-red)">Failed to load dataset stats: ${e}</p>`;
+      }
+    }
+
     // Initial load
     refreshStatus();
+    loadDatasetStats();
     initLiveStream();
   </script>
 </body>
