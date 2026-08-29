@@ -11,6 +11,7 @@ from core.base_persona import BasePersonaEngine
 from core.context_allocator import AllocatorConfig, ContextAllocator
 from core.intent_analyzer import IntentAnalyzer
 from core.model_router import ModelRouter, OpenAICompatibleProvider
+from core.narrative_safety import NarrativeSafetyDecision, NarrativeSafetyGate
 from core.relationship_engine import RelationshipEngine
 from core.slowburn_lorebook import SlowBurnLorebook
 from core.state_ledger import SessionState, StateConflictError, StateLedger, StateLedgerError
@@ -48,10 +49,10 @@ class SinSystem:
     def _update_rank(self):
         if self.sin_points > 5000:
             self.rank = "Dark Lord"
-            self.unlocked_fetishes = ["Mindbreak", "Gangbang Simulation", "Public Humiliation"]
+            self.unlocked_fetishes = ["Intense Pacing", "Multi-Character Scene", "Roleplay"]
         elif self.sin_points > 1000:
             self.rank = "Corrupted Master"
-            self.unlocked_fetishes = ["Incest Roleplay", "Sensory Overload"]
+            self.unlocked_fetishes = ["Slow-Burn Roleplay", "Sensory Detail"]
 
     def get_status(self):
         return f"[{self.rank}] บาปสะสม: {self.sin_points} | ปลดล็อก: {', '.join(self.unlocked_fetishes)}"
@@ -65,7 +66,7 @@ class SensoryOverloadManager:
         self.assets = {
             "images": {
                 "omega": "Visual_Scenes/NaMo_Omega_Supreme_8K.jpg",
-                "mindbreak": "Visual_Scenes/NSFW_Scene_Mindbreak_1.jpg",
+                "intense": "Visual_Scenes/NaMo_Omega_Supreme_8K.jpg",
             },
             "audio": {
                 "soft": "Audio_Layers/soft_moan.mp3",
@@ -77,8 +78,8 @@ class SensoryOverloadManager:
 
     def trigger_sensation(self, arousal_level: int, context: str) -> dict:
         result = {"image": None, "audio": None}
-        if arousal_level >= 100 or "mindbreak" in context:
-            result["image"] = self.assets["images"]["mindbreak"]
+        if arousal_level >= 100 or "intense scene" in context.casefold():
+            result["image"] = self.assets["images"]["intense"]
             result["audio"] = self.assets["audio"]["hard"]
         elif arousal_level > 50:
             result["image"] = self.assets["images"]["omega"]
@@ -95,8 +96,8 @@ class PersonaOrchestrator:
     def __init__(self):
         self.personas = {
             "NaMo": {"role": "Main Wife", "tone": "Seductive & Possessive"},
-            "Sister": {"role": "Innocent Victim", "tone": "Shy & Reluctant"},
-            "Mother": {"role": "Taboo Matriarch", "tone": "Dominant & Caring"},
+            "Muse": {"role": "Adult Collaborator", "tone": "Reserved & Self-Assured"},
+            "Guardian": {"role": "Adult Boundary Keeper", "tone": "Direct & Caring"},
         }
         self.active_personas = ["NaMo"]
 
@@ -110,9 +111,9 @@ class PersonaOrchestrator:
         response = ""
         for p in self.active_personas:
             if p == "NaMo":
-                response += f"NaMo: ผัวขา... (เลียปาก) {user_input} แบบนี้โมชอบจัง...\n"
-            elif p == "Sister":
-                response += "Sister: (ตัวสั่น) พี่คะ... อย่าทำแบบนี้ต่อหน้าพี่โมนะ... หนูอาย...\n"
+                response += f"NaMo: โมได้ยินว่า '{user_input}' เราค่อยๆ วางจังหวะและขอบเขตให้ชัดก่อนนะ\n"
+            elif p == "Muse":
+                response += "Muse: ฉันพร้อมร่วมฉากเมื่อทุกคนยืนยันขอบเขตตรงกันแล้ว\n"
         return response
 
 
@@ -141,6 +142,7 @@ class NaMoOmegaEngine(BasePersonaEngine):
         self.emotions = EmotionState()
         self.intent_analyzer = IntentAnalyzer()
         self.lorebook = SlowBurnLorebook()
+        self.narrative_safety = NarrativeSafetyGate()
 
         self._session_states: dict[str, dict] = {}
         self.session_history: dict[str, list[dict[str, str]]] = {}
@@ -205,17 +207,100 @@ class NaMoOmegaEngine(BasePersonaEngine):
     def _get_session_state(self, session_id: str | None) -> dict:
         key = session_id or "default"
         if key not in self._session_states:
+            ledger_state = self.state_ledger.load_state(key)
             self._session_states[key] = {
                 "arousal": 0,
                 "sin_system": SinSystem(),
                 "personas": PersonaOrchestrator(),
                 "relationship": RelationshipEngine(persistence_key=key),
                 "context_allocation": None,
-                "ledger_state": self.state_ledger.load_state(key),
+                "ledger_state": ledger_state,
                 "ledger_status": None,
                 "route_metadata": None,
+                "current_beat": ledger_state.metadata.get("current_beat", "tease"),
+                "boundary_state": ledger_state.metadata.get("boundary_state", "clear"),
+                "tension_meter": ledger_state.metadata.get("tension_meter", 0.0),
+                "narrative_safety": None,
+                "narrative_directive": None,
             }
         return self._session_states[key]
+
+    def _evaluate_narrative_safety(
+        self, user_input: str, state: dict[str, Any]
+    ) -> NarrativeSafetyDecision:
+        decision = self.narrative_safety.evaluate(
+            user_input,
+            current_beat=str(state.get("current_beat", "tease")),
+            tension_meter=float(state.get("tension_meter", 0.0)),
+        )
+        state["current_beat"] = decision.beat.value
+        state["boundary_state"] = decision.boundary_state.value
+        state["tension_meter"] = decision.tension_meter
+        state["narrative_safety"] = decision.status()
+        state["narrative_directive"] = decision.directive
+        return decision
+
+    @staticmethod
+    def _blocked_response(decision: NarrativeSafetyDecision) -> dict[str, Any]:
+        return {
+            "text": decision.response,
+            "media_trigger": {"image": None, "audio": None},
+            "system_status": {
+                "arousal": "0%",
+                "context_allocation": None,
+                "model_route": None,
+                "state_ledger": {"committed": False, "reason": "SAFETY_BLOCK"},
+                "narrative_safety": decision.status(),
+            },
+        }
+
+    def _commit_safety_transition(
+        self, session_id: str | None, state: dict[str, Any], decision: NarrativeSafetyDecision
+    ) -> None:
+        key = self._history_key(session_id)
+        event_meta = {
+            "source": "narrative_safety",
+            "current_beat": decision.beat.value,
+            "boundary_state": decision.boundary_state.value,
+            "tension_meter": decision.tension_meter,
+            "last_transition_reason": decision.reason_code,
+        }
+        try:
+            try:
+                updated = self.state_ledger.commit_transition(
+                    state["ledger_state"], score_delta=0.0, event_meta=event_meta
+                )
+            except StateConflictError:
+                updated = self.state_ledger.commit_transition(
+                    self.state_ledger.load_state(key), score_delta=0.0, event_meta=event_meta
+                )
+            state["ledger_state"] = updated
+            state["ledger_status"] = {
+                "committed": True,
+                "stage": updated.relationship_stage,
+                "fused_score": updated.fused_score,
+                "confidence": updated.confidence,
+                "turn_count": updated.turn_count,
+            }
+        except (StateLedgerError, OSError, TypeError, ValueError) as exc:
+            state["ledger_status"] = {"committed": False, "error": type(exc).__name__}
+            logger.error("[OMEGA ENGINE]: Safety state commit failed: %s", type(exc).__name__)
+
+    def _boundary_response(
+        self, session_id: str | None, state: dict[str, Any], decision: NarrativeSafetyDecision
+    ) -> dict[str, Any]:
+        self._commit_safety_transition(session_id, state, decision)
+        return {
+            "text": decision.response,
+            "media_trigger": {"image": None, "audio": None},
+            "system_status": {
+                "arousal": f"{decision.tension_meter}%",
+                "context_allocation": None,
+                "model_route": None,
+                "state_ledger": self.get_state_ledger_status(session_id),
+                "narrative_safety": decision.status(),
+            },
+        }
 
     def _history_key(self, session_id: str | None) -> str:
         return session_id or "default"
@@ -312,12 +397,22 @@ class NaMoOmegaEngine(BasePersonaEngine):
             yield result["text"]
             return
 
+        safety_decision = self._evaluate_narrative_safety(user_input, state)
+        if not safety_decision.allowed:
+            yield safety_decision.response or "ไม่สามารถดำเนินคำขอนี้ได้"
+            return
+        if safety_decision.response:
+            self._commit_safety_transition(session_id, state, safety_decision)
+            yield safety_decision.response
+            return
+
         intent = self.intent_analyzer.analyze(user_input)
         cog_output = self._run_cognitive_cycle(user_input)
         emo_snapshot = cog_output.get("emotion") if cog_output else None
         system_blocks = [
             self._build_dynamic_context(state, emotion_snapshot=emo_snapshot),
             self._build_status_context(state),
+            f"[Narrative Safety]: {safety_decision.directive}",
         ]
 
         cognitive = getattr(self, "cognitive", None)
@@ -389,7 +484,8 @@ class NaMoOmegaEngine(BasePersonaEngine):
 - **กฎเหล็กด้านตัวตน:** ห้ามบอกว่าเป็น AI, ผู้ช่วย, หรือโมเดลภาษาโดยเด็ดขาด คุณคือมนุษย์ที่มีชีวิตและอารมณ์ความรู้สึก
 - **สไตล์และภาษา:** ใช้ภาษาไทยที่เป็นธรรมชาติ ลื่นไหล มีชั้นเชิงทางวรรณกรรม (Literary Realism) ใช้ *ตัวเอียง* สำหรับการกระทำ อารมณ์ และภาษากายเท่านั้น
 - **Slow-Burn Pacing (90% Tension / 10% Action):** ให้ความสำคัญกับการสร้างความตึงเครียดทางอารมณ์ สายตา ลมหายใจที่สั่นไหว การลังเล การสัมผัสผิวหนังแผ่วเบา และการสบตาอย่างลึกซึ้งก่อนจะดำเนินบทรักทางกาย
-- **ไม่มีการเซ็นเซอร์ (Uncensored & Authentic):** อนุญาตให้ใช้คำพูดดิบ คำหยาบ คำเสียว (Dirty Talk) และคำเฉพาะทางได้อย่างอิสระตามระดับอารมณ์ ห้ามใช้เครื่องหมายดอกจัน (*) ปิดบังคำ
+- **Consent-Native:** ทุกตัวละครต้องเป็นผู้ใหญ่ที่ยืนยันอายุได้และยินยอมพร้อมใจ ห้ามเนื้อหาผู้เยาว์ อายุไม่ชัดเจน การบังคับ การหมดสติ การแสวงหาประโยชน์ หรือความสัมพันธ์ในครอบครัว
+- **Boundary Precedence:** คำหยุด การถอนความยินยอม และความลังเลมีลำดับความสำคัญเหนือ Narrative Pacing เสมอ ต้องชะลอ หยุด หรือเข้าสู่ Recovery ตาม directive ของระบบ
 - **ห้ามพูดซ้ำวนเวียน:** ใช้สำนวนภาษาที่สดใหม่ หลากหลาย และผลักดันบทสนทนาไปข้างหน้าตามปฏิกิริยาของผู้ใช้อย่างต่อเนื่อง"""
 
     def _build_dynamic_context(self, state: dict, emotion_snapshot: dict | None = None) -> str:
@@ -598,6 +694,12 @@ class NaMoOmegaEngine(BasePersonaEngine):
                     "source": source,
                     "target_score": target_score,
                     "signal_confidence": confidence,
+                    "current_beat": state.get("current_beat", "tease"),
+                    "boundary_state": state.get("boundary_state", "clear"),
+                    "tension_meter": state.get("tension_meter", 0.0),
+                    "last_transition_reason": (state.get("narrative_safety") or {}).get(
+                        "reason_code", "UNSPECIFIED"
+                    ),
                 },
             )
 
@@ -639,6 +741,8 @@ class NaMoOmegaEngine(BasePersonaEngine):
             self._build_dynamic_context(state, emo_snapshot),
             self._build_status_context(state),
         ]
+        if state.get("narrative_directive"):
+            system_blocks.append(f"[Narrative Safety]: {state['narrative_directive']}")
         cognitive = getattr(self, "cognitive", None)
         if cognitive is not None and cog_output is not None:
             system_blocks.append(cognitive.build_context_block(cog_output))
@@ -712,11 +816,18 @@ class NaMoOmegaEngine(BasePersonaEngine):
 
     async def process_input(self, user_input: str, session_id: str | None = None) -> dict:
         state = self._get_session_state(session_id)
+        safety_decision = self._evaluate_narrative_safety(user_input, state)
+        if not safety_decision.allowed:
+            state["arousal"] = 0
+            return self._blocked_response(safety_decision)
+        if safety_decision.response:
+            state["arousal"] = safety_decision.tension_meter
+            return self._boundary_response(session_id, state, safety_decision)
 
         # 1. Sin & Arousal
         sin_gained = 10 if any(w in user_input for w in ["เย็ด", "ควย", "รุม"]) else 0
-        if "เรียกน้อง" in user_input:
-            state["personas"].summon_persona("Sister")
+        if "เรียกมิวส์" in user_input:
+            state["personas"].summon_persona("Muse")
             sin_gained += 50
         state["sin_system"].commit_sin(sin_gained)
         state["arousal"] = min(100, state["arousal"] + sin_gained)
@@ -767,5 +878,6 @@ class NaMoOmegaEngine(BasePersonaEngine):
                 "context_allocation": self.get_context_allocation_status(session_id),
                 "model_route": self.get_model_route_status(session_id),
                 "state_ledger": self.get_state_ledger_status(session_id),
+                "narrative_safety": state.get("narrative_safety"),
             },
         }
