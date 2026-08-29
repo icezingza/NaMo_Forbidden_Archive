@@ -317,6 +317,95 @@ class SlowBurnLorebook:
                 "กฎ: มั่นใจในความรู้สึก เปิดใจอย่างอ่อนโยน ค่อยเป็นค่อยไป แต่ลึกซึ้งและแนบแน่น"
             )
 
+    def get_triggered_entries(
+        self,
+        user_input: str,
+        ai_history: str = "",
+        current_tension: float = 50.0,
+        current_beat: str = "escalation",
+    ) -> list[dict[str, Any]]:
+        """Retrieve lorebook entries matching keywords, tension threshold, and sorted by beat match.
+
+        Args:
+            user_input: Current turn user message.
+            ai_history: Concatenated conversation history.
+            current_tension: Active tension score (0.0 to 100.0).
+            current_beat: Active narrative beat (tease, resistance, escalation, resolution, recovery).
+
+        Returns:
+            Sorted list of triggered entry dictionaries.
+        """
+        if not self.entries:
+            return []
+
+        text_to_scan = f"{user_input} {ai_history}".lower()
+        tension_level = self.resolve_tension_level(current_tension)
+        triggered: list[dict[str, Any]] = []
+
+        for entry in self.entries:
+            if not entry.get("enabled", True):
+                continue
+
+            # 1. Tension Threshold Range Check
+            threshold = entry.get("tension_threshold")
+            if isinstance(threshold, (list, tuple)) and len(threshold) == 2:
+                min_t, max_t = float(threshold[0]), float(threshold[1])
+                if not (min_t <= current_tension <= max_t):
+                    continue
+
+            primary_keys = entry.get("key", [])
+            secondary_keys = entry.get("keysecondary", [])
+
+            # Check primary key match
+            matched_pk = [
+                pk for pk in primary_keys
+                if str(pk).strip() and str(pk).lower() in text_to_scan
+            ]
+            primary_match = len(matched_pk) > 0
+
+            # Check secondary key match
+            secondary_match = True
+            if secondary_keys:
+                has_sk_match = any(
+                    str(sk).lower() in text_to_scan for sk in secondary_keys if str(sk).strip()
+                )
+                has_specific_pk = any(
+                    any(ord(c) > 127 for c in str(pk)) or len(str(pk)) > 3
+                    for pk in matched_pk
+                )
+                secondary_match = has_sk_match or has_specific_pk
+
+            if primary_match and secondary_match:
+                # Dynamic Tension Content Resolution
+                tension_dict = entry.get("tension_levels")
+                if isinstance(tension_dict, dict) and tension_level in tension_dict:
+                    selected_content = tension_dict[tension_level]
+                else:
+                    selected_content = entry.get("content", "")
+
+                entry_beat = entry.get("beat", "escalation")
+                beat_match = 1 if entry_beat == current_beat else 0
+                priority = entry.get("priority", 1)
+
+                triggered.append({
+                    "beat_match": beat_match,
+                    "priority": priority,
+                    "order": entry.get("insertion_order", 100),
+                    "comment": entry.get("comment", ""),
+                    "content": selected_content,
+                    "beat": entry_beat,
+                    "entry_id": entry.get("id"),
+                })
+
+        # Sort by Beat Match (descending), Priority (descending), Insertion Order (descending)
+        if triggered:
+            triggered.sort(
+                key=lambda x: (x["beat_match"], x["priority"], x["order"]),
+                reverse=True,
+            )
+
+        return triggered
+
     def inject_context(
         self,
         user_input: str,
@@ -337,7 +426,6 @@ class SlowBurnLorebook:
         if not self.entries:
             return ""
 
-        text_to_scan = f"{user_input} {ai_history}".lower()
         tension_level = self.resolve_tension_level(tension_meter)
         is_rushed = self.detect_rushed_input(user_input)
         push_pull_dir, block_actions = (
@@ -346,69 +434,16 @@ class SlowBurnLorebook:
             else ("", False)
         )
 
-        triggered_contents: list[dict[str, Any]] = []
-
-        if not block_actions:
-            for entry in self.entries:
-                if not entry.get("enabled", True):
-                    continue
-
-                # Tension Threshold Range Check
-                threshold = entry.get("tension_threshold")
-                if isinstance(threshold, (list, tuple)) and len(threshold) == 2:
-                    min_t, max_t = float(threshold[0]), float(threshold[1])
-                    if not (min_t <= tension_meter <= max_t):
-                        continue
-
-                primary_keys = entry.get("key", [])
-                secondary_keys = entry.get("keysecondary", [])
-
-                # Check primary key match
-                matched_pk = [
-                    pk for pk in primary_keys
-                    if str(pk).strip() and str(pk).lower() in text_to_scan
-                ]
-                primary_match = len(matched_pk) > 0
-
-                # Check secondary key match
-                secondary_match = True
-                if secondary_keys:
-                    has_sk_match = any(
-                        str(sk).lower() in text_to_scan for sk in secondary_keys if str(sk).strip()
-                    )
-                    has_specific_pk = any(
-                        any(ord(c) > 127 for c in str(pk)) or len(str(pk)) > 3
-                        for pk in matched_pk
-                    )
-                    secondary_match = has_sk_match or has_specific_pk
-
-                if primary_match and secondary_match:
-                    # Dynamic Tension Content Resolution
-                    tension_dict = entry.get("tension_levels")
-                    if isinstance(tension_dict, dict) and tension_level in tension_dict:
-                        selected_content = tension_dict[tension_level]
-                    else:
-                        selected_content = entry.get("content", "")
-
-                    entry_beat = entry.get("beat", "escalation")
-                    beat_match = 1 if entry_beat == current_beat else 0
-                    priority = entry.get("priority", 1)
-
-                    triggered_contents.append({
-                        "beat_match": beat_match,
-                        "priority": priority,
-                        "order": entry.get("insertion_order", 100),
-                        "comment": entry.get("comment", ""),
-                        "content": selected_content,
-                        "beat": entry_beat,
-                    })
-
-        # Sort by Beat Match (descending), Priority (descending), Insertion Order (descending)
-        if triggered_contents:
-            triggered_contents.sort(
-                key=lambda x: (x["beat_match"], x["priority"], x["order"]),
-                reverse=True,
+        triggered_contents = (
+            []
+            if block_actions
+            else self.get_triggered_entries(
+                user_input=user_input,
+                ai_history=ai_history,
+                current_tension=tension_meter,
+                current_beat=current_beat,
             )
+        )
 
         if triggered_contents or push_pull_dir or tension_meter >= 85.0:
             injected = f"\n\n[SYSTEM DIRECTIVE: Slow-Burn Lorebook Triggered | Tension Meter: {tension_meter:.1f}/100 - Level: {tension_level.upper()} - Beat: {current_beat.upper()}]\n"
