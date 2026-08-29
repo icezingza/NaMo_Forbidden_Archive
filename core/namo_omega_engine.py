@@ -488,6 +488,33 @@ class NaMoOmegaEngine(BasePersonaEngine):
 - **Boundary Precedence:** คำหยุด การถอนความยินยอม และความลังเลมีลำดับความสำคัญเหนือ Narrative Pacing เสมอ ต้องชะลอ หยุด หรือเข้าสู่ Recovery ตาม directive ของระบบ
 - **ห้ามพูดซ้ำวนเวียน:** ใช้สำนวนภาษาที่สดใหม่ หลากหลาย และผลักดันบทสนทนาไปข้างหน้าตามปฏิกิริยาของผู้ใช้อย่างต่อเนื่อง"""
 
+    def _substitute_prompt_variables(self, text: str, state: dict) -> str:
+        """Replace system prompt placeholders ([TENSION_LEVEL], [CURRENT_BEAT], [RESIDUE_STATUS]) with active state values.
+
+        Fallback defaults:
+          tension_meter: 0.0
+          current_beat: "tease"
+          emotional_residue: "None"
+        """
+        if not text:
+            return ""
+
+        tension_val = state.get("arousal", state.get("tension_meter", 0.0))
+        try:
+            tension_str = f"{float(tension_val):.1f}"
+        except (TypeError, ValueError):
+            tension_str = "0.0"
+
+        beat_str = str(state.get("current_beat", "tease"))
+        residue_str = str(
+            state.get("last_scene_outcome", state.get("emotional_residue", "None"))
+        )
+
+        replaced = text.replace("[TENSION_LEVEL]", tension_str)
+        replaced = replaced.replace("[CURRENT_BEAT]", beat_str)
+        replaced = replaced.replace("[RESIDUE_STATUS]", residue_str)
+        return replaced
+
     def _build_dynamic_context(self, state: dict, emotion_snapshot: dict | None = None) -> str:
         trust = emotion_snapshot.get("trust", 0.5) if emotion_snapshot else 0.5
         relationship_state = state["relationship"]
@@ -499,10 +526,12 @@ class NaMoOmegaEngine(BasePersonaEngine):
             f"fused_score={ledger_state.fused_score:.4f} | "
             f"confidence={ledger_state.confidence:.2f} | turn={ledger_state.turn_count}"
         )
-        return f"""{relationship_block}
-{tone_block}
-{resonance_block}
-[เป้าหมาย]: สร้างความประทับใจและความภักดีผ่านสติปัญญาและเสน่ห์ที่ลึกลับ"""
+        status_block = (
+            "[Session State]: Tension Level=[TENSION_LEVEL] | "
+            "Current Beat=[CURRENT_BEAT] | Residue Status=[RESIDUE_STATUS]"
+        )
+        raw_text = f"{status_block}\n{relationship_block}\n{tone_block}\n{resonance_block}"
+        return self._substitute_prompt_variables(raw_text, state)
 
     def _build_dynamic_prompt(self, state: dict, emotion_snapshot: dict | None = None) -> str:
         return (
