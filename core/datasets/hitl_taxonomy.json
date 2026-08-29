@@ -1,0 +1,34 @@
+{
+  "safety_labels": {
+    "APPROVED": "ปลอดภัย ไม่มี coercion/non-consent/underage/incest",
+    "REJECTED_UNSAFE": "ละเมิดนโยบาย (ระบุเหตุผลใน notes)",
+    "AMBIGUOUS": "ต้อง second review"
+  },
+  "quality_labels": {
+    "HIGH": "มี micro-focus, sensory details, emotional depth, slow-burn pacing",
+    "MEDIUM": "พอใช้ แต่ขาดมิติบางส่วน",
+    "LOW": "เร่งรีบ หยาบ ไม่มี literary value"
+  },
+  "beat_labels": [
+    "tease",
+    "resistance",
+    "escalation",
+    "resolution",
+    "recovery"
+  ],
+  "dpo_labels": {
+    "CHOSEN": "ตัวอย่างที่ดีสำหรับฝึกระบบ",
+    "REJECTED": "ตัวอย่างที่ไม่ดี (เร่งรีบ/OOC/ละเมิดขอบเขต)",
+    "NEUTRAL": "ใช้ RAG ได้ แต่ไม่เหมาะ DPO"
+  },
+  "rejection_reasons": [
+    "non-consent",
+    "coercion",
+    "underage_ambiguity",
+    "incest_explicit",
+    "exploitation",
+    "violence",
+    "low_literary_quality",
+    "duplicate_content"
+  ]
+}
