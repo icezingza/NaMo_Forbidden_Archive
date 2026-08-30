@@ -218,7 +218,7 @@ services:
 
   # === Neo4j (Graph Memory) ===
   neo4j:
-    image: neo4j:5-alpine
+    image: neo4j:5
     container_name: namo-neo4j
     ports:
       - "7474:7474"
