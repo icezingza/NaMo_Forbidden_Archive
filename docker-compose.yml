@@ -192,7 +192,7 @@ services:
     networks:
       - namo-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cognitive -d cognition"]
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U cognitive -d cognition"]
       interval: 10s
       timeout: 5s
       retries: 3

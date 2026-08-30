@@ -94,7 +94,7 @@ GROUP BY s.id, s.session_id, s.telegram_user_id, s.relationship_stage, s.stage_p
          e.arousal, e.trust, e.passion, e.temperament, e.resonance;
 
 -- Grant permissions
-GRANT CONNECT ON DATABASE namo_sessions TO cognitive;
+GRANT CONNECT ON DATABASE cognition TO cognitive;
 GRANT USAGE ON SCHEMA public TO cognitive;
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO cognitive;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO cognitive;
