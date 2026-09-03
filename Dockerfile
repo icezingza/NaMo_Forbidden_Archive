@@ -13,7 +13,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt ./
 
 # Build wheels in isolation with strict error handling
-RUN pip install --upgrade pip setuptools wheel && \
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --upgrade pip setuptools wheel && \
     pip wheel --no-cache-dir --wheel-dir /build/wheels -r requirements.txt
 
 # Stage 2: Runtime image (minimal)
@@ -21,9 +22,9 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install only runtime deps (curl for healthchecks, libpq for database)
+# Install only runtime deps (curl for healthchecks; psycopg2-binary bundles libpq)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl libpq5 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user for security
