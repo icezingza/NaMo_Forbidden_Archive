@@ -1,11 +1,7 @@
-"""Manifest-aware lorebook registry for NaMo runtime.
-
-The registry keeps source files immutable, validates the list[entry] schema used by the
-NaMo lorebook loader, and annotates entries with source metadata for observability.
-"""
-
+"""Manifest-aware lorebook registry for the NaMo runtime."""
 from __future__ import annotations
 
+import gzip
 import json
 import logging
 from dataclasses import dataclass
@@ -17,10 +13,16 @@ logger = logging.getLogger(__name__)
 DEFAULT_LOREBOOK_DIR = Path("core/lorebooks")
 DEFAULT_BASE_LOREBOOK = DEFAULT_LOREBOOK_DIR / "Sex_Positions_Kinks_SlowBurn_TH_v10.json"
 DEFAULT_ROLEPLAY000_MANIFEST = DEFAULT_LOREBOOK_DIR / "ROLEPLAY000_IMPORT_MANIFEST_TH.json"
+ROLEPLAY000_FILES = {
+    "Story_Engine_TH.json",
+    "Simple_Personality_Traits_TH.json",
+    "Sex_Acts_TH.json",
+    "Most_Useful_Items_TH.json",
+}
 
 
 class LorebookRegistryError(ValueError):
-    """Raised when a lorebook source or manifest is malformed."""
+    """Raised when a lorebook source or manifest is malformed/incomplete."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,10 +33,11 @@ class LorebookSource:
 
 
 class LorebookRegistry:
-    """Load and combine multiple NaMo list-compatible lorebooks.
+    """Load multiple list[entry] lorebooks while preserving logical source identity.
 
-    Source text is not rewritten. Entries are shallow-normalized only for whitespace and
-    receive private runtime metadata keys prefixed with ``_source_``.
+    A manifest may name ``foo.json`` while the repository stores it losslessly as
+    ``foo.json.gz`` or split ``foo.json.gz.partNN`` chunks. This is a storage detail only;
+    runtime metadata and manifest validation continue to use the logical ``foo.json`` name.
     """
 
     def __init__(self, sources: Iterable[LorebookSource]) -> None:
@@ -58,10 +61,7 @@ class LorebookRegistry:
 
     @classmethod
     def from_manifest(
-        cls,
-        manifest_path: str | Path,
-        *,
-        include_base_lorebook: bool = False,
+        cls, manifest_path: str | Path, *, include_base_lorebook: bool = False
     ) -> "LorebookRegistry":
         manifest = Path(manifest_path)
         sources: list[LorebookSource] = []
@@ -75,30 +75,23 @@ class LorebookRegistry:
         path = Path(manifest_path)
         if not path.exists():
             raise LorebookRegistryError(f"Lorebook manifest not found: {path}")
-        with path.open(encoding="utf-8") as fh:
-            data = json.load(fh)
-        if not isinstance(data, dict):
-            raise LorebookRegistryError("Lorebook manifest must be a JSON object")
-
-        files = data.get("files")
-        if not isinstance(files, list):
-            raise LorebookRegistryError("Lorebook manifest field 'files' must be a list")
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict) or not isinstance(data.get("files"), list):
+            raise LorebookRegistryError("Lorebook manifest must contain a 'files' list")
 
         sources: list[LorebookSource] = []
-        for item in files:
+        for item in data["files"]:
             if not isinstance(item, dict) or not item.get("file"):
                 raise LorebookRegistryError("Every manifest file record must contain 'file'")
-            schema = item.get("schema")
-            if schema not in (None, "list[entry]"):
+            if item.get("schema") not in (None, "list[entry]"):
                 raise LorebookRegistryError(
-                    f"Unsupported lorebook schema for {item['file']}: {schema}"
+                    f"Unsupported lorebook schema for {item['file']}: {item.get('schema')}"
                 )
             declared = item.get("entries")
-            declared_entries = int(declared) if declared is not None else None
             sources.append(
                 LorebookSource(
                     path=path.parent / str(item["file"]),
-                    declared_entries=declared_entries,
+                    declared_entries=int(declared) if declared is not None else None,
                     source_archive_name=str(item.get("source") or "") or None,
                 )
             )
@@ -108,48 +101,67 @@ class LorebookRegistry:
     def _clean_entry(entry: dict[str, Any]) -> dict[str, Any]:
         cleaned: dict[str, Any] = {}
         for key, value in entry.items():
-            clean_key = str(key).strip()
+            key = str(key).strip()
             if isinstance(value, str):
-                clean_value: Any = value.strip()
+                value = value.strip()
             elif isinstance(value, list):
-                clean_value = [item.strip() if isinstance(item, str) else item for item in value]
-            else:
-                clean_value = value
-            cleaned[clean_key] = clean_value
+                value = [item.strip() if isinstance(item, str) else item for item in value]
+            cleaned[key] = value
         return cleaned
 
+    @staticmethod
+    def _read_source(source: LorebookSource) -> tuple[list[Any], str] | None:
+        logical = source.path
+        if logical.exists():
+            raw = json.loads(logical.read_text(encoding="utf-8"))
+            return raw, str(logical)
+
+        gzip_path = logical.with_name(logical.name + ".gz")
+        if gzip_path.exists():
+            with gzip.open(gzip_path, "rt", encoding="utf-8") as fh:
+                return json.load(fh), str(gzip_path)
+
+        parts = sorted(logical.parent.glob(logical.name + ".gz.part*"))
+        if parts:
+            compressed = b"".join(part.read_bytes() for part in parts)
+            return json.loads(gzip.decompress(compressed).decode("utf-8")), ",".join(
+                str(part) for part in parts
+            )
+
+        if source.declared_entries is not None:
+            raise LorebookRegistryError(f"Declared lorebook source is missing: {logical}")
+        logger.warning("Lorebook source not found: %s", logical)
+        return None
+
     def _load_sources(self) -> None:
-        source_index = 0
-        for source in self.sources:
-            path = source.path
-            if not path.exists():
-                logger.warning("Lorebook source not found: %s", path)
+        for source_index, source in enumerate(self.sources):
+            loaded = self._read_source(source)
+            if loaded is None:
                 continue
-            with path.open(encoding="utf-8") as fh:
-                raw = json.load(fh)
+            raw, physical_source = loaded
+            logical_name = source.path.name
             if not isinstance(raw, list):
                 raise LorebookRegistryError(
-                    f"Lorebook must use list[entry] schema: {path}"
+                    f"Lorebook must use list[entry] schema: {logical_name}"
                 )
             if source.declared_entries is not None and len(raw) != source.declared_entries:
                 raise LorebookRegistryError(
-                    f"Manifest count mismatch for {path.name}: "
+                    f"Manifest count mismatch for {logical_name}: "
                     f"declared={source.declared_entries}, actual={len(raw)}"
                 )
 
-            self.source_counts[path.name] = len(raw)
+            self.source_counts[logical_name] = len(raw)
             for entry_index, raw_entry in enumerate(raw):
                 if not isinstance(raw_entry, dict):
                     raise LorebookRegistryError(
-                        f"Lorebook entry {entry_index} in {path} must be an object"
+                        f"Lorebook entry {entry_index} in {logical_name} must be an object"
                     )
                 entry = self._clean_entry(raw_entry)
-                entry["_source_lorebook"] = path.name
-                entry["_source_path"] = str(path)
+                entry["_source_lorebook"] = logical_name
+                entry["_source_path"] = physical_source
                 entry["_source_index"] = source_index
                 entry["_entry_index"] = entry_index
                 self.entries.append(entry)
-            source_index += 1
 
         self.entries.sort(
             key=lambda item: (
@@ -166,13 +178,5 @@ class LorebookRegistry:
     @property
     def roleplay000_entries(self) -> int:
         return sum(
-            count
-            for name, count in self.source_counts.items()
-            if name
-            in {
-                "Story_Engine_TH.json",
-                "Simple_Personality_Traits_TH.json",
-                "Sex_Acts_TH.json",
-                "Most_Useful_Items_TH.json",
-            }
+            count for name, count in self.source_counts.items() if name in ROLEPLAY000_FILES
         )
