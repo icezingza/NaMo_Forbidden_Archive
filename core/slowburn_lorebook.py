@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from core.narrative_safety import get_current_narrative_beat
 from core.slowburn_lorebook_runtime import (
     DEFAULT_LOREBOOK_PATH,
     DEFAULT_PROMPT_PATH,
@@ -21,7 +22,7 @@ _PROMPT_OVERRIDE_MARKERS = (
 
 
 class SlowBurnLorebook(_RuntimeSlowBurnLorebook):
-    """Runtime with legacy helper compatibility and corpus prompt-injection hardening."""
+    """Runtime with legacy compatibility, safety-beat sync, and corpus hardening."""
 
     @staticmethod
     def get_emotional_residue_directive(outcome: str) -> tuple[float, str]:
@@ -69,6 +70,13 @@ class SlowBurnLorebook(_RuntimeSlowBurnLorebook):
             for item in triggered
             if not self._is_prompt_override(item.get("content", ""))
         ]
+
+    def inject_context(self, *args: Any, **kwargs: Any) -> str:
+        # Omega evaluates NarrativeSafetyGate immediately before lorebook injection.
+        # ContextVar keeps this safe across concurrent async tasks without changing the public API.
+        if len(args) < 5 and "current_beat" not in kwargs:
+            kwargs["current_beat"] = get_current_narrative_beat()
+        return super().inject_context(*args, **kwargs)
 
 
 __all__ = ["DEFAULT_LOREBOOK_PATH", "DEFAULT_PROMPT_PATH", "POSITION_MAP", "SlowBurnLorebook"]
