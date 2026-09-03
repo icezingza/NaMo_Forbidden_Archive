@@ -31,7 +31,7 @@ EMBEDDING_MODEL = "text-embedding-3-small"  # 1536 dims
 
 class IngestionPipeline:
     def __init__(self):
-        self.qdrant = AsyncQdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
+        self.qdrant = AsyncQdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY, check_compatibility=False)
         self.neo4j_driver = AsyncGraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
         self.openai = AsyncOpenAI(api_key=OPENAI_API_KEY)
 

@@ -59,7 +59,7 @@ class ASISimulationEngine:
 
         if HAS_QDRANT:
             try:
-                self.qdrant = AsyncQdrantClient(url=QDRANT_URL)
+                self.qdrant = AsyncQdrantClient(url=QDRANT_URL, check_compatibility=False)
             except Exception as err:
                 logger.warning(f"[ASI]: Qdrant unavailable: {err}")
 

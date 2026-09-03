@@ -131,9 +131,10 @@ class FullPortV2Lorebook:
                     blocks.append(f"[{self._entry_name(entry)}]\n{text}")
         return "\n\n".join(blocks)
 
-    def match_entries(self, user_input: str, *, ai_history: str = "") -> list[FullPortMatch]:
+    def match_entries(self, user_input: str, *, ai_history: str = "", recent_lorebook_ids: list[str] | None = None) -> list[FullPortMatch]:
         haystack=self._norm(f"{user_input}\n{ai_history}")
         matches: list[FullPortMatch]=[]
+        recent_ids = set(recent_lorebook_ids or [])
         for entry in self.entries:
             keys=entry.get("keys_bilingual") or entry.get("keys") or []
             if not isinstance(keys, list):
@@ -148,6 +149,8 @@ class FullPortV2Lorebook:
             if entry.get("id") == "story:4":
                 matched_question = bool(re.search(r"\?|ไหม\b|หรือเปล่า\b|ทำไม\b|อะไร\b|อย่างไร\b|ยังไง\b|เมื่อไหร่\b|ที่ไหน\b", user_input, re.IGNORECASE))
                 match_score = max(match_score, 80 if matched_question else 0) if matched_question else 0
+            if str(entry.get("id")) in recent_ids:
+                match_score = int(match_score * 0.4) # Penalize recently used
             if match_score <= 0:
                 continue
             text=self._render_entry(entry)

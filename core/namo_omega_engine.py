@@ -487,12 +487,28 @@ class NaMoOmegaEngine(BasePersonaEngine):
         tension_meter = min(100.0, max(0.0, tension_meter + tension_boost))
 
         denial_counter = self._resolve_denial_counter(user_input, state)
+        ledger = state.get("ledger_state")
+        recent_ids = ledger.metadata.get("recent_lorebook_ids", []) if ledger and hasattr(ledger, "metadata") else []
+        
         lorebook_plan = self.lorebook.get_injection_plan(
             user_input=user_input,
             ai_history=self._get_history(session_id),
             tension_meter=tension_meter,
             current_beat=state["current_beat"],
+            recent_lorebook_ids=recent_ids,
         )
+        
+        # Track used IDs
+        used_ids = []
+        for placement_items in lorebook_plan.values():
+            for item in placement_items:
+                if "id" in item:
+                    used_ids.append(item["id"])
+                    
+        if used_ids and ledger and hasattr(ledger, "metadata"):
+            updated_recent = recent_ids + used_ids
+            ledger.metadata["recent_lorebook_ids"] = updated_recent[-15:] # Keep last 15
+
         push_pull = ""
         if self.lorebook.detect_rushed_input(user_input):
             push_pull, block_actions = self.lorebook.get_push_pull_directive(denial_counter)

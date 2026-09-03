@@ -19,6 +19,25 @@ class CompositeRoleplayLorebook:
         if extra: blocks.append(extra)
         return "\n\n".join(blocks)
 
+    def get_injection_plan(self, **kwargs: Any) -> dict[str, list[dict[str, Any]]]:
+        legacy_func = getattr(self.legacy, "get_injection_plan", None)
+        plan = legacy_func(**kwargs) if callable(legacy_func) else {}
+        if "system_pre" not in plan:
+            plan["system_pre"] = []
+        
+        user_input = kwargs.get("user_input", "")
+        ai_history = kwargs.get("ai_history", "")
+        recent_ids = kwargs.get("recent_lorebook_ids", [])
+        
+        matches = self.fullport.match_entries(user_input, ai_history=ai_history, recent_lorebook_ids=recent_ids)
+        for m in matches:
+            plan["system_pre"].append({
+                "id": m.entry_id,
+                "content_th": m.text,
+                "name": m.name_th
+            })
+        return plan
+
     def __getattr__(self, name: str) -> Any:
         # Preserve helper methods currently called on SlowBurnLorebook.
         return getattr(self.legacy, name)
