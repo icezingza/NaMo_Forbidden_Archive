@@ -122,6 +122,10 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Validate .dockerignore
+        run: |
+          test -f .dockerignore && echo ".dockerignore found" || echo "WARNING: No .dockerignore found"
+
       - name: Build ${{ matrix.service }} image for testing
         uses: docker/build-push-action@v5
         with:
@@ -178,6 +182,13 @@ jobs:
           image: namo-${{ matrix.service }}:test
           only-severities: critical,high
 
+      - name: Generate Scout recommendations
+        uses: docker/scout-action@v1
+        continue-on-error: true
+        with:
+          command: recommendations
+          image: namo-${{ matrix.service }}:test
+
       - name: Generate Scout comparison report (PR only)
         uses: docker/scout-action@v1
         if: github.event_name == 'pull_request'
@@ -208,31 +219,53 @@ jobs:
           username: ${{ env.DOCKER_HUB_USERNAME }}
           password: ${{ env.DOCKER_HUB_TOKEN }}
 
-      - name: Build and push main image
+      - name: Build and push main image (with registry cache)
         if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=${{ env.DOCKER_HUB_USERNAME }}/namo-api:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKER_HUB_USERNAME }}/namo-api:buildcache,mode=max
           tags: |
             ${{ env.DOCKER_HUB_USERNAME }}/namo-api:latest
             ${{ env.DOCKER_HUB_USERNAME }}/namo-api:${{ github.sha }}
 
-      - name: Build and push memory image
+      - name: Build and push memory image (with registry cache)
         if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile.memory
+          platforms: linux/amd64,linux/arm64
           push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=${{ env.DOCKER_HUB_USERNAME }}/namo-memory:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKER_HUB_USERNAME }}/namo-memory:buildcache,mode=max
           tags: |
             ${{ env.DOCKER_HUB_USERNAME }}/namo-memory:latest
             ${{ env.DOCKER_HUB_USERNAME }}/namo-memory:${{ github.sha }}
+
+      - name: Scan API image for vulnerabilities
+        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
+        uses: docker/scout-action@v1
+        with:
+          command: cves
+          image: ${{ env.DOCKER_HUB_USERNAME }}/namo-api:${{ github.sha }}
+          only-severities: critical,high
+          exit-code: false
+        continue-on-error: true
+
+      - name: Scan memory image for vulnerabilities
+        if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
+        uses: docker/scout-action@v1
+        with:
+          command: cves
+          image: ${{ env.DOCKER_HUB_USERNAME }}/namo-memory:${{ github.sha }}
+          only-severities: critical,high
+          exit-code: false
+        continue-on-error: true
 
       - name: Run Docker Scout on pushed images
         if: env.DOCKER_HUB_USERNAME != '' && env.DOCKER_HUB_TOKEN != ''
