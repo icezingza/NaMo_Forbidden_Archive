@@ -9,15 +9,17 @@ from core.slowburn_lorebook import DEFAULT_LOREBOOK_PATH, SlowBurnLorebook
 
 
 def test_slowburn_lorebook_cleaning(tmp_path: Path):
-    raw_lorebook = [{
-        "id ": 1,
-        "key ": ["  oral ", " blowjob "],
-        "keysecondary ": [" sex "],
-        "comment ": " Oral Test ",
-        "content ": " Oral content body ",
-        "enabled": True,
-        "insertion_order ": 100,
-    }]
+    raw_lorebook = [
+        {
+            "id ": 1,
+            "key ": ["  oral ", " blowjob "],
+            "keysecondary ": [" sex "],
+            "comment ": " Oral Test ",
+            "content ": " Oral content body ",
+            "enabled": True,
+            "insertion_order ": 100,
+        }
+    ]
     json_file = tmp_path / "test_lorebook.json"
     json_file.write_text(json.dumps(raw_lorebook), encoding="utf-8")
     lorebook = SlowBurnLorebook(json_path=json_file)
@@ -47,19 +49,21 @@ def test_slowburn_lorebook_no_trigger_legacy_single_source():
 
 
 def test_slowburn_lorebook_tension_modulation(tmp_path: Path):
-    raw_lorebook = [{
-        "id": 1,
-        "key": ["ท่าหมา"],
-        "comment": "Doggy Test",
-        "content": "Default content",
-        "tension_levels": {
-            "low": "Low tension hesitant touch",
-            "mid": "Mid tension deeper contact",
-            "high": "High tension unhinged passion",
-        },
-        "enabled": True,
-        "insertion_order": 100,
-    }]
+    raw_lorebook = [
+        {
+            "id": 1,
+            "key": ["ท่าหมา"],
+            "comment": "Doggy Test",
+            "content": "Default content",
+            "tension_levels": {
+                "low": "Low tension hesitant touch",
+                "mid": "Mid tension deeper contact",
+                "high": "High tension unhinged passion",
+            },
+            "enabled": True,
+            "insertion_order": 100,
+        }
+    ]
     json_file = tmp_path / "tension_test.json"
     json_file.write_text(json.dumps(raw_lorebook, ensure_ascii=False), encoding="utf-8")
     lorebook = SlowBurnLorebook(json_path=json_file)

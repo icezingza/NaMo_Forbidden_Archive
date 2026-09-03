@@ -1,4 +1,5 @@
 """Backward-compatible public surface for the manifest-aware lorebook runtime."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -8,6 +9,8 @@ from core.slowburn_lorebook_runtime import (
     DEFAULT_LOREBOOK_PATH,
     DEFAULT_PROMPT_PATH,
     POSITION_MAP,
+)
+from core.slowburn_lorebook_runtime import (
     SlowBurnLorebook as _RuntimeSlowBurnLorebook,
 )
 
@@ -47,9 +50,7 @@ class SlowBurnLorebook(_RuntimeSlowBurnLorebook):
         return 0.0, ""
 
     @staticmethod
-    def get_sensory_directive(
-        environment: str = "bedroom", tension_meter: float = 50.0
-    ) -> str:
+    def get_sensory_directive(environment: str = "bedroom", tension_meter: float = 50.0) -> str:
         return (
             f"[MULTI-SENSORY ATMOSPHERIC DIRECTIVE | Environment: {environment.upper()}]\n"
             f"- 🌡️ อุณหภูมิ/เหงื่อ: ปรับตาม tension={tension_meter:.1f}\n"
@@ -65,11 +66,7 @@ class SlowBurnLorebook(_RuntimeSlowBurnLorebook):
 
     def get_triggered_entries(self, *args: Any, **kwargs: Any) -> list[dict[str, Any]]:
         triggered = super().get_triggered_entries(*args, **kwargs)
-        return [
-            item
-            for item in triggered
-            if not self._is_prompt_override(item.get("content", ""))
-        ]
+        return [item for item in triggered if not self._is_prompt_override(item.get("content", ""))]
 
     def inject_context(self, *args: Any, **kwargs: Any) -> str:
         # Omega evaluates NarrativeSafetyGate immediately before lorebook injection.

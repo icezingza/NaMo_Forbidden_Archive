@@ -199,7 +199,7 @@ services:
 
   # === Qdrant (Vector Database) ===
   qdrant:
-    image: qdrant/qdrant:latest
+    image: qdrant/qdrant:v1.19.1
     container_name: namo-qdrant
     ports:
       - "6333:6333"
@@ -211,10 +211,12 @@ services:
     networks:
       - namo-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      # Qdrant's image has no curl; use bash's built-in TCP probe.
+      test: ["CMD-SHELL", "bash -c ': > /dev/tcp/127.0.0.1/6333'"]
       interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 5
+      start_period: 10s
 
   # === Neo4j (Graph Memory) ===
   neo4j:
