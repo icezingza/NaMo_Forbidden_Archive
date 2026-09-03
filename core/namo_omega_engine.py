@@ -145,7 +145,16 @@ class NaMoOmegaEngine(BasePersonaEngine):
         self.emotions = EmotionState()
         self.intent_analyzer = IntentAnalyzer()
         self.lorebook = SlowBurnLorebook()
-        self.lorebook = CompositeRoleplayLorebook(self.lorebook)
+        from core.roleplay.fullport_v2_lorebook import FullPortV2Lorebook
+        fullport_lorebook = FullPortV2Lorebook(
+            mode=os.getenv("NAMO_ROLEPLAY_MODE", "compact"),
+            max_matches=int(os.getenv("NAMO_ROLEPLAY_MAX_MATCHES", "2")),
+            max_context_chars=int(os.getenv("NAMO_ROLEPLAY_MAX_CONTEXT_CHARS", "8000"))
+        )
+        self.lorebook = CompositeRoleplayLorebook(
+            self.lorebook,
+            fullport=fullport_lorebook,
+        )
         self.narrative_safety = NarrativeSafetyGate()
 
         self._session_states: dict[str, dict] = {}
@@ -455,11 +464,17 @@ class NaMoOmegaEngine(BasePersonaEngine):
         intent = self.intent_analyzer.analyze(user_input)
         cog_output = self._run_cognitive_cycle(user_input)
         emo_snapshot = cog_output.get("emotion") if cog_output else None
+        
+        base_roleplay_context = self.lorebook.fullport.get_base_context() if hasattr(self.lorebook, "fullport") and hasattr(self.lorebook.fullport, "get_base_context") else ""
+        
         system_blocks = [
+            base_roleplay_context,
             self._build_dynamic_context(state, emotion_snapshot=emo_snapshot),
             self._build_status_context(state),
             f"[Narrative Safety]: {safety_decision.directive}",
         ]
+        system_blocks = [block for block in system_blocks if block]
+
 
         cognitive = getattr(self, "cognitive", None)
         if cognitive is not None and cog_output is not None:
