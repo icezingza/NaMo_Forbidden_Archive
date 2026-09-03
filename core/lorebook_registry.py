@@ -1,12 +1,14 @@
 """Manifest-aware lorebook registry for the NaMo runtime."""
+
 from __future__ import annotations
 
 import gzip
 import json
 import logging
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +49,7 @@ class LorebookRegistry:
         self._load_sources()
 
     @classmethod
-    def default(cls) -> "LorebookRegistry":
+    def default(cls) -> LorebookRegistry:
         sources: list[LorebookSource] = []
         if DEFAULT_BASE_LOREBOOK.exists():
             sources.append(LorebookSource(DEFAULT_BASE_LOREBOOK))
@@ -56,13 +58,13 @@ class LorebookRegistry:
         return cls(sources)
 
     @classmethod
-    def from_single_file(cls, path: str | Path) -> "LorebookRegistry":
+    def from_single_file(cls, path: str | Path) -> LorebookRegistry:
         return cls([LorebookSource(Path(path))])
 
     @classmethod
     def from_manifest(
         cls, manifest_path: str | Path, *, include_base_lorebook: bool = False
-    ) -> "LorebookRegistry":
+    ) -> LorebookRegistry:
         manifest = Path(manifest_path)
         sources: list[LorebookSource] = []
         if include_base_lorebook and DEFAULT_BASE_LOREBOOK.exists():
@@ -141,9 +143,7 @@ class LorebookRegistry:
             raw, physical_source = loaded
             logical_name = source.path.name
             if not isinstance(raw, list):
-                raise LorebookRegistryError(
-                    f"Lorebook must use list[entry] schema: {logical_name}"
-                )
+                raise LorebookRegistryError(f"Lorebook must use list[entry] schema: {logical_name}")
             if source.declared_entries is not None and len(raw) != source.declared_entries:
                 raise LorebookRegistryError(
                     f"Manifest count mismatch for {logical_name}: "
@@ -177,6 +177,4 @@ class LorebookRegistry:
 
     @property
     def roleplay000_entries(self) -> int:
-        return sum(
-            count for name, count in self.source_counts.items() if name in ROLEPLAY000_FILES
-        )
+        return sum(count for name, count in self.source_counts.items() if name in ROLEPLAY000_FILES)

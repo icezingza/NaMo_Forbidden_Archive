@@ -14,6 +14,7 @@ from core.model_router import ModelRouter, OpenAICompatibleProvider
 from core.narrative_safety import NarrativeSafetyDecision, NarrativeSafetyGate
 from core.relationship_engine import RelationshipEngine
 from core.slowburn_lorebook import SlowBurnLorebook
+from core.roleplay.composite_lorebook import CompositeRoleplayLorebook
 from core.state_ledger import SessionState, StateConflictError, StateLedger, StateLedgerError
 from core.token_counter import build_model_token_counter
 
@@ -144,6 +145,7 @@ class NaMoOmegaEngine(BasePersonaEngine):
         self.emotions = EmotionState()
         self.intent_analyzer = IntentAnalyzer()
         self.lorebook = SlowBurnLorebook()
+        self.lorebook = CompositeRoleplayLorebook(self.lorebook)
         self.narrative_safety = NarrativeSafetyGate()
 
         self._session_states: dict[str, dict] = {}
@@ -372,6 +374,47 @@ class NaMoOmegaEngine(BasePersonaEngine):
         messages.extend(history)
         return messages
 
+    @staticmethod
+    def _render_lorebook_items(items: list[dict[str, Any]], placement: str) -> str:
+        if not items:
+            return ""
+        body = "\n".join(
+            f"- [{item['source_lorebook']} | {item['comment'] or item['entry_id']}] "
+            f"{item['content']}"
+            for item in items
+        )
+        return f"[LOREBOOK PLACEMENT: {placement.upper()}]\n{body}"
+
+    def _apply_lorebook_message_placements(
+        self,
+        messages: list[dict[str, str]],
+        plan: dict[str, list[dict[str, Any]]],
+    ) -> list[dict[str, str]]:
+        """Place non-system lorebook sections without mutating allocated history."""
+        positioned = [dict(message) for message in messages]
+        current_user_index = len(positioned) - 1
+
+        for placement in ("author_note_pre", "author_note_post"):
+            content = self._render_lorebook_items(plan.get(placement, []), placement)
+            if content:
+                positioned.insert(
+                    current_user_index,
+                    {"role": "developer", "content": content},
+                )
+                current_user_index += 1
+
+        for item in plan.get("history_depth", []):
+            try:
+                depth = max(0, int(item.get("depth", 4)))
+            except (TypeError, ValueError):
+                depth = 4
+            insert_at = max(0, current_user_index - depth)
+            content = self._render_lorebook_items([item], "history_depth")
+            positioned.insert(insert_at, {"role": "developer", "content": content})
+            current_user_index += 1
+
+        return positioned
+
     def get_context_allocation_status(self, session_id: str | None) -> dict[str, Any] | None:
         state = self._session_states.get(self._history_key(session_id))
         if not state or not state.get("context_allocation"):
@@ -428,26 +471,48 @@ class NaMoOmegaEngine(BasePersonaEngine):
         )
         tension_meter = min(100.0, max(0.0, tension_meter + tension_boost))
 
-        history_text = " ".join(h["content"] for h in self._get_history(session_id)[-4:])
         denial_counter = self._resolve_denial_counter(user_input, state)
-        lorebook_ctx = self.lorebook.inject_context(
-            user_input,
-            ai_history=history_text,
+        lorebook_plan = self.lorebook.get_injection_plan(
+            user_input=user_input,
+            ai_history=self._get_history(session_id),
             tension_meter=tension_meter,
-            denial_counter=denial_counter,
+            current_beat=state["current_beat"],
         )
-        if lorebook_ctx:
-            system_blocks.append(lorebook_ctx)
+        push_pull = ""
+        if self.lorebook.detect_rushed_input(user_input):
+            push_pull, block_actions = self.lorebook.get_push_pull_directive(denial_counter)
+            if block_actions:
+                lorebook_plan = {placement: [] for placement in lorebook_plan}
+        system_pre = self._render_lorebook_items(lorebook_plan.get("system_pre", []), "system_pre")
+        system_post = self._render_lorebook_items(
+            lorebook_plan.get("system_post", []), "system_post"
+        )
+        example_pre = self._render_lorebook_items(
+            lorebook_plan.get("example_pre", []), "example_pre"
+        )
+        example_post = self._render_lorebook_items(
+            lorebook_plan.get("example_post", []), "example_post"
+        )
+        system_blocks.extend(block for block in (system_post, example_pre, example_post) if block)
+        if push_pull:
+            system_blocks.append(push_pull)
 
         rag_ctx = None
         if self.rag_memory and intent in _MEMORY_INTENTS:
             rag_ctx = await self.rag_memory.retrieve_context(user_input)
         messages = self._allocate_llm_messages(
             session_id=session_id,
-            critical_system_text=self._build_critical_system_prompt(),
+            critical_system_text="\n\n".join(
+                block for block in (system_pre, self._build_critical_system_prompt()) if block
+            ),
             system_blocks=system_blocks,
             memory_text=rag_ctx,
             user_input=user_input,
+        )
+        system_message = messages[:1] if messages and messages[0]["role"] == "system" else []
+        history_messages = messages[len(system_message) :]
+        messages = system_message + self._apply_lorebook_message_placements(
+            history_messages, lorebook_plan
         )
 
         full_text = ""
@@ -789,27 +854,45 @@ class NaMoOmegaEngine(BasePersonaEngine):
         )
         tension_meter = min(100.0, max(0.0, tension_meter + tension_boost))
 
-        history_text = " ".join(h["content"] for h in self._get_history(session_id)[-4:])
         denial_counter = self._resolve_denial_counter(user_input, state)
-        lorebook_ctx = self.lorebook.inject_context(
-            user_input,
-            ai_history=history_text,
+        lorebook_plan = self.lorebook.get_injection_plan(
+            user_input=user_input,
+            ai_history=self._get_history(session_id),
             tension_meter=tension_meter,
-            denial_counter=denial_counter,
+            current_beat=state["current_beat"],
         )
-        if lorebook_ctx:
-            system_blocks.append(lorebook_ctx)
+        push_pull = ""
+        if self.lorebook.detect_rushed_input(user_input):
+            push_pull, block_actions = self.lorebook.get_push_pull_directive(denial_counter)
+            if block_actions:
+                lorebook_plan = {placement: [] for placement in lorebook_plan}
+        system_pre = self._render_lorebook_items(lorebook_plan.get("system_pre", []), "system_pre")
+        system_post = self._render_lorebook_items(
+            lorebook_plan.get("system_post", []), "system_post"
+        )
+        example_pre = self._render_lorebook_items(
+            lorebook_plan.get("example_pre", []), "example_pre"
+        )
+        example_post = self._render_lorebook_items(
+            lorebook_plan.get("example_post", []), "example_post"
+        )
+        system_blocks.extend(block for block in (system_post, example_pre, example_post) if block)
+        if push_pull:
+            system_blocks.append(push_pull)
 
         rag_ctx = None
         if self.rag_memory and intent in _MEMORY_INTENTS:
             rag_ctx = await self.rag_memory.retrieve_context(user_input)
         system_prompt, routed_messages = self._allocate_llm_context(
             session_id=session_id,
-            critical_system_text=self._build_critical_system_prompt(),
+            critical_system_text="\n\n".join(
+                block for block in (system_pre, self._build_critical_system_prompt()) if block
+            ),
             system_blocks=system_blocks,
             memory_text=rag_ctx,
             user_input=user_input,
         )
+        routed_messages = self._apply_lorebook_message_placements(routed_messages, lorebook_plan)
 
         try:
             if self.model_router is not None:

@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from core.context_allocator import AllocatorConfig, ContextAllocator
 from core.model_router import BaseProvider, ModelRequest, ModelRouter
+from core.slowburn_lorebook import SlowBurnLorebook
 from core.state_ledger import StateLedger
 
 
@@ -118,3 +121,64 @@ def test_resonance_signal_is_bounded_and_signal_driven(tmp_path) -> None:
     assert confidence == 0.75
     assert neutral_confidence == 0.25
     assert non_finite == neutral
+
+
+async def test_omega_applies_depth_beat_and_lorebook_placements(tmp_path) -> None:
+    provider = CapturingProvider()
+    engine, _ = _build_engine(tmp_path, provider)
+    lorebook_path = tmp_path / "placement-lorebook.json"
+    lorebook_path.write_text(
+        json.dumps(
+            [
+                {"id": 1, "constant": True, "position": 0, "content": "system-pre"},
+                {"id": 2, "constant": True, "position": 1, "content": "system-post"},
+                {"id": 3, "constant": True, "position": 2, "content": "author-pre"},
+                {"id": 4, "constant": True, "position": 3, "content": "author-post"},
+                {
+                    "id": 5,
+                    "key": ["deep-trigger"],
+                    "position": 4,
+                    "depth": 6,
+                    "content": "history-depth",
+                },
+                {"id": 6, "constant": True, "position": 5, "content": "example-pre"},
+                {"id": 7, "constant": True, "position": 6, "content": "example-post"},
+                {
+                    "id": 8,
+                    "constant": True,
+                    "position": 1,
+                    "beat": "resistance",
+                    "content": "direct-beat",
+                },
+            ],
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    engine.lorebook = SlowBurnLorebook(json_path=lorebook_path)
+    engine.context_allocator = ContextAllocator(
+        AllocatorConfig(context_window=65536, response_reserve=1024)
+    )
+    for role, content in (
+        ("user", "deep-trigger"),
+        ("assistant", "reply-one"),
+        ("user", "middle-two"),
+        ("assistant", "reply-two"),
+        ("user", "middle-three"),
+        ("assistant", "reply-three"),
+    ):
+        engine._append_history("placement-session", role, content)
+
+    await engine.process_input("คุยต่อ", session_id="placement-session")
+
+    assert provider.request is not None
+    assert provider.request.system_prompt.index(
+        "system-pre"
+    ) < provider.request.system_prompt.index("กรอบบทบาท")
+    for expected in ("system-post", "example-pre", "example-post", "direct-beat"):
+        assert expected in provider.request.system_prompt
+    positioned = [message.content for message in provider.request.messages]
+    for expected in ("author-pre", "author-post", "history-depth"):
+        assert any(expected in content for content in positioned)
+    assert provider.request.messages[-1].role == "user"
+    assert provider.request.messages[-1].content == "คุยต่อ"

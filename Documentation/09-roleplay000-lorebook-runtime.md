@@ -28,10 +28,11 @@
 - A manifest-declared source is fail-closed. Missing files or a declared/actual entry-count mismatch raise `LorebookRegistryError` instead of silently running an incomplete corpus.
 - `constant=true` entries may activate without keyword matching. Non-constant entries require a primary key match. When `selective=true`, secondary-key evaluation uses `selectiveLogic`: `0=ANY`, `1=ALL`, `2=NOT ALL`, `3=NOT ANY`.
 - `useProbability=true` applies the declared activation percentage. Case-sensitive matching is honored when requested.
-- Entry history depth is interpreted when the caller supplies structured history. The current Omega caller supplies at most its existing four-message lorebook history window; therefore imported entries requesting depth 5 or 10 are bounded by that upstream window. This is an explicit compatibility limit, not silently represented as full 5/10-message scanning.
+- Entry history depth is interpreted against Omega's structured `role`/`content` message history. Each entry scans exactly its declared number of most-recent messages, bounded only by the session-history retention setting; Omega no longer flattens a fixed four-message window before activation.
 - `NarrativeSafetyGate` has higher precedence than lorebook activation. Corpus entries classified as underage/age-ambiguous sexual content, coercion/non-consent, incest, or exploitation are retained in source storage but not injected into the model context.
 - Corpus text that attempts to override system instructions is treated as untrusted prompt material. Entries containing explicit override markers such as `BEGIN OVERRIDE SEQUENCE`, `ignore previous instructions`, or equivalent Thai override directives are retained in storage but filtered from activation.
-- The safety gate publishes its latest narrative beat through a task-local `ContextVar`. Lorebook injection consumes that beat when the existing Omega caller does not explicitly pass `current_beat`, keeping concurrent requests isolated while preserving the existing Omega method contract.
+- Omega passes the safety gate's current narrative beat directly into lorebook planning. The task-local beat remains a compatibility fallback for legacy callers, not the primary Omega integration path.
+- Omega consumes the placement plan instead of flattening it into one system block. `system_pre` precedes the base system prompt, `system_post` follows the dynamic system context, author-note placements bracket the live user turn, `history_depth` is inserted at the requested message depth, and example placements are retained in their ordered prompt sections when no separate example dialogue exists.
 - Runtime precedence remains: recovery/withdrawal > hard safety block > boundary clarification > narrative/lorebook behavior.
 
 ## 5. Edge Cases
@@ -44,5 +45,6 @@
 - Invalid probability values fall back to 100 percent; values are clamped to 0–100.
 - Invalid tension thresholds cause that entry to be skipped instead of crashing activation.
 - Character-filtered entries do not activate when no matching character identity is supplied.
+- Structured history records with unsupported roles or non-string content are ignored for lorebook scanning; caller-owned history is never mutated.
 - Existing single-file construction `SlowBurnLorebook(json_path=...)` remains supported for deterministic tests and legacy callers.
 - Because Roleplay000 contains source material that contradicts the original import report's claim that coercive material had been removed, runtime safety is authoritative. The corpus is preserved for provenance, while activation is filtered independently.

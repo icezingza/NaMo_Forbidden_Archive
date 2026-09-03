@@ -6,16 +6,16 @@ NRE v6.0.0 Autonomous Sovereign Brain Architecture
 
 from __future__ import annotations
 
+import asyncio
 import io
 import os
 import re
 import sys
-import asyncio
 
-import httpx
-from telebot.async_telebot import AsyncTeleBot
-from dotenv import load_dotenv
 import edge_tts
+import httpx
+from dotenv import load_dotenv
+from telebot.async_telebot import AsyncTeleBot
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -34,6 +34,7 @@ else:
     print(f"🚀 Initializing Vipha/NaMo Telegram Bot v2 (Async Mode) with token: {TOKEN[:10]}...")
 
 bot = AsyncTeleBot(TOKEN) if TOKEN else None
+
 
 async def synthesize_voice(text: str) -> bytes | None:
     """Synthesizes speech using Edge-TTS (100% Free Thai Voice Engine).
@@ -58,7 +59,9 @@ async def synthesize_voice(text: str) -> bytes | None:
         print(f"[Edge-TTS Error]: {e}")
         return None
 
+
 if bot:
+
     @bot.message_handler(commands=["start", "help", "reset"])
     async def send_welcome(message):
         chat_id = str(message.chat.id)
@@ -66,7 +69,9 @@ if bot:
             # Call Backend Reset
             try:
                 async with httpx.AsyncClient() as client:
-                    res = await client.post(f"{BACKEND_URL}/session/reset", json={"session_id": chat_id}, timeout=10.0)
+                    res = await client.post(
+                        f"{BACKEND_URL}/session/reset", json={"session_id": chat_id}, timeout=10.0
+                    )
                 if res.status_code == 200:
                     await bot.reply_to(
                         message,
@@ -97,7 +102,7 @@ if bot:
             # 1. Forward message to FastAPI backend
             payload = {"session_id": chat_id, "text": user_text}
             endpoint = f"{BACKEND_URL}/session/chat"
-            
+
             async with httpx.AsyncClient() as client:
                 response = await client.post(endpoint, json=payload, timeout=35.0)
 
@@ -141,6 +146,7 @@ if bot:
             )
         except Exception as e:
             await bot.send_message(chat_id, f"❌ เกิดข้อผิดพลาดไม่คาดคิด: {str(e)}")
+
 
 if __name__ == "__main__":
     if TOKEN and bot:

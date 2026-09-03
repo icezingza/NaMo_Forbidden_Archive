@@ -18,7 +18,7 @@ import requests
 logger = logging.getLogger("NamoModelRouter")
 
 _PROVIDER_NAME = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
-_MESSAGE_ROLES = frozenset({"user", "assistant", "tool"})
+_MESSAGE_ROLES = frozenset({"developer", "user", "assistant", "tool"})
 _GENERATION_OPTIONS = frozenset(
     {
         "temperature",
