@@ -131,7 +131,7 @@ class FullPortV2Lorebook:
                     blocks.append(f"[{self._entry_name(entry)}]\n{text}")
         return "\n\n".join(blocks)
 
-    def match_entries(self, user_input: str, *, ai_history: str = "", recent_lorebook_ids: list[str] | None = None) -> list[FullPortMatch]:
+    def match_entries(self, user_input: str, *, ai_history: str = "", recent_lorebook_ids: list[str] | None = None, dynamic_max_matches: int | None = None) -> list[FullPortMatch]:
         haystack=self._norm(f"{user_input}\n{ai_history}")
         matches: list[FullPortMatch]=[]
         recent_ids = set(recent_lorebook_ids or [])
@@ -174,7 +174,8 @@ class FullPortV2Lorebook:
             key=lambda m:(m.match_score, m.priority, -m.insertion_order),
             reverse=True,
         )
-        return matches[: self.max_matches]
+        limit = dynamic_max_matches if dynamic_max_matches is not None else self.max_matches
+        return matches[: limit]
 
     def inject_context(
         self,

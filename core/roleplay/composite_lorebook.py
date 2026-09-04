@@ -28,8 +28,9 @@ class CompositeRoleplayLorebook:
         user_input = kwargs.get("user_input", "")
         ai_history = kwargs.get("ai_history", "")
         recent_ids = kwargs.get("recent_lorebook_ids", [])
+        dynamic_limit = kwargs.get("dynamic_max_matches", None)
         
-        matches = self.fullport.match_entries(user_input, ai_history=ai_history, recent_lorebook_ids=recent_ids)
+        matches = self.fullport.match_entries(user_input, ai_history=ai_history, recent_lorebook_ids=recent_ids, dynamic_max_matches=dynamic_limit)
         for m in matches:
             plan["system_pre"].append({
                 "id": m.entry_id,

@@ -490,12 +490,20 @@ class NaMoOmegaEngine(BasePersonaEngine):
         ledger = state.get("ledger_state")
         recent_ids = ledger.metadata.get("recent_lorebook_ids", []) if ledger and hasattr(ledger, "metadata") else []
         
+        base_limit = int(os.getenv("NAMO_ROLEPLAY_MAX_MATCHES", "2"))
+        dynamic_limit = base_limit
+        if tension_meter >= 70:
+            dynamic_limit += 2
+        elif tension_meter >= 40:
+            dynamic_limit += 1
+        
         lorebook_plan = self.lorebook.get_injection_plan(
             user_input=user_input,
             ai_history=self._get_history(session_id),
             tension_meter=tension_meter,
             current_beat=state["current_beat"],
             recent_lorebook_ids=recent_ids,
+            dynamic_max_matches=dynamic_limit,
         )
         
         # Track used IDs

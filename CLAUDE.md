@@ -400,3 +400,30 @@ Patterns Claude has been seen repeating incorrectly in this codebase:
 - **Instantiating engines outside the registry** — always use `_EngineRegistry.get(name)` in server context
 - **Adding a new engine without registering it** — register in the `_EngineRegistry` block in `server.py`
 - **Lines exceeding 100 chars** — ruff enforces a 100-character line limit; break long function signatures and dicts into multiple lines
+
+---
+
+## Architecture Overview
+(Auto-injected reference from Session 5de9072c)
+
+**NaMo Forbidden Archive** is an advanced conversational AI framework built in **Python 3.11+** with a complex, multi-engine architecture.
+
+### Languages & Frameworks
+- Core Language: Python 3.11+ (3.12 in Dockerfile)
+- Web Framework: FastAPI + Uvicorn
+- DB (Vector): FAISS / Qdrant
+- DB (Graph): Neo4j
+- Cache: Redis
+- SQL DB: PostgreSQL
+
+### Architecture Layers:
+1. **Client Layer**: Telegram Bot, Web UI, REST API clients
+2. **Integration Layer**: FastAPI gateway with rate limiting (sliding-window) & session TTL (3600s default)
+3. **Cognitive Layer**:
+   - **5D Emotion Engine** — tracks Arousal, Trust, Passion, Temperament, Resonance
+   - **Persona Engines** — dark, omega, rinlada, seraphina, ultimate
+   - **RAG Memory** — FAISS/Qdrant + Neo4j
+   - **Cognitive Stream** — FIFO thought queue (Impulse → Reflection → Conflict)
+4. **Storage Layer**: Qdrant (embeddings), Neo4j (lineage), PostgreSQL (state), Redis (cache)
+
+**Deployment:** Multi-stage Dockerfile, docker-compose.yml, Google Cloud Run ready.
